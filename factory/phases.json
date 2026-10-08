@@ -1,0 +1,109 @@
+{
+  "phases": [
+    {
+      "id": "intake",
+      "n": "00",
+      "name": "Receção",
+      "stage": "Validar",
+      "owner": "orchestrator",
+      "playbook": "factory/playbooks/00-intake.md",
+      "outputs": ["docs/00-brief.md"]
+    },
+    {
+      "id": "research",
+      "n": "01",
+      "name": "Pesquisa",
+      "stage": "Validar",
+      "owner": "market-researcher",
+      "playbook": "factory/playbooks/01-research.md",
+      "outputs": [
+        "docs/01-research.md",
+        "docs/research/market.md",
+        "docs/research/competitors.md",
+        "docs/research/audience.md",
+        "docs/research/risks.md"
+      ]
+    },
+    {
+      "id": "strategy",
+      "n": "02",
+      "name": "Estratégia",
+      "stage": "Definir",
+      "owner": "product-strategist",
+      "playbook": "factory/playbooks/02-strategy.md",
+      "outputs": ["docs/02-product.md", "docs/02-business.md"]
+    },
+    {
+      "id": "brand",
+      "n": "03",
+      "name": "Marca",
+      "stage": "Definir",
+      "owner": "brand-designer",
+      "playbook": "factory/playbooks/03-brand.md",
+      "outputs": ["docs/03-brand.md", "brand/logo.svg", "brand/tokens.json"]
+    },
+    {
+      "id": "architecture",
+      "n": "04",
+      "name": "Arquitetura",
+      "stage": "Definir",
+      "owner": "solution-architect",
+      "playbook": "factory/playbooks/04-architecture.md",
+      "outputs": ["docs/04-architecture.md", "docs/adr/"]
+    },
+    {
+      "id": "build",
+      "n": "05",
+      "name": "Construção",
+      "stage": "Construir",
+      "owner": "fullstack-engineer",
+      "playbook": "factory/playbooks/05-build.md",
+      "outputs": ["docs/05-build.md", "{app_dir}/"]
+    },
+    {
+      "id": "qa",
+      "n": "06",
+      "name": "Qualidade",
+      "stage": "Construir",
+      "owner": "qa-engineer",
+      "playbook": "factory/playbooks/06-qa.md",
+      "outputs": ["docs/06-qa-report.md"]
+    },
+    {
+      "id": "legal",
+      "n": "07",
+      "name": "Legal",
+      "stage": "Construir",
+      "owner": "legal-counsel",
+      "playbook": "factory/playbooks/07-legal.md",
+      "outputs": ["docs/07-compliance.md", "legal/"]
+    },
+    {
+      "id": "gtm",
+      "n": "08",
+      "name": "Go-to-market",
+      "stage": "Lançar",
+      "owner": "growth-marketer",
+      "playbook": "factory/playbooks/08-gtm.md",
+      "outputs": ["docs/08-gtm.md", "marketing/"]
+    },
+    {
+      "id": "launch",
+      "n": "09",
+      "name": "Lançamento",
+      "stage": "Lançar",
+      "owner": "devops-engineer",
+      "playbook": "factory/playbooks/09-launch.md",
+      "outputs": ["docs/09-launch.md"]
+    },
+    {
+      "id": "growth",
+      "n": "10",
+      "name": "Crescimento",
+      "stage": "Crescer",
+      "owner": "growth-marketer",
+      "playbook": "factory/playbooks/10-growth.md",
+      "outputs": ["docs/10-growth.md"]
+    }
+  ]
+}

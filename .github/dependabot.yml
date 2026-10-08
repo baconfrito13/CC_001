@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Keep the web starter (and merged product apps) current; grouped to one PR per week.
+  - package-ecosystem: npm
+    directories:
+      - /factory/starters/web
+      - /products/*/app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

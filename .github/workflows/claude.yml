@@ -1,0 +1,77 @@
+# Claude in GitHub: issues labeled "ideia" start the factory; "@claude" in comments/reviews
+# (on product PRs or issues) is founder feedback or a direct request.
+# Needs ONE repository secret: CLAUDE_CODE_OAUTH_TOKEN (run `claude setup-token`) or
+# ANTHROPIC_API_KEY — see SETUP.md. Without it the job exits with a warning.
+name: Claude · Fábrica
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  claude:
+    # Public repository: only the owner and collaborators may start Claude.
+    if: |
+      (github.event_name == 'issues' && github.event.label.name == 'ideia' &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Check Claude credentials
+        id: auth
+        env:
+          OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          APIKEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$OAUTH" ] || [ -n "$APIKEY" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Add the CLAUDE_CODE_OAUTH_TOKEN (claude setup-token) or ANTHROPIC_API_KEY repository secret — see SETUP.md."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.auth.outputs.ok == 'true'
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        if: steps.auth.outputs.ok == 'true'
+        with:
+          node-version: 22
+
+      - uses: anthropics/claude-code-action@v1
+        if: steps.auth.outputs.ok == 'true'
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          label_trigger: ideia
+          track_progress: true
+          settings: .claude/settings.json
+          claude_args: |
+            --max-turns 400
+            --allowedTools "Bash,Edit,MultiEdit,Write,Read,Glob,Grep,WebSearch,WebFetch,Agent,Task,Skill,Workflow,TodoWrite"
+            --append-system-prompt "You run inside GitHub Actions for the product factory described in CLAUDE.md. For an issue labeled ideia: follow .claude/skills/ideia/SKILL.md with that issue as the input in --aqui mode (no cloud sessions here); map the issue form fields (Profundidade Rapida -> --rapido, A fundo -> --fundo, the Só validar checkbox -> --so-validar, Notas appended to the idea). Commit and push to your branch after every phase, and open a draft pull request with gh pr create --draft once intake is pushed, then link it from the issue. For @claude comments on a product pull request: treat them as founder feedback and follow .claude/skills/continuar/SKILL.md for that product. Playwright browsers are not preinstalled here: run npx playwright install --with-deps chromium before e2e tests."
