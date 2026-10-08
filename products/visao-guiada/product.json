@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "slug": "visao-guiada",
+  "name": "Visão Guiada",
+  "one_liner": "Óculos com câmara e auriculares com IA offline que descrevem o mundo a pessoas cegas, vendidos como kit sem subscrição",
+  "idea": "Uma solução para pessoas cegas ou com outros tipos de problemas visuais graves que seria, no fundo, um conjunto de óculos e fones interligados e com um sistema de inteligência artificial integrado, de preferência sem necessidade de ligação à internet, que se fosse indespensável teria de ser feita através de ligação ao telemovel do utilizador. Uma solução nativa mesmo. Esses óculos teriam um câmara e o que vêm transmitem ao utilizador através dos fones, que também têm microfone e permitem ao utilizador fazer perguntas à IA. Tudo feito no mesmo ecosistema. A \"monetização\" seria através da venda do kit (óculos + fones/microfone), preferencialmente sem necessidade de subscrição e com possíveis atualizações OTA.",
+  "type": "other",
+  "status": "active",
+  "phase": "research",
+  "depth": "standard",
+  "depth_locked": false,
+  "phases": {
+    "intake": {
+      "status": "done",
+      "started": "2026-10-08",
+      "started_at": "2026-10-08T15:48:51Z",
+      "completed": "2026-10-08",
+      "completed_at": "2026-10-08T15:49:45Z",
+      "summary": "other (hardware+IA offline), kit óculos+auriculares, venda única, depth standard"
+    },
+    "research": {
+      "status": "pending"
+    },
+    "strategy": {
+      "status": "pending"
+    },
+    "brand": {
+      "status": "pending"
+    },
+    "architecture": {
+      "status": "pending"
+    },
+    "build": {
+      "status": "pending"
+    },
+    "qa": {
+      "status": "pending"
+    },
+    "legal": {
+      "status": "pending"
+    },
+    "gtm": {
+      "status": "pending"
+    },
+    "launch": {
+      "status": "pending"
+    },
+    "growth": {
+      "status": "pending"
+    }
+  },
+  "decision": null,
+  "stack": {
+    "recipe": null,
+    "app_dir": "app",
+    "components": [],
+    "hosting": null,
+    "payments": null,
+    "database": null,
+    "auth": null
+  },
+  "links": {
+    "branch": "produto/visao-guiada",
+    "pr": null,
+    "issue": null,
+    "session": "https://claude.ai/code/session_01PHw6osQUbYMevv5yPhTMZM",
+    "preview": null,
+    "production": null,
+    "domain": null,
+    "repo": null
+  },
+  "source": {
+    "channel": "claude",
+    "ref": null
+  },
+  "created": "2026-10-08",
+  "updated": "2026-10-08"
+}
