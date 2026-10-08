@@ -29,6 +29,10 @@ Arguments: `$ARGUMENTS`
 
 - If `git branch --show-current` prints nothing (detached HEAD), run
   `git checkout -B <links.branch> origin/<links.branch>`.
+- If the PR in `links.pr` is already merged (a launched product), new work goes on a fresh
+  branch `produto/<slug>-<YYYYMMDD>` from `origin/main` with a new draft PR
+  `🏭 <Name> — <what changes>`; record both with `factory.py set <slug> links.branch …` and
+  `links.pr …`.
 - `git pull --ff-only` (if it fails, fetch and merge the remote branch; never rebase or
   force-push a shared branch). If `origin/main` contains the factory and has commits this
   branch lacks, `git merge origin/main` (keeps the PR diff to the product and brings factory
@@ -52,7 +56,8 @@ Arguments: `$ARGUMENTS`
 - **KILL** (`decision.verdict` is `kill` and not `forced`):
   - with `--forcar` → `python3 factory/scripts/factory.py set <slug> decision '{"verdict": "kill", "score": <same score>, "rationale": "forçado pelo fundador; veredicto original: kill <score>", "forced": true}'`,
     `set <slug> status active`, tick the "Decidir o destino" task, then continue;
-  - founder replied "arquivar" → `set <slug> status killed`, comment on the PR, stop;
+  - founder replied "arquivar" → `set <slug> status killed`, commit, push, comment on the PR
+    and close it (never merge it; the branch stays), stop;
   - founder replied "ângulo N" → start `/ideia` with that alternative angle from
     `docs/01-research.md` (a new product), set this one `killed`, stop;
   - otherwise stop and remind the founder of those three options.
@@ -80,3 +85,5 @@ phase. Act on `result.stopped` with the table in `.claude/skills/ideia/SKILL.md`
 Same as `/ideia` step 6: refresh the PR status block, add lessons to `docs/lessons.md`, reply
 in pt-PT (≤ 12 lines: what advanced, verdicts, links, founder tasks with minutes, next
 automatic step), push notification when founder action is needed or the product went live.
+For a launched product with `merges: claude`, finished follow-up work is merged as `/lancar`
+step 4 describes; a product that is not launched keeps its PR open.

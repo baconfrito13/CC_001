@@ -10,7 +10,7 @@ Ordem recomendada (o mais útil primeiro):
 | # | Passo | Tempo | Desbloqueia |
 |---|---|---|---|
 | 1 | Privacidade do repositório e proteção do `main` | 3 min | ideias confidenciais; nenhum agente escreve diretamente no `main` |
-| 2 | Fazer merge do PR da fábrica | 1 min | sessões novas já arrancam com a fábrica |
+| 2 | Merges: nada a fazer — a fábrica já está no `main` e faz os merges seguintes | 0 min | não precisas de abrir pull requests |
 | 3 | Preencher `FOUNDER.md` | 10 min | decisões de negócio sem perguntas |
 | 4 | Ligar o piloto automático (`/autopiloto ligar` na sessão "🏭 Fábrica · Capataz") | 1 min | ideias processadas sem abrires sessões |
 | 5 | Tokens no ambiente cloud do Claude | 15 min | deploys, bases de dados, pagamentos em teste |
@@ -27,7 +27,8 @@ ideias, pesquisas, planos de negócio e código. Decide antes de enviares a prim
 - **Privado (recomendado se as ideias forem confidenciais):** GitHub → *Settings* → *General*
   → *Danger Zone* → *Change repository visibility* → *Private*. As sessões do Claude
   continuam a funcionar igual. Só os minutos do GitHub Actions passam a ter uma quota mensal
-  no plano gratuito (as sessões cloud do Claude não gastam esses minutos).
+  (2000 minutos no plano gratuito, que chegam para os testes de vários produtos por mês; as
+  sessões cloud do Claude não gastam esses minutos).
 - **Público:** minutos de Actions ilimitados e "build in public". Nesse caso não escrevas em
   `FOUNDER.md` nada que não queiras ver publicado.
 
@@ -47,12 +48,15 @@ As regras estão disponíveis em repositórios públicos no plano gratuito; num 
 **privado** exigem GitHub Pro (ou Team). Se ficares no privado e gratuito, salta este ponto —
 as regras do Claude continuam a proteger o `main`.
 
-## 2. Merge do PR da fábrica
+## 2. Merges (nada a fazer)
 
-No GitHub, abre o pull request **"🛠️ Fábrica de produtos"**, carrega em *Ready for review*
-(está em rascunho) e depois em *Merge pull request* com a opção **Create a merge commit** (não
-*Squash*: os produtos que já tenham começado continuam a juntar-se ao `main` sem conflitos). A
-partir daí o `main` tem a fábrica e cada produto novo nasce num branch limpo a partir dele.
+O PR da fábrica já está no `main`, e cada produto novo nasce num branch limpo a partir dele.
+A partir daqui **a fábrica faz os merges por ti** (`merges: claude` em `FOUNDER.md`), sempre
+com *merge commit* e só com os testes a passar e sem conflitos: cada produto entra no `main`
+quando é lançado (e cada ciclo de crescimento quando termina), as melhorias da fábrica quando
+ficam completas, e as atualizações de dependências do Dependabot quando passam nos testes.
+Mudanças às regras da própria fábrica (`CLAUDE.md`, `.claude/`, `.github/`) esperam por ti.
+Se preferires aprovar cada merge, muda para `merges: fundador`.
 
 ## 3. `FOUNDER.md`
 
@@ -114,7 +118,7 @@ acrescentas em *Network access* → *Allowed domains* no mesmo menu
 
 Permite enviar ideias por **issues** (modelo "💡 Nova ideia") e falar com o Claude com
 `@claude` nos PRs dos produtos, mesmo sem abrires o Claude; e publica uma
-**pré-visualização** na Vercel quando fazes merge de um produto (produção é sempre com
+**pré-visualização** na Vercel quando um produto entra no `main` (produção é sempre com
 `/lancar`).
 
 1. Instala a app do Claude no repositório: no Claude Code (terminal) corre

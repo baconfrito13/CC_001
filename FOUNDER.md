@@ -12,6 +12,7 @@
 ```yaml
 autonomy: max                 # max = decide tudo o que é reversível sem perguntar
 go_live: approval             # approval = aprovas cada lançamento em produção · auto = lança sozinho
+merges: claude                # claude = a fábrica faz os merges dos PRs (regras em CLAUDE.md) · fundador = fazes tu
 max_parallel_products: 3      # quantos produtos avançam ao mesmo tempo (sessões em paralelo)
 default_depth: auto           # auto (ajusta ao score da validação) · lean · standard · deep
 autopilot_cron: "CRON_TZ=Europe/Lisbon 47 2 * * *"   # piloto automático: todos os dias às 02:47
