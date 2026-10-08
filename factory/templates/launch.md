@@ -42,7 +42,7 @@
 <!-- Use the values shown by the platform (vercel domains inspect/verify). Canonical = apex; www redirects 308. -->
 
 - **Domínio:** `{{}}` · **Registador:** {{}} (renovação {{€/ano}}) · **DNS em:** {{Cloudflare | registador}} · **Canónico:** {{apex | www}}
-- [ ] Registos A/CNAME verificados · [ ] HTTPS válido e redirecionamentos (`http→https`, `www→apex`) · [ ] `SITE_URL`, hreflang, OG e sitemap atualizados
+- [ ] Registos A/CNAME verificados · [ ] HTTPS válido e redirecionamentos (`http→https`, `www→apex`) · [ ] `NEXT_PUBLIC_SITE_URL`, hreflang, OG e sitemap atualizados
 
 ## 6. Email
 

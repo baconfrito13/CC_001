@@ -10,8 +10,10 @@ import { JsonLd } from "@/components/JsonLd";
 import { analytics, config, locales, site } from "@/config/site";
 import { getDictionary } from "@/content";
 import { readBrandColors } from "@/lib/brand";
+import { getEnv } from "@/lib/env";
 import { fill } from "@/lib/format";
 import { isLocale, localeMeta } from "@/lib/i18n";
+import { robotsMetadata } from "@/lib/indexing";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/jsonld";
 import { localizedPath } from "@/lib/locale-path";
 import { buildAlternates, buildSocialMetadata } from "@/lib/seo";
@@ -50,6 +52,8 @@ export async function generateMetadata({ params }: LayoutParams): Promise<Metada
     applicationName: site.name,
     alternates: buildAlternates(locale),
     ...buildSocialMetadata(locale, "", title, description),
+    // Previews and unlaunched deployments must never end up in a search index.
+    ...robotsMetadata(getEnv()),
     formatDetection: { telephone: false, email: false, address: false },
   };
 }

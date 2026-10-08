@@ -58,6 +58,16 @@ const planSchema = z
     path: ["checkoutUrl"],
   });
 
+const paymentsSchema = z.object({
+  /**
+   * Stripe Managed Payments (Stripe as Merchant of Record). When true, POST /api/checkout
+   * creates Checkout Sessions with `managed_payments: { enabled: true }`. Your Stripe account
+   * must be eligible and have Managed Payments switched on in the Dashboard. Payment Links
+   * used through `checkoutUrl` are configured in the Dashboard instead.
+   */
+  stripeManagedPayments: z.boolean().default(false),
+});
+
 const analyticsSchema = z
   .object({
     provider: z.enum(["none", "plausible", "posthog"]).default("none"),
@@ -144,6 +154,7 @@ export const siteConfigSchema = z
           message: "plan ids must be unique",
         }),
     }),
+    payments: paymentsSchema,
     analytics: analyticsSchema,
     features: z.object({
       waitlist: z.boolean().default(true),
@@ -185,7 +196,7 @@ export const rawConfig = {
     vatId: "PT000000000 (placeholder)",
     registration:
       "Conservatória do Registo Comercial de Lisboa, no. 000000000 (placeholder)",
-    address: "Rua do Exemplo 1, 1000-000 Lisboa, Portugal",
+    address: "Rua do Exemplo 1, 1000-000 Lisboa",
     country: "Portugal",
   },
   contact: {
@@ -281,6 +292,9 @@ export const rawConfig = {
       },
     ],
   },
+  payments: {
+    stripeManagedPayments: false,
+  },
   analytics: {
     // Prefer environment variables so each deployment can differ (see .env.example).
     provider: env.NEXT_PUBLIC_ANALYTICS_PROVIDER ?? "none",
@@ -322,6 +336,7 @@ export const {
   legal,
   social,
   pricing,
+  payments,
   analytics,
   features,
 } = config;

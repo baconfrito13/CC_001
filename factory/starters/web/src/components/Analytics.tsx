@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { useEffect } from "react";
+import { configureTracking } from "@/lib/track";
 import { useConsent } from "./CookieConsent";
 
 export interface AnalyticsProps {
@@ -43,8 +44,9 @@ function jsString(value: string): string {
 export function posthogSnippet(key: string, apiHost: string): string {
   return `(function(w,d){
 if(w.posthog&&w.posthog.__loaded)return;
-var ph=w.posthog=w.posthog||[];
+var ph=w.posthog=Array.isArray(w.posthog)?w.posthog:[];
 ph._i=[];ph.__SV=1;
+ph.capture=function(){ph.push(["capture"].concat(Array.prototype.slice.call(arguments)))};
 ph.init=function(token,config,name){
 ph._i.push([token,config,name]);
 var s=d.createElement("script");s.async=true;s.crossOrigin="anonymous";
@@ -73,6 +75,12 @@ export function Analytics(props: AnalyticsProps) {
   const posthogReady =
     props.provider === "posthog" && Boolean(props.posthogKey) && granted;
 
+  // Lets track() know whether it may send events.
+  const allowed = plausibleReady || posthogReady;
+  useEffect(() => {
+    configureTracking({ provider: props.provider, allowed });
+  }, [props.provider, allowed]);
+
   useEffect(() => {
     if (props.provider !== "posthog") return;
     const posthog = window.posthog;
@@ -81,10 +89,12 @@ export function Analytics(props: AnalyticsProps) {
     else posthog.opt_out_capturing?.();
   }, [props.provider, granted]);
 
+  // Script ids must not equal the global names (window.plausible / window.posthog): browsers
+  // expose elements by id on `window`, which would shadow the real objects.
   if (plausibleReady && props.plausibleDomain) {
     return (
       <Script
-        id="plausible"
+        id="analytics-plausible"
         src={props.plausibleScriptSrc}
         data-domain={props.plausibleDomain}
         strategy="afterInteractive"
@@ -94,7 +104,7 @@ export function Analytics(props: AnalyticsProps) {
 
   if (posthogReady && props.posthogKey) {
     return (
-      <Script id="posthog" strategy="afterInteractive">
+      <Script id="analytics-posthog" strategy="afterInteractive">
         {posthogSnippet(props.posthogKey, props.posthogHost)}
       </Script>
     );

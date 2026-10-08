@@ -12,7 +12,7 @@ Ordem recomendada (o mais útil primeiro):
 | 1 | Fazer merge do PR da fábrica | 1 min | sessões novas já arrancam com a fábrica |
 | 2 | Decidir: repositório público ou privado | 1 min | confidencialidade das tuas ideias |
 | 3 | Preencher `FOUNDER.md` | 10 min | decisões de negócio sem perguntas |
-| 4 | Ligar o piloto automático | 1 min | ideias processadas sem abrires sessões |
+| 4 | Ligar o piloto automático (`/autopiloto ligar` na sessão "🏭 Fábrica · Capataz") | 1 min | ideias processadas sem abrires sessões |
 | 5 | Tokens no ambiente cloud do Claude | 15 min | deploys, bases de dados, pagamentos em teste |
 | 6 | GitHub Actions (opcional) | 5 min | ideias via issues, deploy automático no merge |
 | 7 | Contas de negócio (quando o 1.º produto passar a validação) | variável | cobrar dinheiro de verdade |
@@ -44,14 +44,24 @@ identidade legal (para as páginas legais).
 
 ## 4. Piloto automático
 
-Numa sessão do Claude Code neste repositório escreve `/autopiloto ligar`. Cria uma rotina
-(Claude Code → *Routines*) que corre o capataz da fábrica todos os dias às 02:47 (hora de
-Lisboa): processa ideias novas da caixa e das issues, retoma produtos parados e corre os
-ciclos de crescimento dos produtos lançados. Desligar: `/autopiloto desligar`.
+Já existe uma sessão chamada **🏭 Fábrica · Capataz** na tua lista de sessões do Claude
+Code: é o capataz permanente da fábrica, com todas as ferramentas (GitHub, criar sessões de
+produto, notificações). Abre-a e escreve:
 
-Alternativa manual: [claude.ai/code](https://claude.ai/code) → *Routines* → *New routine* →
-repositório **CC_001**, horário diário, e como instrução o texto de
-`factory/routines/heartbeat.md` (troca `<REPO>` por `baconfrito13/CC_001`).
+```
+/autopiloto ligar
+```
+
+Ela cria uma rotina diária (02:47, hora de Lisboa) que a acorda para processar ideias novas
+da caixa e das issues, retomar produtos parados e correr os ciclos de crescimento dos
+produtos lançados. Tem de ser pedido por ti, nessa sessão: por segurança, a fábrica não cria
+rotinas recorrentes em teu nome. Desligar: `/autopiloto desligar`. **Não arquives essa
+sessão** — é ela que a rotina acorda. Também podes falar com ela a qualquer hora (`/ideia …`,
+`/portfolio`).
+
+Alternativa: [claude.ai/code](https://claude.ai/code) → *Routines* → *New routine* →
+repositório **CC_001** selecionado, horário diário, e como instrução o texto de
+`factory/routines/heartbeat.md`.
 
 ## 5. Tokens no ambiente cloud do Claude
 
@@ -113,6 +123,9 @@ Para adiantar:
   defeito (disponível para empresas em Portugal), **Paddle** se quiseres MB WAY, **Polar** para
   ferramentas de developers. Para vendas só B2B, Stripe direto com Stripe Tax. Comissões e
   regras verificadas a 2026-10-08 em `factory/playbooks/monetization.md`.
+- **Alojamento comercial:** o plano gratuito *Hobby* da Vercel não permite uso comercial (nem
+  anunciar um produto à venda). Quando o primeiro produto for cobrar dinheiro: Vercel Pro
+  (cerca de 20 USD/mês, uma subscrição serve todos os produtos) ou Cloudflare.
 - **Domínios:** Cloudflare Registrar (preço de custo) ou outro registrar; `.pt` através de um
   registrar acreditado pelo DNS.pt.
 - **Apps móveis:** Apple Developer Program (99 USD/ano) e Google Play Console (25 USD, uma vez).

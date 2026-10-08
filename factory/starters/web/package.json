@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:smoke": "playwright test tests/e2e/smoke.spec.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "brand:apply": "node scripts/apply-brand.mjs"
   },

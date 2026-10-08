@@ -150,6 +150,10 @@ products/<slug>/
 Products with several deliverables use `app/` for the main one and sibling folders named by
 role (`api/`, `mobile/`, `extension/`); list them in `product.json` `stack.components`.
 
+Locale codes in file and folder names are the web starter's: `en` and `pt` (content in
+European Portuguese, rendered as `pt-PT`), e.g. `legal/public/privacy.pt.md`,
+`marketing/copy/landing.en.md`, `app/src/content/legal/pt/terms.md`.
+
 ## `product.json`
 
 Schema: `factory/schemas/product.schema.json`. Key fields:

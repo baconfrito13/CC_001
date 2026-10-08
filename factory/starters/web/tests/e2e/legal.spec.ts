@@ -12,9 +12,10 @@ test.describe("legal pages", () => {
         await expect(page.locator("html")).toHaveAttribute("lang", locale.htmlLang);
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-        const html = await page.content();
-        expect(html).not.toContain("{{");
-        expect(html).not.toContain("}}");
+        expect(await page.content()).not.toContain("{{");
+        const visibleText = await page.locator("body").innerText();
+        expect(visibleText).not.toContain("{{");
+        expect(visibleText).not.toContain("}}");
 
         const text = await page.locator("main").innerText();
         expect(text).toContain("Acme, Lda.");

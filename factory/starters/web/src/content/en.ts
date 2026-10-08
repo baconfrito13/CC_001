@@ -227,6 +227,7 @@ export const en: Dictionary = {
     },
     homeBreadcrumb: "Home",
     lastUpdated: "Last updated",
+    tableLabel: "Table (scrolls sideways on small screens)",
   },
   notFound: {
     title: "Page not found",

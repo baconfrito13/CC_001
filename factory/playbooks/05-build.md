@@ -22,8 +22,7 @@ can clone, run in one command, and trust.
 ### Step 1 — Scaffold and prove the baseline
 
 1. Web recipes: copy the starter, never edit it in place:
-   `mkdir -p products/<slug>/app && tar -C factory/starters/web --exclude=node_modules --exclude=.next --exclude=out -cf - . | tar -C products/<slug>/app -xf -`
-   (equivalent: `cp -r factory/starters/web products/<slug>/app && rm -rf products/<slug>/app/{node_modules,.next,out}`). Other types: run the recipe's Scaffold block.
+   `python3 factory/scripts/factory.py scaffold <slug>` (copies `factory/starters/web` into `products/<slug>/app` without `node_modules`, build output, `*.tsbuildinfo` or `.env*`; `--dir <folder>` for another component). Other types: run the recipe's Scaffold block.
 2. `npm install`, then the baseline **before changing anything**: `npm run check` (starter: lint + typecheck + unit tests + production build) and `CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e` (the starter's Playwright config reads `CHROMIUM_PATH`; e2e builds and serves on port 3100). Both must be green; if the starter itself fails, fix or report to the orchestrator, do not build on red.
 3. Read the starter's `README.md` **customization checklist** and execute it in order (site config, content, brand tokens, OG image, unused sections). Apply the brand: `npm run brand:apply -- ../brand/tokens.json`, then verify contrast of text/background pairs ≥ WCAG AA (4.5:1 body, 3:1 large) with a quick script or axe.
 4. Add what the architecture requires (database, auth, AI layer) exactly as the recipe says; then re-run the baseline. Commit-ready state: `chore: scaffold` (see Step 8 for commit rules).

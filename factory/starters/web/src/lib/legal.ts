@@ -48,6 +48,20 @@ export function renderLegalMarkdown(
   return marked.parse(filled, { async: false, gfm: true }) as string;
 }
 
+/**
+ * Wrap every table in a keyboard-focusable scroll container so wide tables never break the
+ * page layout on phones (and the scroll area is reachable without a mouse).
+ */
+export function wrapTables(html: string, label: string): string {
+  const safeLabel = label.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  return html
+    .replaceAll(
+      "<table>",
+      `<div class="legal-table" tabindex="0" role="region" aria-label="${safeLabel}"><table>`,
+    )
+    .replaceAll("</table>", "</table></div>");
+}
+
 export function renderLegalDoc(
   locale: Locale,
   doc: LegalDoc,

@@ -24,19 +24,20 @@ content pages or MDX authoring → `content.md`. If users sign in → `web-saas.
 
 ```bash
 # from the repo root; slug = product.json slug
-mkdir -p products/<slug>/app
-tar -C factory/starters/web --exclude=node_modules --exclude=.next --exclude=out -cf - . \
-  | tar -C products/<slug>/app -xf -
-cd products/<slug>/app && npm install
+python3 factory/scripts/factory.py scaffold <slug>   # → products/<slug>/app, no deps/build output/.env
+cd products/<slug>/app && npm ci
 npm run check          # baseline must be green BEFORE customizing
 ```
 
-Equivalent: `cp -r factory/starters/web products/<slug>/app` then `rm -rf products/<slug>/app/{node_modules,.next,out}`.
 Then follow the **customization checklist in the starter's `README.md`** (read it fully first):
 `src/config/site.ts` (site, locales, company, contact, legal, pricing, analytics, flags),
 `src/content/{en,pt}.ts` (copy), `npm run brand:apply -- ../brand/tokens.json`, replace the OG
 image/logo, delete unused sections. Run `npm outdated` and `npm audit --omit=dev`; bump only what
 `npm run check` still passes with.
+
+Official CLI fallback (only with an ADR approving a non-starter app; the starter already solves legal, consent, SEO and i18n):
+`npx create-next-app@latest app --ts --tailwind --biome --app --src-dir --import-alias "@/*" --use-npm --yes --skip-install --disable-git`
+(flags verified 2026-10-08 with create-next-app 16.4; it writes an `AGENTS.md` pointing to the docs bundled in `node_modules/next/dist/docs/`).
 
 Pure-static variant (PRD needs zero server): set `output: 'export'` in `next.config.ts`, delete
 `src/app/api/**`, point the waitlist form to an external endpoint (a Cloudflare Worker or form

@@ -3,7 +3,7 @@ import { type Locale, type PricingPlan, pricing, site } from "@/config/site";
 import type { Dictionary } from "@/content";
 import { fill, formatPrice } from "@/lib/format";
 import { localeMeta } from "@/lib/i18n";
-import { primaryCtaHref } from "@/lib/links";
+import { planFallbackCta } from "@/lib/links";
 import { localizedPath } from "@/lib/locale-path";
 import { planActionKind } from "@/lib/plans";
 import { CheckoutButton } from "./CheckoutButton";
@@ -65,10 +65,10 @@ function PlanAction({
       />
     );
   }
-  const href = primaryCtaHref(locale);
+  const fallback = planFallbackCta(locale, dict);
   return (
-    <a href={href} className={`${style} w-full`}>
-      {href.startsWith("mailto:") ? dict.pricing.ctaContact : dict.pricing.ctaWaitlist}
+    <a href={fallback.href} className={`${style} w-full`}>
+      {fallback.label}
     </a>
   );
 }

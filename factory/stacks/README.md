@@ -58,7 +58,7 @@ Record the choice: `python3 factory/scripts/factory.py set <slug> stack.recipe w
 | Data residency | EU region for DB, storage, analytics, email | US if the audience is US-only (ADR) | Processors listed in `legal/` (RoPA/subprocessors) |
 | Auth | Supabase Auth (web-saas) · Better Auth + Drizzle (alternative) | Clerk/Auth0 only with ADR (cost at 10k MAU) | Passwordless/OAuth first; MFA available |
 | Database | Supabase Postgres + RLS mandatory | Neon Postgres + Drizzle; D1 for Workers APIs | Migrations in git, never dashboard-only changes |
-| Payments | MoR (Paddle / Lemon Squeezy / Polar) for digital goods at launch | Stripe Checkout + Stripe Tax when you need Billing/Connect/meters | Always behind a feature flag + test mode; see "Payments" below |
+| Payments | MoR for digital goods at launch, in the order of `factory/playbooks/monetization.md` (Stripe Managed Payments · Paddle · Polar · Gumroad; not Lemon Squeezy for new products) | Stripe Checkout + Stripe Tax for B2B-only, Billing/Connect/meters | Always behind a feature flag + test mode; see "Payments" below |
 | Email | Resend (transactional) | Postmark; Buttondown/Beehiiv for newsletters | SPF, DKIM, DMARC set (founder task for DNS) |
 | Analytics | Plausible (cookieless, no consent banner needed for it alone) or PostHog EU | Umami self-hosted | Loaded only after consent when it sets cookies/IDs |
 | Errors | Sentry (`@sentry/nextjs`, `@sentry/cloudflare`, `@sentry/react-native`) | — | Enabled by `SENTRY_DSN`; no PII in events |
@@ -84,7 +84,8 @@ Record the choice: `python3 factory/scripts/factory.py set <slug> stack.recipe w
 | Option | Fees (fetched 2026-10-08) | Handles VAT/sales tax | Pick when |
 |---|---|---|---|
 | Paddle (MoR) | 5% + $0.50 per checkout (https://www.paddle.com/pricing) | Yes | SaaS/software, B2B+B2C, founder wants zero tax admin |
-| Lemon Squeezy (MoR) | 5% + $0.50, extras outside US (https://www.lemonsqueezy.com/pricing) | Yes | Digital products, license keys, simple setup |
+| Stripe Managed Payments (MoR) | 3.5% on top of Stripe processing (https://support.stripe.com/questions/managed-payments-pricing) | Yes | Default MoR for digital products on the starter's Stripe path (Portugal supported) |
+| Lemon Squeezy (MoR) | 5% + $0.50 (https://www.lemonsqueezy.com/pricing) | Yes | Legacy only: do not start new products here (see `monetization.md`) |
 | Polar (MoR) | Starter 5% + $0.50 (+1.5% intl cards); Pro $20/mo 3.8% + $0.40 (https://polar.sh/docs/merchant-of-record/fees) | Yes | Developer tools, open-source, usage billing |
 | Stripe direct | EEA cards 1.5% + €0.25; UK 2.5% + €0.25; intl 3.15% + €0.25 (https://stripe.com/en-pt/pricing); Stripe Tax 0.5% or €0.45/tx | Only with Stripe Tax + founder registrations | Marketplaces (Connect), metered API billing, high volume, physical goods |
 | RevenueCat | Free to $2,500 monthly tracked revenue, then 1% (https://www.revenuecat.com/pricing/) | App stores collect tax | Mobile in-app purchases |
@@ -105,7 +106,7 @@ the MoR forbids the category. Starter fields: `checkoutUrl` (MoR link / Stripe P
   macOS notarization needs an Apple Developer account ($99/year, https://developer.apple.com/programs/whats-included/);
   Windows code-signing certificate cost varies: both are founder tasks.
 - Distribution: GitHub Releases + Tauri updater (signed updates) + a landing page from `web-static`.
-  Monetization: MoR license keys (Lemon Squeezy/Polar/Paddle) validated at startup with offline grace.
+  Monetization: MoR license keys (Polar or Paddle) validated at startup with offline grace.
 - Tests: Vitest for logic, Playwright against the web UI, one smoke test launching the built app (`tauri build --debug`).
 - Cloud sessions cannot sign or notarize: prepare the pipeline, mark signing as founder task.
 

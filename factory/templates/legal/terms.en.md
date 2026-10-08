@@ -1,10 +1,10 @@
-<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for high-risk products (user-generated content at scale, AI that affects people, regulated activities) or significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the {{placeholders}} exactly as they are, and delete this notice before publishing. -->
+<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for high-risk products (user-generated content at scale, AI that affects people, regulated activities) or significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the double-brace placeholders exactly as they are, and delete this notice before publishing. -->
 
-# Terms of Service
+# Terms and Conditions
 
 **Effective date:** {{legal.effectiveDate}} · **Last updated:** {{legal.lastUpdated}}
 
-These Terms govern your use of {{site.name}} ({{site.url}}), provided by **{{company.legalName}}** (tax number {{company.taxId}}; VAT ID {{company.vatId}}; registration {{company.registration}}), {{company.address}}, {{company.country}} ("we", "us"). By creating an account or using the service you accept these Terms. If you use the service for a business, "you" means that business and the person accepting on its behalf. Please read them together with our Privacy Policy and, for consumers, our Withdrawal and Refund Policy.
+These Terms govern your use of {{site.name}} ([{{site.url}}]({{site.url}})), provided by **{{company.legalName}}** (tax number {{company.taxId}}; VAT ID {{company.vatId}}; registration {{company.registration}}), {{company.address}}, {{company.country}} ("we", "us"). By creating an account or using the service you accept these Terms. If you use the service for a business, "you" means that business and the person accepting on its behalf. Please read them together with our Privacy Policy and, for consumers, our Right of Withdrawal page.
 
 A **consumer** is an individual acting outside any trade, business or profession. Sections marked *(consumers)* apply only to consumers and sections marked *(business customers)* only to business customers; the rest apply to everyone. Nothing in these Terms reduces rights that the law gives consumers and that cannot be waived.
 
@@ -16,12 +16,12 @@ A **consumer** is an individual acting outside any trade, business or profession
 
 <!-- FILL: min-age — Replace with the minimum age, consistent with the Privacy Policy: "You must be at least 18 years old to use {{site.name}}." (paid products, default) or "You must be at least 16 years old to use {{site.name}}." (free products). If the product is aimed at under-16s STOP and escalate to a lawyer. -->
 
-- Give accurate information and keep it up to date. Keep your login details secret and tell us at {{contact.supportEmail}} if you suspect unauthorised use. You are responsible for what happens under your account.
+- Give accurate information and keep it up to date. Keep your login details secret and tell us at [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) if you suspect unauthorised use. You are responsible for what happens under your account.
 - *(business customers)* You confirm that you have authority to bind your organisation, and that your users will follow these Terms.
 
 ## 3. Plans, prices and payment
 
-<!-- FILL: pricing-billing — Replace with the real commercial terms from docs/02-business.md: (1) a table of plans (name | price incl. VAT for consumers | billing period | what is included | limits); (2) free-trial rules, if any, and what happens when it ends; (3) usage limits and overage; (4) who sells: if a Merchant of Record is used, say "Payments are processed and invoiced by [MoR name and address], who is the seller of record; {{company.legalName}} provides the service" and keep it identical in the Withdrawal and Refund Policy; (5) accepted payment methods. Prices shown to consumers MUST include VAT and all other charges. -->
+<!-- FILL: pricing-billing — Replace with the real commercial terms from docs/02-business.md: (1) a table of plans (name | price incl. VAT for consumers | billing period | what is included | limits); (2) free-trial rules, if any, and what happens when it ends; (3) usage limits and overage; (4) who sells: if a Merchant of Record is used, say "Payments are processed and invoiced by [MoR name and address], who is the seller of record; {{company.legalName}} provides the service" and keep it identical on the Right of Withdrawal page; (5) accepted payment methods. Prices shown to consumers MUST include VAT and all other charges. -->
 
 - **Taxes.** Prices for consumers include VAT. Prices for business customers are shown without VAT unless stated; VAT or reverse-charge treatment is applied according to the law and the tax information you provide.
 - **Renewal.** Subscriptions renew automatically for the same period at the then-current price until cancelled. You can cancel at any time in your account settings, in as few steps as it took to subscribe; cancellation takes effect at the end of the paid period. For annual plans we send a reminder before renewal.
@@ -30,7 +30,7 @@ A **consumer** is an individual acting outside any trade, business or profession
 
 ## 4. Right of withdrawal and refunds *(consumers)*
 
-If you are a consumer and buy at a distance, you have the right to withdraw from the contract within 14 days without giving a reason. If you ask for the service or digital content to start immediately, special rules apply (you pay a proportionate amount for a service already provided and, for digital content, you lose the right once performance has begun with your express consent and acknowledgement). The full rules, how to exercise the right, the model withdrawal form and our refund terms are in the Withdrawal and Refund Policy.
+If you are a consumer and buy at a distance, you have the right to withdraw from the contract within 14 days without giving a reason. If you ask for the service or digital content to start immediately, special rules apply (you pay a proportionate amount for a service already provided and, for digital content, you lose the right once performance has begun with your express consent and acknowledgement). The full rules, how to exercise the right, the model withdrawal form and our refund terms are on the Right of Withdrawal page.
 
 ## 5. Acceptable use
 
@@ -50,13 +50,13 @@ The service, its software, design, trademarks and documentation belong to us or 
 
 ## 8. Availability, support and changes to the service
 
-We work to keep the service available and secure, but we do not promise uninterrupted operation: maintenance, third-party outages or events beyond our control may affect it. Support is available at {{contact.supportEmail}}. *(business customers)* Unless a separate agreement states a service level, no uptime commitment applies.
+We work to keep the service available and secure, but we do not promise uninterrupted operation: maintenance, third-party outages or events beyond our control may affect it. Support is available at [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}). *(business customers)* Unless a separate agreement states a service level, no uptime commitment applies.
 
 We may update and improve the service. Where a change goes beyond what is needed to keep it conforming and has a negative impact on your access or use, we will tell you clearly, in advance and on a durable medium (for example by e-mail), and *(consumers)* you may terminate the contract free of charge within 30 days of the notice or of the change, whichever is later, unless we let you keep the unchanged version at no extra cost.
 
 ## 9. Legal guarantee of conformity *(consumers)*
 
-We must supply digital content and services that conform to the contract. If they do not, you are entitled by law (Decreto-Lei n.º 84/2021) to have conformity restored free of charge, to a proportionate price reduction or to terminate the contract, depending on the circumstances. For a single act of supply, we are liable for any lack of conformity that existed at supply and appears within two years; for a continuous supply (such as a subscription), for any lack of conformity that occurs or appears during the whole period in which the service is to be provided. These rights cannot be limited by contract. Contact {{contact.supportEmail}} to use them; refunds are made within 14 days.
+We must supply digital content and services that conform to the contract. If they do not, you are entitled by law (Decreto-Lei n.º 84/2021) to have conformity restored free of charge, to a proportionate price reduction or to terminate the contract, depending on the circumstances. For a single act of supply, we are liable for any lack of conformity that existed at supply and appears within two years; for a continuous supply (such as a subscription), for any lack of conformity that occurs or appears during the whole period in which the service is to be provided. These rights cannot be limited by contract. Contact [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) to use them; refunds are made within 14 days.
 
 ## 10. Liability
 
@@ -68,7 +68,7 @@ Nothing in these Terms excludes or limits liability that cannot be excluded or l
 
 ## 11. Personal data
 
-We process personal data as described in the Privacy Policy. *(business customers)* If you upload personal data of other people, we act as your processor under a data processing agreement, which forms part of these Terms and is available at {{contact.privacyEmail}}.
+We process personal data as described in the Privacy Policy. *(business customers)* If you upload personal data of other people, we act as your processor under a data processing agreement, which forms part of these Terms and is available at [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 12. Term, cancellation and suspension
 
@@ -82,11 +82,11 @@ We may change these Terms for valid reasons (for example legal changes, new feat
 
 ## 14. Governing law, courts and complaints
 
-These Terms are governed by the following law: **{{legal.governingLaw}}**. *(business customers)* Exclusive jurisdiction: **{{legal.jurisdiction}}**. *(consumers)* You keep the mandatory consumer-protection rights of the country where you live and may bring proceedings in the courts of that country.
+These Terms are governed by {{legal.governingLaw}}. *(business customers)* Exclusive jurisdiction lies with {{legal.jurisdiction}}. *(consumers)* You keep the mandatory consumer-protection rights of the country where you live and may bring proceedings in the courts of that country.
 
-**Complaints.** Please contact {{contact.supportEmail}} first. You can also use the electronic complaints book (Livro de Reclamações Eletrónico): {{legal.complaintsBookUrl}}.
+**Complaints.** Please contact [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) first. You can also use the electronic complaints book (Livro de Reclamações Eletrónico): [{{legal.complaintsBookUrl}}]({{legal.complaintsBookUrl}}).
 
-<!-- FILL: ral-choice — Choose ONE, per the founder's RAL decision (default A) and delete the other. A (not bound to any RAL entity): "**Consumer disputes.** We are not bound by an alternative dispute resolution (RAL) entity. Consumers may nevertheless use a consumer dispute resolution entity, for example {{legal.ralEntityName}} ({{legal.ralEntityUrl}}); the list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." B (bound by adhesion or by mandatory arbitration): "**Consumer disputes.** We are bound to use {{legal.ralEntityName}} ({{legal.ralEntityUrl}}) to resolve consumer disputes. The list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." Do NOT mention the European Online Dispute Resolution platform: it was discontinued on 20 July 2025. -->
+<!-- FILL: ral-choice — Choose ONE, per the founder's RAL decision (default A) and delete the other. A (not bound to any RAL entity): "**Consumer disputes.** We are not bound by an alternative dispute resolution (RAL) entity. Consumers may nevertheless use a consumer dispute resolution entity, for example [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}); the list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." B (bound by adhesion or by mandatory arbitration): "**Consumer disputes.** We are bound to use [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}) to resolve consumer disputes. The list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." Do NOT mention the European Online Dispute Resolution platform: it was discontinued on 20 July 2025. -->
 
 ## 15. General
 
@@ -94,4 +94,4 @@ These Terms and the documents they refer to are the entire agreement between us 
 
 ## 16. Contact
 
-{{company.legalName}} · {{company.address}}, {{company.country}} · {{contact.email}} · Support: {{contact.supportEmail}}.
+{{company.legalName}} · {{company.address}}, {{company.country}} · [{{contact.email}}](mailto:{{contact.email}}) · Support: [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}).

@@ -11,7 +11,7 @@ e a faturar**, com o mínimo de intervenção tua.
 
 | Onde | Como |
 |---|---|
-| **App Claude, claude.ai/code ou terminal** | abre uma sessão no repositório **CC_001** e escreve `/ideia uma app que…` — ou cola várias ideias de uma vez |
+| **App Claude, claude.ai/code ou terminal** | na sessão **🏭 Fábrica · Capataz** (ou em qualquer sessão nova no repositório **CC_001**) escreve `/ideia uma app que…` — ou cola várias ideias de uma vez |
 | **GitHub (telemóvel ou web)** | *Issues* → *New issue* → **💡 Nova ideia** (requer o passo 6 do [SETUP](SETUP.md)) |
 | **Caixa de ideias** | acrescenta uma linha `- …` a [`ideas/INBOX.md`](ideas/INBOX.md); o piloto automático apanha-a |
 
@@ -71,7 +71,7 @@ copiar, o que cada tarefa desbloqueia. Enquanto não as fazes, a fábrica contin
 | `/lancar <produto>` | pôr em produção |
 | `/crescer <produto>` | ciclo de crescimento |
 | `/fabrica` | capataz: processa as ideias novas e põe tudo a avançar |
-| `/autopiloto ligar · desligar · estado · agora` | rotina diária automática |
+| `/autopiloto ligar · desligar · estado · agora` | rotina diária automática (escreve-o na sessão "🏭 Fábrica · Capataz") |
 | `/spinout <produto>` | mover um produto para um repositório próprio (para vender, por exemplo) |
 
 ## Como funciona por dentro

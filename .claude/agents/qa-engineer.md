@@ -20,7 +20,8 @@ the product's `docs/02-product.md` (acceptance criteria) and `docs/05-build.md`.
 3. Accessibility: axe on every key page in every locale (zero serious/critical), keyboard-only
    pass, focus order, contrast, reduced motion.
 4. Performance/SEO: Lighthouse against the production build (`npm run build && npm start`)
-   with `--chrome-path=/opt/pw-browsers/chromium`; targets ≥ 90 for performance,
+   with `CHROME_PATH=/opt/pw-browsers/chromium` (Lighthouse 13 has no `--chrome-path` flag) and
+   `--chrome-flags="--headless=new --no-sandbox"`; targets ≥ 90 for performance,
    accessibility, best practices and SEO on the landing page.
 5. Exploratory: Playwright screenshots at 375 px and 1440 px for each page and state (empty,
    error, success, long text, pt-PT strings), broken links, 404s, forms with bad input,

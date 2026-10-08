@@ -50,6 +50,9 @@ given:
 
 ## 3. Intake in this session (playbook `factory/playbooks/00-intake.md`)
 
+0. If your instructions name a development branch that is not the one checked out (sessions
+   started by `/ideia` begin on the factory revision), create it from the current HEAD first:
+   `git checkout -b <that branch>` — all product work goes there.
 1. Read `FOUNDER.md`, `factory/LEARNINGS.md` and the playbook.
 2. Decide working name, `type` (taxonomy in `factory/PIPELINE.md`), one-liner.
 3. `python3 factory/scripts/factory.py new <slug or auto> --name "<name>" --type <type> --idea "<verbatim idea>" --one-liner "<one-liner>" --source <claude|issue:#N|inbox> --branch "$(git branch --show-current)"`

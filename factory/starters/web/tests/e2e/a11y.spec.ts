@@ -70,7 +70,7 @@ test.describe("accessibility (axe)", () => {
       .locator("#waitlist form")
       .getByRole("button", { name: "Join the waitlist" })
       .click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.locator('#waitlist [role="alert"]')).toBeVisible();
     expect(await seriousViolations(page)).toEqual([]);
   });
 });

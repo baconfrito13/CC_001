@@ -165,6 +165,47 @@ test.describe("analytics only after consent (Plausible, not cookieless)", () => 
     await expect.poll(() => requests).toContain(SCRIPT);
   });
 
+  test("track() sends product events only after consent", async ({ page, context }) => {
+    await context.setExtraHTTPHeaders({ "x-forwarded-for": "10.99.1.1" });
+    await trackPlausible(page);
+    const signUp = async () => {
+      const form = page.locator("#waitlist form");
+      await form.getByLabel("Email address").fill("track@example.com");
+      await form.getByRole("checkbox").check();
+      await form.getByRole("button", { name: "Join the waitlist" }).click();
+      await expect(page.locator("#waitlist").getByRole("status")).toContainText(
+        "You are on the list!",
+      );
+    };
+
+    // Rejected: the event is dropped, nothing is queued.
+    await page.goto("/en");
+    await page.getByRole("button", { name: "Reject analytics" }).click();
+    await signUp();
+    expect(await page.evaluate(() => (window as any).plausible)).toBeUndefined();
+
+    // Accepted: the event reaches Plausible (here: its queue, as the script is stubbed).
+    await context.setExtraHTTPHeaders({ "x-forwarded-for": "10.99.1.2" });
+    await context.clearCookies();
+    await page.evaluate(() => window.localStorage.clear());
+    await page.goto("/pt");
+    await page.getByRole("button", { name: "Aceitar análise" }).click();
+    await expect
+      .poll(() => page.evaluate(() => (window as any).__plausibleLoaded))
+      .toBe(true);
+    const form = page.locator("#waitlist form");
+    await form.getByLabel("Endereço de e-mail").fill("track@exemplo.pt");
+    await form.getByRole("checkbox").check();
+    await form.getByRole("button", { name: "Entrar na lista de espera" }).click();
+    await expect(page.locator("#waitlist").getByRole("status")).toContainText(
+      "Está na lista!",
+    );
+    const queued = await page.evaluate(() =>
+      (window as any).plausible?.q?.map((args: unknown[]) => [...args]),
+    );
+    expect(queued).toEqual([["waitlist_signup", { props: { locale: "pt" } }]]);
+  });
+
   test("the security policy allows the configured analytics provider without violations", async ({
     page,
   }) => {

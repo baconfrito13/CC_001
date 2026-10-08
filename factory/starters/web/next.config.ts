@@ -67,6 +67,13 @@ function contentSecurityPolicy(): string {
   ].join("; ");
 }
 
+/** Mirrors src/lib/indexing.ts (a unit test keeps them in sync). */
+function isIndexable(): boolean {
+  const explicit = process.env.NEXT_PUBLIC_INDEXABLE?.trim();
+  if (explicit) return explicit === "true" || explicit === "1";
+  return process.env.VERCEL_ENV === "production";
+}
+
 const securityHeaders = [
   // Two years, all subdomains. Add "; preload" only if you submit the domain to hstspreload.org.
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
@@ -82,6 +89,8 @@ const securityHeaders = [
   ...(isProduction
     ? [{ key: "Content-Security-Policy", value: contentSecurityPolicy() }]
     : []),
+  // Belt and braces next to robots.txt and <meta name="robots">: also covers images and APIs.
+  ...(isIndexable() ? [] : [{ key: "X-Robots-Tag", value: "noindex, nofollow" }]),
 ];
 
 const nextConfig: NextConfig = {

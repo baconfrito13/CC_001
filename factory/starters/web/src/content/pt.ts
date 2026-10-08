@@ -232,6 +232,7 @@ export const pt: Dictionary = {
     },
     homeBreadcrumb: "Início",
     lastUpdated: "Última atualização",
+    tableLabel: "Tabela (desliza para o lado em ecrãs pequenos)",
   },
   notFound: {
     title: "Página não encontrada",

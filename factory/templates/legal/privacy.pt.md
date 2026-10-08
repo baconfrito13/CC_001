@@ -1,17 +1,17 @@
-<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado em tratamentos de risco elevado (categorias especiais de dados, crianças, monitorização em larga escala, IA com impacto nas pessoas) ou receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os {{marcadores}} exatamente como estão e apagar este aviso antes de publicar. -->
+<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado em tratamentos de risco elevado (categorias especiais de dados, crianças, monitorização em larga escala, IA com impacto nas pessoas) ou receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os marcadores de chavetas duplas exatamente como estão e apagar este aviso antes de publicar. -->
 
 # Política de Privacidade
 
 **Data de entrada em vigor:** {{legal.effectiveDate}} · **Última atualização:** {{legal.lastUpdated}}
 
-Esta política explica que dados pessoais o {{site.name}} ({{site.url}}) recolhe, para que fins, quem tem acesso a eles, durante quanto tempo os conservamos e que direitos tem. Procurámos que seja curta e clara. Se algo não estiver claro, escreva para {{contact.privacyEmail}}.
+Esta política explica que dados pessoais o {{site.name}} ([{{site.url}}]({{site.url}})) recolhe, para que fins, quem tem acesso a eles, durante quanto tempo os conservamos e que direitos tem. Procurámos que seja curta e clara. Se algo não estiver claro, escreva para [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 1. Quem é responsável pelos seus dados
 
 O responsável pelo tratamento dos seus dados pessoais é **{{company.legalName}}** (NIF {{company.taxId}}; n.º de IVA {{company.vatId}}; registo {{company.registration}}), com morada em {{company.address}}, {{company.country}} («nós»).
 
-- Contacto de privacidade (pedidos, dúvidas, reclamações): {{contact.privacyEmail}}
-- Contacto geral: {{contact.email}} · Apoio ao cliente: {{contact.supportEmail}}
+- Contacto de privacidade (pedidos, dúvidas, reclamações): [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}})
+- Contacto geral: [{{contact.email}}](mailto:{{contact.email}}) · Apoio ao cliente: [{{contact.supportEmail}}](mailto:{{contact.supportEmail}})
 - Não designámos um Encarregado de Proteção de Dados porque a lei não o exige para as nossas atividades. O contacto de privacidade acima trata de todas as questões de proteção de dados.
 
 <!-- FILL: processor-role — Incluir APENAS se os clientes carregarem dados pessoais de terceiros (típico de SaaS B2B); caso contrário, apagar este bloco. Substituir por este parágrafo: "Se utilizar o {{site.name}} na sua atividade profissional e carregar dados pessoais de outras pessoas (por exemplo, dos seus clientes ou trabalhadores), é o responsável pelo tratamento desses dados e nós tratamo-los por sua conta, como subcontratante, ao abrigo de um acordo de subcontratação de dados disponível mediante pedido em {{contact.privacyEmail}}. Esta política não descreve esse tratamento." -->
@@ -56,7 +56,7 @@ Podemos também comunicar dados a autoridades públicas quando a lei o exigir, a
 
 ## 6. Transferências para fora do Espaço Económico Europeu
 
-Preferimos prestadores que tratem os dados na UE/EEE. Quando um destinatário se situe fora do EEE, baseamo-nos numa decisão de adequação da Comissão Europeia (incluindo o Quadro de Privacidade de Dados UE–EUA para empresas norte-americanas certificadas) ou nas Cláusulas Contratuais-Tipo aprovadas pela Comissão, acompanhadas de garantias adicionais quando necessário. Pode pedir uma cópia das salvaguardas em {{contact.privacyEmail}}.
+Preferimos prestadores que tratem os dados na UE/EEE. Quando um destinatário se situe fora do EEE, baseamo-nos numa decisão de adequação da Comissão Europeia (incluindo o Quadro de Privacidade de Dados UE–EUA para empresas norte-americanas certificadas) ou nas Cláusulas Contratuais-Tipo aprovadas pela Comissão, acompanhadas de garantias adicionais quando necessário. Pode pedir uma cópia das salvaguardas em [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 7. Durante quanto tempo conservamos os dados
 
@@ -70,9 +70,9 @@ Protegemos os dados pessoais com medidas adequadas ao risco, como cifragem em tr
 
 Nos termos do RGPD, tem direito de: **acesso** aos seus dados; **retificação**; **apagamento**; **limitação** do tratamento; **portabilidade** (receber os dados num formato estruturado e de uso corrente); **oposição** ao tratamento baseado em interesses legítimos e ao marketing direto; **retirar o consentimento**; e a não ficar sujeito a certas decisões baseadas exclusivamente no tratamento automatizado.
 
-Para exercer um direito, escreva para {{contact.privacyEmail}} (pode também usar as opções de exportação e eliminação disponíveis na sua conta, quando existirem). Podemos pedir informação para confirmar a sua identidade. Respondemos sem demora injustificada e no prazo de um mês; se o pedido for complexo ou se existirem muitos pedidos, podemos prorrogar por mais dois meses e explicaremos o motivo no primeiro mês. O exercício dos direitos é gratuito, salvo se os pedidos forem manifestamente infundados ou excessivos.
+Para exercer um direito, escreva para [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) (pode também usar as opções de exportação e eliminação disponíveis na sua conta, quando existirem). Podemos pedir informação para confirmar a sua identidade. Respondemos sem demora injustificada e no prazo de um mês; se o pedido for complexo ou se existirem muitos pedidos, podemos prorrogar por mais dois meses e explicaremos o motivo no primeiro mês. O exercício dos direitos é gratuito, salvo se os pedidos forem manifestamente infundados ou excessivos.
 
-Tem ainda o direito de apresentar reclamação a uma autoridade de controlo. A nossa é a **{{legal.supervisoryAuthority}}** ({{legal.supervisoryAuthorityUrl}}); pode também reclamar à autoridade do país da UE onde reside, trabalha ou onde ocorreu a alegada infração.
+Tem ainda o direito de apresentar reclamação a uma autoridade de controlo. A nossa é a **{{legal.supervisoryAuthority}}** ([{{legal.supervisoryAuthorityUrl}}]({{legal.supervisoryAuthorityUrl}})); pode também reclamar à autoridade do país da UE onde reside, trabalha ou onde ocorreu a alegada infração.
 
 ## 10. Crianças
 
@@ -80,7 +80,7 @@ O {{site.name}} não se dirige a crianças. <!-- FILL: min-age — Substituir es
 
 ## 11. Mensagens de marketing
 
-Só enviamos e-mails de marketing com o seu consentimento ou, a clientes existentes, sobre produtos ou serviços semelhantes aos nossos, com uma forma simples de recusar. Cada mensagem inclui uma ligação para cancelar a subscrição e pode também escrever para {{contact.privacyEmail}}. As mensagens de serviço (por exemplo, avisos de segurança, faturas e alterações aos Termos) não são marketing e são enviadas enquanto tiver conta.
+Só enviamos e-mails de marketing com o seu consentimento ou, a clientes existentes, sobre produtos ou serviços semelhantes aos nossos, com uma forma simples de recusar. Cada mensagem inclui uma ligação para cancelar a subscrição e pode também escrever para [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}). As mensagens de serviço (por exemplo, avisos de segurança, faturas e alterações aos Termos) não são marketing e são enviadas enquanto tiver conta.
 
 ## 12. Alterações a esta política
 
@@ -88,4 +88,4 @@ Se alterarmos esta política, publicaremos aqui a nova versão com uma nova data
 
 ## 13. Contacto
 
-Dúvidas ou pedidos: {{contact.privacyEmail}} · {{company.legalName}}, {{company.address}}, {{company.country}}.
+Dúvidas ou pedidos: [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) · {{company.legalName}}, {{company.address}}, {{company.country}}.

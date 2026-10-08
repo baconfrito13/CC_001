@@ -14,7 +14,7 @@ One TypeScript codebase, Manifest V3. Needs server state, accounts or heavy comp
 | Framework | WXT 0.21 (`wxt`), TypeScript, React via `@wxt-dev/module-react` (or vanilla for tiny tools) | File-based entrypoints, HMR, MV3 + Firefox builds, `wxt zip` | free |
 | Manifest | MV3 (Chrome, Edge); Firefox build from the same source (`-b firefox`) | MV2 is dead on Chrome | n/a |
 | Storage | `wxt/utils/storage` (typed wrapper over `browser.storage`) | Versioned, watchable | `storage.sync` ~100 KB, `local` ~10 MB (verify) |
-| Payments | MoR license keys (Lemon Squeezy / Polar / Paddle) validated via their license API · or ExtensionPay (`extpay`) | Chrome Web Store has no payments of its own | MoR ~5% + $0.50; ExtensionPay fees: verify |
+| Payments | MoR license keys (Polar / Paddle; Lemon Squeezy only for an existing store) validated via their license API · or ExtensionPay (`extpay`) | Chrome Web Store has no payments of its own | MoR ~5% + $0.50; ExtensionPay fees: verify |
 | Backend (optional) | Hono Worker (`api.md`) for license signing, AI proxy, sync | Never ship secrets inside the extension | Workers Free |
 | Landing + legal | `web-static` component (privacy policy URL is mandatory in every store) | Store requirement | — |
 | Analytics | Minimal, opt-in, no page-content collection; PostHog EU or none | Store "limited use" policy + GDPR | 1M events/mo |
@@ -63,7 +63,7 @@ state, use `storage`/alarms; handle re-start on every event.
 ## Payments
 
 License flow: buy on the landing page (MoR `checkoutUrl`) → customer gets a license key by email → popup/options "Activate" → background calls the MoR license
-API (activate/validate; endpoints are public for Lemon Squeezy, verify per provider) → store `{key, instanceId, validatedAt, plan}` → re-validate every 7 days with `alarms`;
+API (activate/validate; Polar exposes customer-portal license-key validation; verify per provider) → store `{key, instanceId, validatedAt, plan}` → re-validate every 7 days with `alarms`;
 grace period 14 days offline. Free tier = limited features; paid unlocks via `isPro()` in one module. Client-side checks are bypassable: acceptable for products ≤ ~$30; above that
 sign entitlements in a Worker. Flag `LICENSE_MODE=live|test|off`; `test` accepts keys `TEST-…` only outside production builds. ExtensionPay (`extpay`) is the quick alternative (adds Stripe-based
 payment + `extpay.getUser()`), at the price of vendor fees and lock-in: ADR.

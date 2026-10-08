@@ -120,6 +120,7 @@ Set `runtimeVersion` policy (`fingerprint` or `appVersion`) so OTA updates never
 
 ## Gotchas
 
+- The untouched default template is not lint/type clean (verified 2026-10-08, SDK 57): `expo lint` reports 1 error (`react-hooks/set-state-in-effect` in `src/hooks/use-color-scheme.web.ts`) and `tsc --noEmit` 2 errors (no declarations for `*.css` imports: add `declare module '*.css';` in a `.d.ts` or run `npx expo start` once to generate types). `expo-doctor` (21/21), `expo install --check` and `expo export --platform web` pass. Make the baseline green before the first slice.
 - Expo Go cannot run RevenueCat or other native modules: use a development build (`eas build --profile development`).
 - `npm i` of RN libraries without `expo install` breaks native ABI/SDK alignment; React is pinned by the SDK.
 - Apple rejects: missing account deletion, IAP bypass, vague permission strings, broken demo login, missing privacy policy; Google needs the Data safety form and a recent target API level.

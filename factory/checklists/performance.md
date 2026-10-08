@@ -7,7 +7,7 @@ Real-user Core Web Vitals (CrUX / Search Console / Vercel Speed Insights) replac
 ## 1. Measuring (verified 2026-10-08, lighthouse 13.5)
 
 ```bash
-URL=http://localhost:3100/en; OUT="$SCRATCH/lh"; mkdir -p "$OUT"            # production build: npm run build && npm run start -- --port 3100
+URL=http://localhost:3100/en; OUT="$SCRATCH/lh"; mkdir -p "$OUT"            # production build served on :3100 (server env as in factory/playbooks/06-qa.md Step 1)
 for i in 1 2 3; do CHROME_PATH=/opt/pw-browsers/chromium npx --yes lighthouse@latest "$URL" \
   --only-categories=performance,accessibility,best-practices,seo --chrome-flags="--headless=new --no-sandbox" \
   --output=json --output-path="$OUT/m$i.json" --quiet; done                  # desktop: add --preset=desktop

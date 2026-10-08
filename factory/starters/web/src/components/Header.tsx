@@ -3,7 +3,7 @@ import { features, type Locale, locales, site } from "@/config/site";
 import type { Dictionary } from "@/content";
 import { fill } from "@/lib/format";
 import { localeMeta } from "@/lib/i18n";
-import { primaryCtaHref } from "@/lib/links";
+import { primaryCta } from "@/lib/links";
 import { localizedPath } from "@/lib/locale-path";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { Logo } from "./Logo";
@@ -19,7 +19,7 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       : []),
     { href: `${home}#faq`, label: dict.nav.faq },
   ];
-  const cta = primaryCtaHref(locale);
+  const cta = primaryCta(locale, dict, dict.nav.cta);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
@@ -64,8 +64,8 @@ export function Header({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           />
           {/* Wrapper hides the CTA on phones (the hero has one); `hidden` would clash with the button's own display. */}
           <div className="hidden sm:block">
-            <a href={cta} className={button.primary}>
-              {dict.nav.cta}
+            <a href={cta.href} className={button.primary}>
+              {cta.label}
             </a>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import robots from "@/app/robots";
+import robots, { robotsFor } from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { config, locales, site } from "@/config/site";
 import { readBrandColors } from "@/lib/brand";
@@ -47,11 +47,21 @@ describe("sitemap", () => {
 });
 
 describe("robots", () => {
-  it("allows the site, blocks /api and points to the sitemap", () => {
-    expect(robots()).toEqual({
+  it("production: allows the site, blocks /api and points to the sitemap", () => {
+    expect(robotsFor(true)).toEqual({
       rules: { userAgent: "*", allow: "/", disallow: "/api/" },
       sitemap: `${site.url}/sitemap.xml`,
     });
+  });
+
+  it("previews and local builds: disallows everything and advertises no sitemap", () => {
+    expect(robotsFor(false)).toEqual({ rules: { userAgent: "*", disallow: "/" } });
+  });
+
+  it("is not indexable by default (no Vercel production, no explicit opt-in)", () => {
+    if (!process.env.VERCEL_ENV && !process.env.NEXT_PUBLIC_INDEXABLE) {
+      expect(robots()).toEqual(robotsFor(false));
+    }
   });
 });
 

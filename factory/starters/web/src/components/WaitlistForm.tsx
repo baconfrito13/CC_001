@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useEffect, useRef, useState } from "react";
+import { track } from "@/lib/track";
 import { button, input } from "./ui";
 
 export interface WaitlistStrings {
@@ -86,6 +87,7 @@ export function WaitlistForm({
         body: JSON.stringify({ email, consent, locale, website }),
       });
       if (response.ok) {
+        track("waitlist_signup", { locale });
         setStatus("success");
         return;
       }

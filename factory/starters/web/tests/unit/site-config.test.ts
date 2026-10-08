@@ -131,6 +131,17 @@ describe("site config schema", () => {
     });
   });
 
+  it("keeps Stripe Managed Payments off unless enabled", () => {
+    expect(config.payments.stripeManagedPayments).toBe(false);
+    const input = draft();
+    delete input.payments;
+    expect(() => parseSiteConfig(input)).toThrow(/payments/);
+    input.payments = {};
+    expect(parseSiteConfig(input).payments.stripeManagedPayments).toBe(false);
+    input.payments = { stripeManagedPayments: true };
+    expect(parseSiteConfig(input).payments.stripeManagedPayments).toBe(true);
+  });
+
   it("defaults feature flags", () => {
     const input = draft();
     input.features = {};

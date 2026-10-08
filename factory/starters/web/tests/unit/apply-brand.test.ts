@@ -76,6 +76,12 @@ describe("parseTokens", () => {
     badInjection.font.sans = "Inter; } body { display: none";
     expect(() => parseTokens(badInjection)).toThrow(/font\.sans/);
 
+    const withVar = clone();
+    withVar.font.sans = "var(--font-inter), ui-sans-serif, system-ui, sans-serif";
+    expect(parseTokens(withVar).font.sans).toBe(withVar.font.sans);
+    withVar.font.sans = "var(--x; } body { display: none), serif";
+    expect(() => parseTokens(withVar)).toThrow(/font\.sans/);
+
     const badRadius = clone();
     badRadius.radius = "12";
     expect(() => parseTokens(badRadius)).toThrow(/radius/);

@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { container } from "@/components/ui";
-import { company, config, locales } from "@/config/site";
+import { company, config, locales, site } from "@/config/site";
 import { getDictionary } from "@/content";
 import { isLocale, localeMeta } from "@/lib/i18n";
-import { getPublishedLegalDocs, isLegalDoc, renderLegalDoc } from "@/lib/legal";
+import {
+  getPublishedLegalDocs,
+  isLegalDoc,
+  renderLegalDoc,
+  wrapTables,
+} from "@/lib/legal";
 import { localizedPath } from "@/lib/locale-path";
 import { buildPlaceholderMap } from "@/lib/placeholders";
-import { buildAlternates } from "@/lib/seo";
+import { buildAlternates, buildSocialMetadata } from "@/lib/seo";
 
 type PageParams = { params: Promise<{ locale: string; doc: string }> };
 
@@ -37,6 +42,12 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
     title: entry.label,
     description: entry.description,
     alternates: buildAlternates(resolved.locale, `/legal/${resolved.doc}`),
+    ...buildSocialMetadata(
+      resolved.locale,
+      `/legal/${resolved.doc}`,
+      `${entry.label} | ${site.name}`,
+      entry.description,
+    ),
   };
 }
 
@@ -46,7 +57,10 @@ export default async function LegalPage({ params }: PageParams) {
   if (!resolved) notFound();
 
   const dict = getDictionary(resolved.locale);
-  const html = renderLegalDoc(resolved.locale, resolved.doc);
+  const html = wrapTables(
+    renderLegalDoc(resolved.locale, resolved.doc),
+    dict.legal.tableLabel,
+  );
 
   return (
     <article className={`${container} py-12 sm:py-16`}>

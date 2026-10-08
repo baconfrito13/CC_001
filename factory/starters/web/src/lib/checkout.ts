@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { config, type PricingPlan, site, supportedLocales } from "@/config/site";
+import {
+  config,
+  type PricingPlan,
+  payments,
+  site,
+  supportedLocales,
+} from "@/config/site";
 import { getEnv } from "@/lib/env";
 import { isSameOrigin, json, readJsonBody } from "@/lib/http";
 import { localeMeta } from "@/lib/i18n";
@@ -16,6 +22,7 @@ export interface CheckoutClient {
         cancel_url: string;
         locale?: "en" | "pt";
         allow_promotion_codes?: boolean;
+        managed_payments?: { enabled: boolean };
         client_reference_id?: string;
         metadata?: Record<string, string>;
         subscription_data?: { metadata?: Record<string, string> };
@@ -28,6 +35,8 @@ export interface CheckoutDeps {
   getClient: () => CheckoutClient | null;
   plans: readonly PricingPlan[];
   baseUrl: string;
+  /** Stripe Managed Payments (Stripe as Merchant of Record). */
+  managedPayments: boolean;
   logError: (message: string, error?: unknown) => void;
 }
 
@@ -35,6 +44,7 @@ const defaultDeps: CheckoutDeps = {
   getClient: () => createStripe(getEnv()) as CheckoutClient | null,
   plans: config.pricing.plans,
   baseUrl: site.url,
+  managedPayments: payments.stripeManagedPayments,
   logError: (message, error) => console.error(message, error ?? ""),
 };
 
@@ -95,6 +105,7 @@ export async function handleCheckout(
       cancel_url: `${deps.baseUrl}/${locale}/pricing?checkout=cancelled`,
       locale: localeMeta[locale].stripe as "en" | "pt",
       allow_promotion_codes: true,
+      ...(deps.managedPayments ? { managed_payments: { enabled: true } } : {}),
       metadata,
       ...(mode === "subscription" ? { subscription_data: { metadata } } : {}),
     });

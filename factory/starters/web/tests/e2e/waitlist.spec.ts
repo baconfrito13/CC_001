@@ -16,7 +16,7 @@ test.describe("waitlist form", () => {
 
     // Nothing filled in.
     await submit.click();
-    const alert = page.getByRole("alert");
+    const alert = page.locator('#waitlist [role="alert"]');
     await expect(alert).toContainText("Please fix the following:");
     await expect(alert).toBeFocused();
     await expect(
@@ -66,7 +66,7 @@ test.describe("waitlist form", () => {
     await page.goto("/pt");
     const form = page.locator("#waitlist form");
     await form.getByRole("button", { name: "Entrar na lista de espera" }).click();
-    await expect(page.getByRole("alert")).toContainText(
+    await expect(page.locator('#waitlist [role="alert"]')).toContainText(
       "Indique o seu endereço de e-mail.",
     );
     await form.getByLabel("Endereço de e-mail").fill("ana@exemplo.pt");

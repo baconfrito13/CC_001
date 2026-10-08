@@ -10,7 +10,7 @@ Pick the simplest revenue model that fits how the product creates value, pick th
 
 1. Read `docs/02-business.md` draft (if phase 02 is running you are writing it), `FOUNDER.md` (tax residence = Portugal; sole trader unless stated; `go_live`), competitor prices from `docs/research/competitors.md`.
 2. Classify what is sold: **digital good/SaaS** (web) · **digital good inside a mobile app** · **physical goods** · **services** · **content/ads**. Classify the buyer: **B2C** (consumers), **B2B** (companies with VAT IDs), mixed. Classify the delivery: instant/automated vs human-in-the-loop.
-3. Check which payment env vars exist (`python3 factory/scripts/factory.py doctor`: `STRIPE_SECRET_KEY`, `LEMONSQUEEZY_API_KEY`, `POLAR_ACCESS_TOKEN`, `PADDLE_API_KEY`); absence never blocks design, only live setup (founder task).
+3. Check which payment env vars exist (`python3 factory/scripts/factory.py doctor`: `STRIPE_SECRET_KEY`, `POLAR_ACCESS_TOKEN`, `PADDLE_API_KEY`); absence never blocks design, only live setup (founder task).
 4. Load `ToolSearch select:WebSearch,WebFetch`; re-fetch the fee pages in Tools & sources before quoting a number to the founder.
 
 ## Procedure

@@ -1,10 +1,10 @@
-<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado em produtos de risco elevado (conteúdos de utilizadores em escala, IA com impacto nas pessoas, atividades reguladas) ou receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os {{marcadores}} exatamente como estão e apagar este aviso antes de publicar. -->
+<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado em produtos de risco elevado (conteúdos de utilizadores em escala, IA com impacto nas pessoas, atividades reguladas) ou receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os marcadores de chavetas duplas exatamente como estão e apagar este aviso antes de publicar. -->
 
-# Termos e Condições de Utilização
+# Termos e Condições
 
 **Data de entrada em vigor:** {{legal.effectiveDate}} · **Última atualização:** {{legal.lastUpdated}}
 
-Estes Termos regulam a utilização do {{site.name}} ({{site.url}}), prestado por **{{company.legalName}}** (NIF {{company.taxId}}; n.º de IVA {{company.vatId}}; registo {{company.registration}}), com morada em {{company.address}}, {{company.country}} («nós»). Ao criar uma conta ou utilizar o serviço, aceita estes Termos. Se utilizar o serviço numa atividade profissional, «o utilizador» designa essa entidade e a pessoa que aceita em seu nome. Leia-os em conjunto com a nossa Política de Privacidade e, no caso dos consumidores, com a Política de Livre Resolução e Reembolsos.
+Estes Termos regulam a utilização do {{site.name}} ([{{site.url}}]({{site.url}})), prestado por **{{company.legalName}}** (NIF {{company.taxId}}; n.º de IVA {{company.vatId}}; registo {{company.registration}}), com morada em {{company.address}}, {{company.country}} («nós»). Ao criar uma conta ou utilizar o serviço, aceita estes Termos. Se utilizar o serviço numa atividade profissional, «o utilizador» designa essa entidade e a pessoa que aceita em seu nome. Leia-os em conjunto com a nossa Política de Privacidade e, no caso dos consumidores, com a página Direito de Livre Resolução.
 
 **Consumidor** é a pessoa singular que age fora do âmbito da sua atividade comercial, industrial, artesanal ou profissional. As secções marcadas *(consumidores)* aplicam-se apenas a consumidores e as marcadas *(clientes empresariais)* apenas a clientes empresariais; as restantes aplicam-se a todos. Nada nestes Termos reduz os direitos que a lei confere aos consumidores e que não podem ser afastados.
 
@@ -16,12 +16,12 @@ Estes Termos regulam a utilização do {{site.name}} ({{site.url}}), prestado po
 
 <!-- FILL: min-age — Substituir pela idade mínima, coerente com a Política de Privacidade: "Tem de ter pelo menos 18 anos para utilizar o {{site.name}}." (produtos pagos, por defeito) ou "Tem de ter pelo menos 16 anos para utilizar o {{site.name}}." (produtos gratuitos). Se o produto se dirigir a menores de 16 anos, PARAR e escalar para um advogado. -->
 
-- Forneça informação verdadeira e mantenha-a atualizada. Guarde as suas credenciais em segredo e avise-nos em {{contact.supportEmail}} se suspeitar de utilização não autorizada. É responsável pelo que acontece na sua conta.
+- Forneça informação verdadeira e mantenha-a atualizada. Guarde as suas credenciais em segredo e avise-nos em [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) se suspeitar de utilização não autorizada. É responsável pelo que acontece na sua conta.
 - *(clientes empresariais)* Confirma que tem poderes para vincular a sua organização e que os seus utilizadores cumprirão estes Termos.
 
 ## 3. Planos, preços e pagamento
 
-<!-- FILL: pricing-billing — Substituir pelas condições comerciais reais de docs/02-business.md: (1) tabela de planos (nome | preço com IVA para consumidores | periodicidade | o que inclui | limites); (2) regras de período experimental gratuito, se existir, e o que acontece no fim; (3) limites de utilização e excedentes; (4) quem vende: se for usado um Merchant of Record, dizer «Os pagamentos são processados e faturados por [nome e morada do MoR], que é o vendedor registado; a {{company.legalName}} presta o serviço» e manter igual na Política de Livre Resolução e Reembolsos; (5) meios de pagamento aceites. Os preços apresentados a consumidores TÊM de incluir IVA e todos os demais encargos. -->
+<!-- FILL: pricing-billing — Substituir pelas condições comerciais reais de docs/02-business.md: (1) tabela de planos (nome | preço com IVA para consumidores | periodicidade | o que inclui | limites); (2) regras de período experimental gratuito, se existir, e o que acontece no fim; (3) limites de utilização e excedentes; (4) quem vende: se for usado um Merchant of Record, dizer «Os pagamentos são processados e faturados por [nome e morada do MoR], que é o vendedor registado; a {{company.legalName}} presta o serviço» e manter igual na página Direito de Livre Resolução; (5) meios de pagamento aceites. Os preços apresentados a consumidores TÊM de incluir IVA e todos os demais encargos. -->
 
 - **Impostos.** Os preços para consumidores incluem IVA. Os preços para clientes empresariais são apresentados sem IVA, salvo indicação em contrário; o IVA ou a autoliquidação são aplicados nos termos da lei e da informação fiscal que fornecer.
 - **Renovação.** As subscrições renovam-se automaticamente por igual período, ao preço então em vigor, até serem canceladas. Pode cancelar a qualquer momento nas definições da conta, em tantos passos quantos os necessários para subscrever; o cancelamento produz efeitos no fim do período pago. Nos planos anuais enviamos um aviso antes da renovação.
@@ -30,7 +30,7 @@ Estes Termos regulam a utilização do {{site.name}} ({{site.url}}), prestado po
 
 ## 4. Livre resolução e reembolsos *(consumidores)*
 
-Se for consumidor e comprar à distância, tem o direito de resolver o contrato no prazo de 14 dias, sem indicar o motivo. Se pedir que o serviço ou o conteúdo digital comece imediatamente, aplicam-se regras especiais (paga um montante proporcional pelo serviço já prestado e, no caso de conteúdos digitais, perde o direito quando a execução tenha início com o seu consentimento prévio expresso e o seu reconhecimento). As regras completas, a forma de exercer o direito, o formulário-tipo de livre resolução e as nossas condições de reembolso constam da Política de Livre Resolução e Reembolsos.
+Se for consumidor e comprar à distância, tem o direito de resolver o contrato no prazo de 14 dias, sem indicar o motivo. Se pedir que o serviço ou o conteúdo digital comece imediatamente, aplicam-se regras especiais (paga um montante proporcional pelo serviço já prestado e, no caso de conteúdos digitais, perde o direito quando a execução tenha início com o seu consentimento prévio expresso e o seu reconhecimento). As regras completas, a forma de exercer o direito, o formulário-tipo de livre resolução e as nossas condições de reembolso constam da página Direito de Livre Resolução.
 
 ## 5. Utilização aceitável
 
@@ -50,13 +50,13 @@ O serviço, o respetivo software, design, marcas e documentação pertencem-nos 
 
 ## 8. Disponibilidade, apoio e alterações ao serviço
 
-Esforçamo-nos por manter o serviço disponível e seguro, mas não garantimos um funcionamento ininterrupto: manutenções, falhas de terceiros ou eventos fora do nosso controlo podem afetá-lo. O apoio está disponível em {{contact.supportEmail}}. *(clientes empresariais)* Salvo acordo separado que fixe um nível de serviço, não existe compromisso de disponibilidade.
+Esforçamo-nos por manter o serviço disponível e seguro, mas não garantimos um funcionamento ininterrupto: manutenções, falhas de terceiros ou eventos fora do nosso controlo podem afetá-lo. O apoio está disponível em [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}). *(clientes empresariais)* Salvo acordo separado que fixe um nível de serviço, não existe compromisso de disponibilidade.
 
 Podemos atualizar e melhorar o serviço. Quando uma alteração ultrapasse o necessário para manter a conformidade e tenha um impacto negativo no seu acesso ou utilização, informá-lo-emos de forma clara, com antecedência e em suporte duradouro (por exemplo, por e-mail) e, *(consumidores)*, pode resolver o contrato sem custos no prazo de 30 dias após o aviso ou a alteração, consoante o que ocorrer mais tarde, salvo se lhe permitirmos manter a versão inalterada sem custos adicionais.
 
 ## 9. Garantia legal de conformidade *(consumidores)*
 
-Temos de fornecer conteúdos e serviços digitais conformes com o contrato. Se não o forem, a lei (Decreto-Lei n.º 84/2021) confere-lhe direito à reposição da conformidade sem custos, à redução proporcional do preço ou à resolução do contrato, consoante as circunstâncias. Num fornecimento único, respondemos por qualquer falta de conformidade existente no momento do fornecimento que se manifeste no prazo de dois anos; num fornecimento contínuo (como uma subscrição), por qualquer falta de conformidade que ocorra ou se manifeste durante todo o período em que o serviço deva ser prestado. Estes direitos não podem ser limitados por contrato. Para os exercer, contacte {{contact.supportEmail}}; os reembolsos são efetuados no prazo de 14 dias.
+Temos de fornecer conteúdos e serviços digitais conformes com o contrato. Se não o forem, a lei (Decreto-Lei n.º 84/2021) confere-lhe direito à reposição da conformidade sem custos, à redução proporcional do preço ou à resolução do contrato, consoante as circunstâncias. Num fornecimento único, respondemos por qualquer falta de conformidade existente no momento do fornecimento que se manifeste no prazo de dois anos; num fornecimento contínuo (como uma subscrição), por qualquer falta de conformidade que ocorra ou se manifeste durante todo o período em que o serviço deva ser prestado. Estes direitos não podem ser limitados por contrato. Para os exercer, contacte [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}); os reembolsos são efetuados no prazo de 14 dias.
 
 ## 10. Responsabilidade
 
@@ -68,7 +68,7 @@ Nada nestes Termos exclui ou limita a responsabilidade que não possa ser exclu�
 
 ## 11. Dados pessoais
 
-Tratamos dados pessoais conforme descrito na Política de Privacidade. *(clientes empresariais)* Se carregar dados pessoais de outras pessoas, atuamos como seu subcontratante ao abrigo de um acordo de subcontratação de dados, que faz parte destes Termos e está disponível em {{contact.privacyEmail}}.
+Tratamos dados pessoais conforme descrito na Política de Privacidade. *(clientes empresariais)* Se carregar dados pessoais de outras pessoas, atuamos como seu subcontratante ao abrigo de um acordo de subcontratação de dados, que faz parte destes Termos e está disponível em [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 12. Duração, cancelamento e suspensão
 
@@ -82,11 +82,11 @@ Podemos alterar estes Termos por motivos válidos (por exemplo, alterações leg
 
 ## 14. Lei aplicável, tribunais e reclamações
 
-Estes Termos regem-se pela seguinte lei: **{{legal.governingLaw}}**. *(clientes empresariais)* Foro competente (em exclusivo): **{{legal.jurisdiction}}**. *(consumidores)* Mantém os direitos imperativos de proteção do consumidor do país onde reside e pode recorrer aos tribunais desse país.
+Aplica-se a estes Termos {{legal.governingLaw}}. *(clientes empresariais)* São exclusivamente competentes {{legal.jurisdiction}}. *(consumidores)* Mantém os direitos imperativos de proteção do consumidor do país onde reside e pode recorrer aos tribunais desse país.
 
-**Reclamações.** Contacte-nos primeiro em {{contact.supportEmail}}. Pode também usar o Livro de Reclamações Eletrónico: {{legal.complaintsBookUrl}}.
+**Reclamações.** Contacte-nos primeiro em [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}). Pode também usar o Livro de Reclamações Eletrónico: [{{legal.complaintsBookUrl}}]({{legal.complaintsBookUrl}}).
 
-<!-- FILL: ral-choice — Escolher UMA, conforme a decisão do fundador sobre RAL (por defeito A) e apagar a outra. A (não vinculado a nenhuma entidade RAL): "**Litígios de consumo.** Não estamos vinculados a nenhuma entidade de resolução alternativa de litígios (RAL). Os consumidores podem, ainda assim, recorrer a uma entidade de resolução de litígios de consumo, por exemplo {{legal.ralEntityName}} ({{legal.ralEntityUrl}}); a lista de entidades está disponível no Portal do Consumidor (www.consumidor.gov.pt)." B (vinculado por adesão ou arbitragem necessária): "**Litígios de consumo.** Estamos vinculados a recorrer a {{legal.ralEntityName}} ({{legal.ralEntityUrl}}) para a resolução de litígios de consumo. A lista de entidades está disponível no Portal do Consumidor (www.consumidor.gov.pt)." NÃO mencionar a plataforma europeia de resolução de litígios em linha (ODR): foi descontinuada em 20 de julho de 2025. -->
+<!-- FILL: ral-choice — Escolher UMA, conforme a decisão do fundador sobre RAL (por defeito A) e apagar a outra. A (não vinculado a nenhuma entidade RAL): "**Litígios de consumo.** Não estamos vinculados a nenhuma entidade de resolução alternativa de litígios (RAL). Os consumidores podem, ainda assim, recorrer a uma entidade de resolução de litígios de consumo, por exemplo [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}); a lista de entidades está disponível no Portal do Consumidor (www.consumidor.gov.pt)." B (vinculado por adesão ou arbitragem necessária): "**Litígios de consumo.** Estamos vinculados a recorrer a [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}) para a resolução de litígios de consumo. A lista de entidades está disponível no Portal do Consumidor (www.consumidor.gov.pt)." NÃO mencionar a plataforma europeia de resolução de litígios em linha (ODR): foi descontinuada em 20 de julho de 2025. -->
 
 ## 15. Disposições gerais
 
@@ -94,4 +94,4 @@ Estes Termos e os documentos a que remetem constituem o acordo integral entre n�
 
 ## 16. Contacto
 
-{{company.legalName}} · {{company.address}}, {{company.country}} · {{contact.email}} · Apoio: {{contact.supportEmail}}.
+{{company.legalName}} · {{company.address}}, {{company.country}} · [{{contact.email}}](mailto:{{contact.email}}) · Apoio: [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}).

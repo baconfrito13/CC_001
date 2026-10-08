@@ -158,6 +158,16 @@
   font-size: 0.9375rem;
 }
 
+.legal-prose .legal-table {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.legal-prose .legal-table table {
+  min-width: 36rem;
+  margin-bottom: 0;
+}
+
 .legal-prose th,
 .legal-prose td {
   border: 1px solid var(--border);

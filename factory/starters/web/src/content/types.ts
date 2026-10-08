@@ -120,6 +120,8 @@ export interface Dictionary {
     >;
     homeBreadcrumb: string;
     lastUpdated: string;
+    /** Accessible name of horizontally scrollable tables inside legal documents. */
+    tableLabel: string;
   };
   notFound: { title: string; body: string; home: string };
 }

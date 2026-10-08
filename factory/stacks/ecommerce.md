@@ -17,7 +17,7 @@ Marketplace with sellers (Connect) → `web-saas.md` + Stripe Connect via ADR.
 | Concern | Path A (Shopify) | Path B (digital) | Limits/prices (verify at execution time) |
 |---|---|---|---|
 | Storefront | Shopify theme (Online Store 2.0, Liquid/JSON templates), customized via admin/CLI | Web starter (`web-static.md`) with product pages from `site.ts` | Shopify Basic $39/mo monthly or $29/mo annual; 3-day trial then $1/mo for 3 months (https://www.shopify.com/pricing, 2026-10-08) |
-| Checkout/payments | Shopify Checkout + Shopify Payments (card 2.9% + 30¢ on Basic, US rates; Portugal rates differ) | MoR (Paddle/Lemon Squeezy/Polar ~5% + $0.50) or Stripe Checkout + Stripe Tax | see `stacks/README.md` |
+| Checkout/payments | Shopify Checkout + Shopify Payments (card 2.9% + 30¢ on Basic, US rates; Portugal rates differ) | MoR for digital goods (Stripe Managed Payments / Paddle / Polar, see `monetization.md`) or Stripe Checkout + Stripe Tax | see `stacks/README.md` |
 | Catalog management | Shopify MCP tools + Admin GraphQL | `src/config/site.ts` products + MoR product ids | free |
 | Fulfilment | Founder's supplier/POD app or own shipping; shipping profiles | Instant download / license key by MoR | apps cost extra |
 | Email | Shopify Email / Klaviyo (founder) + transactional by Shopify | Resend + MoR receipts | Resend free 3,000/mo |

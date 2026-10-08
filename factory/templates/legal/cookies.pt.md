@@ -1,10 +1,10 @@
-<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado se o produto utilizar publicidade, criação de perfis ou rastreio entre sítios, ou tiver receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os {{marcadores}} exatamente como estão e apagar este aviso antes de publicar. -->
+<!-- TEMPLATE-NOTICE: Modelo gerado, não constitui aconselhamento jurídico. Recomenda-se revisão por advogado se o produto utilizar publicidade, criação de perfis ou rastreio entre sítios, ou tiver receita significativa. Resolver todos os blocos FILL (substituir o comentário inteiro pelo texto final, ou apagá-lo se não se aplicar), manter os marcadores de chavetas duplas exatamente como estão e apagar este aviso antes de publicar. -->
 
 # Política de Cookies
 
 **Data de entrada em vigor:** {{legal.effectiveDate}} · **Última atualização:** {{legal.lastUpdated}}
 
-Esta política explica que cookies e tecnologias semelhantes o {{site.name}} ({{site.url}}) utiliza, porquê e como os pode controlar. É disponibilizada por **{{company.legalName}}** ({{company.address}}, {{company.country}}). Leia-a em conjunto com a nossa Política de Privacidade, que explica como tratamos os dados pessoais.
+Esta política explica que cookies e tecnologias semelhantes o {{site.name}} ([{{site.url}}]({{site.url}})) utiliza, porquê e como os pode controlar. É disponibilizada por **{{company.legalName}}** ({{company.address}}, {{company.country}}). Leia-a em conjunto com a nossa Política de Privacidade, que explica como tratamos os dados pessoais.
 
 ## 1. O que são cookies e tecnologias semelhantes
 
@@ -42,7 +42,7 @@ Quando os cookies envolvem dados pessoais, aplica-se também o Regulamento Geral
 
 CENÁRIO A — só armazenamento estritamente necessário e analítica sem cookies (sem banner). Texto: "Utilizamos apenas os cookies e o armazenamento indicados abaixo, que são estritamente necessários ao funcionamento do {{site.name}}. Por esse motivo, não pedimos o seu consentimento para eles. Não podem ser desativados nos nossos sistemas; pode bloqueá-los no navegador, mas partes do serviço deixarão de funcionar." Depois uma tabela | Nome | Fornecedor | Finalidade | Duração | com linhas como: cookie de sessão (mantém a sessão iniciada; próprio; até terminar a sessão ou, no máximo, 30 dias); token CSRF (protege os formulários contra falsificação; próprio; sessão); cookie da escolha de consentimento apenas se existir banner; preferência de idioma APENAS se for necessária ao serviço que pediu. Depois: "**Estatísticas sem cookies.** Medimos a utilização do serviço com [ferramenta, fornecedor, localização], que não guarda nada no seu dispositivo, não usa identificadores que o sigam entre visitas ou sítios web e não nos permite, nem ao fornecedor, identificá-lo. O fundamento de licitude é o nosso interesse legítimo em melhorar o serviço (art. 6.º, n.º 1, al. f) do RGPD). Pode opor-se em {{contact.privacyEmail}}."
 
-CENÁRIO B — banner de consentimento. Texto: "Além dos cookies estritamente necessários, só utilizamos cookies se os aceitar no nosso banner de cookies." Depois uma tabela por categoria (| Nome | Fornecedor | Finalidade | Duração | Próprio/terceiro |): Estritamente necessários (sem consentimento); Preferências; Estatísticas; Marketing; Conteúdos incorporados. As durações têm de ser valores reais, não «variável». Acrescentar: "O consentimento é válido por um máximo de 12 meses, após os quais voltamos a perguntar, ou antes se alterarmos as finalidades. Para provar que deu ou recusou o consentimento, guardamos um registo da sua escolha (data, versão da política, opções) num cookie estritamente necessário ou numa entrada de armazenamento local." -->
+CENÁRIO B — banner de consentimento. Texto: "Além dos cookies estritamente necessários, só utilizamos cookies se os aceitar no nosso banner de cookies." Depois uma tabela por categoria (| Nome | Fornecedor | Finalidade | Duração | Próprio/terceiro |): Estritamente necessários (sem consentimento); Preferências; Estatísticas; Marketing; Conteúdos incorporados. As durações têm de ser valores reais, não «variável». Acrescentar: "O consentimento é válido por [N] dias (usar o valor exato da configuração de consentimento da aplicação; o modelo web usa 180 dias), após os quais voltamos a perguntar, ou antes se alterarmos as finalidades. Para provar que deu ou recusou o consentimento, guardamos um registo da sua escolha (data, versão da política, opções) num cookie estritamente necessário ou numa entrada de armazenamento local." -->
 
 ## 5. As suas escolhas
 
@@ -54,7 +54,7 @@ CENÁRIO B — banner de consentimento. Texto: "Além dos cookies estritamente n
 
 ## 7. Os seus direitos
 
-Se os cookies envolverem dados pessoais, tem os direitos descritos na nossa Política de Privacidade: acesso, retificação, apagamento, limitação, portabilidade e oposição, bem como o direito de retirar o consentimento em qualquer momento. Para os exercer, escreva para {{contact.privacyEmail}}.
+Se os cookies envolverem dados pessoais, tem os direitos descritos na nossa Política de Privacidade: acesso, retificação, apagamento, limitação, portabilidade e oposição, bem como o direito de retirar o consentimento em qualquer momento. Para os exercer, escreva para [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 8. Alterações a esta política
 
@@ -62,6 +62,6 @@ Podemos atualizar esta política quando a nossa utilização de cookies ou a lei
 
 ## 9. Contacto e reclamações
 
-Questões sobre cookies: {{contact.privacyEmail}} · {{company.legalName}}, {{company.address}}, {{company.country}}.
+Questões sobre cookies: [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) · {{company.legalName}}, {{company.address}}, {{company.country}}.
 
-Pode reclamar à autoridade de controlo, {{legal.supervisoryAuthority}} ({{legal.supervisoryAuthorityUrl}}).
+Pode reclamar à autoridade de controlo, {{legal.supervisoryAuthority}} ([{{legal.supervisoryAuthorityUrl}}]({{legal.supervisoryAuthorityUrl}})).

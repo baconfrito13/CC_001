@@ -24,6 +24,10 @@ const booleanString = z
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).catch("development"),
 
+  // Search-engine indexing (build time). See src/lib/indexing.ts.
+  VERCEL_ENV: optional(z.enum(["production", "preview", "development"])),
+  NEXT_PUBLIC_INDEXABLE: optional(booleanString),
+
   // Public (inlined in the browser bundle at build time)
   NEXT_PUBLIC_SITE_URL: optional(z.url()),
   NEXT_PUBLIC_ANALYTICS_PROVIDER: optional(z.enum(["none", "plausible", "posthog"])),

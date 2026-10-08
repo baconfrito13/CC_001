@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { track } from "@/lib/track";
 import { button } from "./ui";
 
 export interface CheckoutButtonProps {
@@ -21,6 +22,7 @@ export function CheckoutButton(props: CheckoutButtonProps) {
 
   async function startCheckout() {
     setState("loading");
+    track("checkout_start", { plan: props.planId, locale: props.locale });
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",

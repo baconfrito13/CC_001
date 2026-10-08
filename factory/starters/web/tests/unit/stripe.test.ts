@@ -16,6 +16,14 @@ const plan = (overrides: Partial<PricingPlan>): PricingPlan => ({
   ...overrides,
 });
 
+/** Compile-time guard: the params we send must stay valid for the installed Stripe SDK. */
+const _sdkParams = {
+  mode: "subscription",
+  line_items: [{ price: "price_1", quantity: 1 }],
+  success_url: "https://acme.example/en/pricing",
+  managed_payments: { enabled: true },
+} satisfies Stripe.Checkout.SessionCreateParams;
+
 const plans = [
   plan({ id: "pro", stripePriceId: "price_pro_monthly" }),
   plan({
@@ -46,7 +54,13 @@ describe("POST /api/checkout", () => {
     return {
       create,
       logError,
-      deps: { getClient: () => client, plans, baseUrl: "https://acme.example", logError },
+      deps: {
+        getClient: () => client,
+        plans,
+        baseUrl: "https://acme.example",
+        managedPayments: false,
+        logError,
+      },
     };
   }
 
@@ -87,6 +101,23 @@ describe("POST /api/checkout", () => {
         subscription_data: { metadata: { planId: "pro", locale: "pt" } },
       }),
     );
+  });
+
+  it("enables Stripe Managed Payments (Stripe as Merchant of Record) only when configured", async () => {
+    const off = setup();
+    await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }), off.deps);
+    expect((off.create.mock.calls[0] as unknown[])[0]).not.toHaveProperty(
+      "managed_payments",
+    );
+
+    const on = setup();
+    await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }), {
+      ...on.deps,
+      managedPayments: true,
+    });
+    expect((on.create.mock.calls[0] as unknown[])[0]).toMatchObject({
+      managed_payments: { enabled: true },
+    });
   });
 
   it("uses payment mode for one-time plans", async () => {

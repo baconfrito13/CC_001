@@ -28,6 +28,24 @@ test.describe("SEO and metadata routes", () => {
     expect(text).toContain("Sitemap: http://localhost:3100/sitemap.xml");
   });
 
+  test("an indexable deployment has no noindex signals", async ({ request, page }) => {
+    const response = await request.get("/en");
+    expect(response.headers()["x-robots-tag"]).toBeUndefined();
+    await page.goto("/en");
+    await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+  });
+
+  test("GET /api/health answers 200 {status, version}", async ({ request }) => {
+    const response = await request.get("/api/health");
+    expect(response.status()).toBe(200);
+    expect(await response.json()).toEqual({
+      status: "ok",
+      version: expect.stringMatching(/^\d+\.\d+\.\d+/),
+    });
+    expect((await request.head("/api/health")).status()).toBe(200);
+    expect((await request.post("/api/health")).status()).toBe(405);
+  });
+
   test("serves an Open Graph image per locale and a favicon", async ({
     request,
     page,

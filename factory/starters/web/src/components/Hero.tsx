@@ -2,11 +2,12 @@ import type { Locale } from "@/config/site";
 import { site } from "@/config/site";
 import type { Dictionary } from "@/content";
 import { fill } from "@/lib/format";
-import { primaryCtaHref } from "@/lib/links";
+import { primaryCta } from "@/lib/links";
 import { button, container } from "./ui";
 
 export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   const vars = { name: site.name };
+  const cta = primaryCta(locale, dict, dict.hero.primaryCta);
   return (
     <section
       aria-labelledby="hero-title"
@@ -26,11 +27,8 @@ export function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
           {fill(dict.hero.subtitle, vars)}
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a
-            href={primaryCtaHref(locale)}
-            className={`${button.primary} w-full sm:w-auto`}
-          >
-            {dict.hero.primaryCta}
+          <a href={cta.href} className={`${button.primary} w-full sm:w-auto`}>
+            {cta.label}
           </a>
           <a href="#how-it-works" className={`${button.secondary} w-full sm:w-auto`}>
             {dict.hero.secondaryCta}

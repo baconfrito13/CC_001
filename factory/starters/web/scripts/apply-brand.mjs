@@ -46,6 +46,8 @@ export const MIN_CONTRAST = 4.5;
 
 const HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const FONT_STACK = /^[A-Za-z0-9 ,"'._-]+$/;
+/** `var(--font-inter)` style references (next/font) are allowed inside a stack. */
+const CSS_VAR = /var\(--[A-Za-z0-9-]+\)/g;
 const RADIUS = /^(?:\d+|\d*\.\d+)(?:rem|em|px)$/;
 
 export class BrandTokensError extends Error {
@@ -110,9 +112,12 @@ export function parseTokens(input) {
     for (const key of ["sans", "display"]) {
       const value = input.font[key];
       if (value === undefined) problems.push(`missing "font.${key}"`);
-      else if (typeof value !== "string" || !FONT_STACK.test(value.trim())) {
+      else if (
+        typeof value !== "string" ||
+        !FONT_STACK.test(value.trim().replace(CSS_VAR, "x"))
+      ) {
         problems.push(
-          `"font.${key}" must be a CSS font stack using only letters, digits, spaces, commas, quotes, dots, hyphens and underscores (got ${JSON.stringify(value)})`,
+          `"font.${key}" must be a CSS font stack using only letters, digits, spaces, commas, quotes, dots, hyphens, underscores and var(--name) references (got ${JSON.stringify(value)})`,
         );
       } else font[key] = value.trim();
     }

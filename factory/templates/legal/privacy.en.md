@@ -1,17 +1,17 @@
-<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for high-risk processing (special categories, children, large-scale monitoring, AI that affects people) or significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the {{placeholders}} exactly as they are, and delete this notice before publishing. -->
+<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for high-risk processing (special categories, children, large-scale monitoring, AI that affects people) or significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the double-brace placeholders exactly as they are, and delete this notice before publishing. -->
 
 # Privacy Policy
 
 **Effective date:** {{legal.effectiveDate}} · **Last updated:** {{legal.lastUpdated}}
 
-This policy explains what personal data {{site.name}} ({{site.url}}) collects, why, who sees it, how long we keep it and what rights you have. We have tried to keep it short and clear. If anything is unclear, write to {{contact.privacyEmail}}.
+This policy explains what personal data {{site.name}} ([{{site.url}}]({{site.url}})) collects, why, who sees it, how long we keep it and what rights you have. We have tried to keep it short and clear. If anything is unclear, write to [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 1. Who is responsible for your data
 
 The controller of your personal data is **{{company.legalName}}** (tax number {{company.taxId}}; VAT ID {{company.vatId}}; registration {{company.registration}}), {{company.address}}, {{company.country}} ("we", "us").
 
-- Privacy contact (requests, questions, complaints): {{contact.privacyEmail}}
-- General contact: {{contact.email}} · Support: {{contact.supportEmail}}
+- Privacy contact (requests, questions, complaints): [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}})
+- General contact: [{{contact.email}}](mailto:{{contact.email}}) · Support: [{{contact.supportEmail}}](mailto:{{contact.supportEmail}})
 - We have not appointed a Data Protection Officer because the law does not require one for our activities. The privacy contact above deals with every data protection matter.
 
 <!-- FILL: processor-role — Include ONLY if customers upload personal data of other people (typical B2B SaaS), otherwise delete this block. Replace with this paragraph: "If you use {{site.name}} for your business and upload personal data about other people (for example your own customers or staff), you are the controller of that data and we process it on your behalf as a processor, under a data processing agreement available on request at {{contact.privacyEmail}}. This policy does not describe that processing." -->
@@ -56,7 +56,7 @@ We may also disclose data to public authorities when the law requires it, to our
 
 ## 6. Transfers outside the European Economic Area
 
-We prefer service providers that process data in the EU/EEA. Where a recipient is located outside the EEA, we rely on an adequacy decision of the European Commission (including the EU–US Data Privacy Framework for certified US companies) or on the Standard Contractual Clauses approved by the Commission, together with additional safeguards where needed. You can ask for a copy of the safeguards at {{contact.privacyEmail}}.
+We prefer service providers that process data in the EU/EEA. Where a recipient is located outside the EEA, we rely on an adequacy decision of the European Commission (including the EU–US Data Privacy Framework for certified US companies) or on the Standard Contractual Clauses approved by the Commission, together with additional safeguards where needed. You can ask for a copy of the safeguards at [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 7. How long we keep data
 
@@ -70,9 +70,9 @@ We protect personal data with measures appropriate to the risk, such as encrypti
 
 Under the GDPR you have the right to: **access** your data; **rectify** it; **erase** it; **restrict** processing; **data portability** (receive your data in a structured, commonly used format); **object** to processing based on legitimate interests and to direct marketing; **withdraw consent**; and not to be subject to certain solely automated decisions.
 
-To exercise a right, write to {{contact.privacyEmail}} (you can also use the self-service export and delete options in your account, when available). We may ask for information to confirm your identity. We answer without undue delay and within one month; if a request is complex or numerous we may extend this by up to two further months and will tell you why within the first month. Exercising your rights is free, unless requests are manifestly unfounded or excessive.
+To exercise a right, write to [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) (you can also use the self-service export and delete options in your account, when available). We may ask for information to confirm your identity. We answer without undue delay and within one month; if a request is complex or numerous we may extend this by up to two further months and will tell you why within the first month. Exercising your rights is free, unless requests are manifestly unfounded or excessive.
 
-You also have the right to lodge a complaint with a supervisory authority. Ours is **{{legal.supervisoryAuthority}}** ({{legal.supervisoryAuthorityUrl}}); you may also complain to the authority of the EU country where you live, work or where the alleged infringement took place.
+You also have the right to lodge a complaint with a supervisory authority. Ours is **{{legal.supervisoryAuthority}}** ([{{legal.supervisoryAuthorityUrl}}]({{legal.supervisoryAuthorityUrl}})); you may also complain to the authority of the EU country where you live, work or where the alleged infringement took place.
 
 ## 10. Children
 
@@ -80,7 +80,7 @@ You also have the right to lodge a complaint with a supervisory authority. Ours 
 
 ## 11. Marketing messages
 
-We send marketing e-mails only with your consent or, for existing customers, about our own similar products or services, with a simple way to refuse. Every message contains an unsubscribe link, and you can also write to {{contact.privacyEmail}}. Service messages (for example security notices, invoices and changes to the Terms) are not marketing and are sent as long as you have an account.
+We send marketing e-mails only with your consent or, for existing customers, about our own similar products or services, with a simple way to refuse. Every message contains an unsubscribe link, and you can also write to [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}). Service messages (for example security notices, invoices and changes to the Terms) are not marketing and are sent as long as you have an account.
 
 ## 12. Changes to this policy
 
@@ -88,4 +88,4 @@ If we change this policy we will publish the new version here with a new "Last u
 
 ## 13. Contact
 
-Questions or requests: {{contact.privacyEmail}} · {{company.legalName}}, {{company.address}}, {{company.country}}.
+Questions or requests: [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) · {{company.legalName}}, {{company.address}}, {{company.country}}.

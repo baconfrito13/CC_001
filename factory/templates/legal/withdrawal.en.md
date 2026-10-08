@@ -1,12 +1,12 @@
-<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for significant revenue or unusual products. This page must match the checkout exactly (button text, tick-box text, confirmation e-mail) and the Terms. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the {{placeholders}} exactly as they are, and delete this notice before publishing. -->
+<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended for significant revenue or unusual products. This page must match the checkout exactly (button text, tick-box text, confirmation e-mail) and the Terms. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the double-brace placeholders exactly as they are, and delete this notice before publishing. -->
 
-# Withdrawal and Refund Policy
+# Right of Withdrawal
 
 **Effective date:** {{legal.effectiveDate}} · **Last updated:** {{legal.lastUpdated}}
 
-This policy applies to **consumers** (individuals acting outside any trade, business or profession) who buy {{site.name}} ({{site.url}}) online. It explains your legal right to withdraw from the contract (Decreto-Lei n.º 24/2014 and Directive 2011/83/EU), how to exercise it, and our refund terms. It does not apply to business customers. It does not limit the legal guarantee of conformity described in our Terms.
+This page applies to **consumers** (individuals acting outside any trade, business or profession) who buy {{site.name}} ([{{site.url}}]({{site.url}})) online. It explains your legal right to withdraw from the contract (Decreto-Lei n.º 24/2014 and Directive 2011/83/EU), how to exercise it, and our refund terms. It does not apply to business customers. It does not limit the legal guarantee of conformity described in our Terms.
 
-The service is provided by **{{company.legalName}}** (tax number {{company.taxId}}; VAT ID {{company.vatId}}; registration {{company.registration}}), {{company.address}}, {{company.country}} · {{contact.email}} · Support: {{contact.supportEmail}}.
+The service is provided by **{{company.legalName}}** (tax number {{company.taxId}}; VAT ID {{company.vatId}}; registration {{company.registration}}), {{company.address}}, {{company.country}} · [{{contact.email}}](mailto:{{contact.email}}) · Support: [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}).
 
 <!-- FILL: mor-variant — Include ONLY if sales go through a Merchant of Record (MoR); otherwise delete this block. Replace with: "Payments are processed and invoiced by [MoR legal name, address, e-mail], which is the seller of record. Refunds after withdrawal are paid by [MoR] to your original payment method; you can exercise your right of withdrawal by writing to us as described below or through [MoR]'s channels." Keep it identical to the wording in the Terms. -->
 
@@ -16,7 +16,7 @@ You have the right to withdraw from this contract within **14 days** without giv
 
 ## 2. How to exercise the right
 
-To exercise your right of withdrawal you must inform us of your decision by an unequivocal statement, for example a letter sent by post or an e-mail, to: **{{company.legalName}}, {{company.address}}, {{company.country}}, {{contact.supportEmail}}**. You may use the model withdrawal form below, but it is not obligatory.
+To exercise your right of withdrawal you must inform us of your decision by an unequivocal statement, for example a letter sent by post or an e-mail, to: **{{company.legalName}}, {{company.address}}, {{company.country}}, [{{contact.supportEmail}}](mailto:{{contact.supportEmail}})**. You may use the model withdrawal form below, but it is not obligatory.
 
 <!-- FILL: withdrawal-function — Required for consumer sales since 19 June 2026 (Article 11a of Directive 2011/83/EU, inserted by Directive (EU) 2023/2673; verify the Portuguese transposing act). Replace with: "You can also withdraw online, without signing in, using the **'Withdraw from contract here'** link in the footer of {{site.url}}: enter your name, identify the contract (order number or the e-mail used) and confirm by clicking **'Confirm withdrawal'**. We will send you an acknowledgement of receipt without delay on a durable medium (e-mail), stating the content of your withdrawal and the date and time we received it. The function is available throughout the withdrawal period." If the function is NOT built, do not publish the page: raise a fix-loop ticket. -->
 
@@ -48,7 +48,7 @@ If you do not tick the box, the service or content is made available only after 
 
 (Complete and return this form only if you wish to withdraw from the contract.)
 
-- To {{company.legalName}}, {{company.address}}, {{company.country}}, {{contact.supportEmail}}:
+- To {{company.legalName}}, {{company.address}}, {{company.country}}, [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}):
 - I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract of sale of the following goods (*) / for the provision of the following service (*):
 - Ordered on (*) / received on (*):
 - Name of consumer(s):
@@ -60,7 +60,7 @@ If you do not tick the box, the service or content is made available only after 
 
 ## 8. Refunds beyond your legal rights
 
-<!-- FILL: voluntary-guarantee — Replace with the voluntary refund promise ONLY if marketing/GTM promises one, e.g. "As a goodwill extra, if you are not satisfied within 30 days of your first payment, write to {{contact.supportEmail}} and we will refund that payment." State conditions precisely (period, what is refunded, how). If there is no voluntary guarantee, replace with: "Apart from the rights described in this policy and in the legal guarantee of conformity in our Terms, we do not offer other refunds." Whatever is written must match the landing page and the checkout. -->
+<!-- FILL: voluntary-guarantee — Replace with the voluntary refund promise ONLY if marketing/GTM promises one, e.g. "As a goodwill extra, if you are not satisfied within 30 days of your first payment, write to {{contact.supportEmail}} and we will refund that payment." State conditions precisely (period, what is refunded, how). If there is no voluntary guarantee, replace with: "Apart from the rights described on this page and in the legal guarantee of conformity in our Terms, we do not offer other refunds." Whatever is written must match the landing page and the checkout. -->
 
 ## 9. Cancelling a subscription
 
@@ -68,10 +68,10 @@ Cancelling is different from withdrawing. You can cancel a subscription at any t
 
 ## 10. Legal guarantee, complaints and dispute resolution
 
-The legal guarantee of conformity for digital content and services is described in our Terms. If you are not satisfied, contact us first at {{contact.supportEmail}}. You can also use the electronic complaints book (Livro de Reclamações Eletrónico): {{legal.complaintsBookUrl}}.
+The legal guarantee of conformity for digital content and services is described in our Terms. If you are not satisfied, contact us first at [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}). You can also use the electronic complaints book (Livro de Reclamações Eletrónico): [{{legal.complaintsBookUrl}}]({{legal.complaintsBookUrl}}).
 
-<!-- FILL: ral-choice — Use the same choice as in the Terms. A (not bound): "We are not bound by an alternative dispute resolution (RAL) entity. Consumers may nevertheless use a consumer dispute resolution entity, for example {{legal.ralEntityName}} ({{legal.ralEntityUrl}}); the list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." B (bound): "We are bound to use {{legal.ralEntityName}} ({{legal.ralEntityUrl}}) to resolve consumer disputes. The list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." Do NOT mention the European ODR platform (discontinued on 20 July 2025). -->
+<!-- FILL: ral-choice — Use the same choice as in the Terms. A (not bound): "We are not bound by an alternative dispute resolution (RAL) entity. Consumers may nevertheless use a consumer dispute resolution entity, for example [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}); the list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." B (bound): "We are bound to use [{{legal.ralEntityName}}]({{legal.ralEntityUrl}}) to resolve consumer disputes. The list of entities is available on the Portal do Consumidor (www.consumidor.gov.pt)." Do NOT mention the European ODR platform (discontinued on 20 July 2025). -->
 
 ## 11. Contact
 
-{{company.legalName}} · {{company.address}}, {{company.country}} · {{contact.supportEmail}}.
+{{company.legalName}} · {{company.address}}, {{company.country}} · [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}).

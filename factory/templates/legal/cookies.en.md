@@ -1,10 +1,10 @@
-<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended if the product uses advertising, profiling or cross-site tracking, or has significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the {{placeholders}} exactly as they are, and delete this notice before publishing. -->
+<!-- TEMPLATE-NOTICE: Generated template, not legal advice. Review by a lawyer is recommended if the product uses advertising, profiling or cross-site tracking, or has significant revenue. Resolve every FILL block (replace the whole comment with final text, or delete it if it does not apply), keep the double-brace placeholders exactly as they are, and delete this notice before publishing. -->
 
 # Cookie Policy
 
 **Effective date:** {{legal.effectiveDate}} · **Last updated:** {{legal.lastUpdated}}
 
-This policy explains which cookies and similar technologies {{site.name}} ({{site.url}}) uses, why, and how you can control them. It is provided by **{{company.legalName}}** ({{company.address}}, {{company.country}}). Please read it together with our Privacy Policy, which explains how we handle personal data.
+This policy explains which cookies and similar technologies {{site.name}} ([{{site.url}}]({{site.url}})) uses, why, and how you can control them. It is provided by **{{company.legalName}}** ({{company.address}}, {{company.country}}). Please read it together with our Privacy Policy, which explains how we handle personal data.
 
 ## 1. What are cookies and similar technologies
 
@@ -42,7 +42,7 @@ When cookies involve personal data, the General Data Protection Regulation (GDPR
 
 SCENARIO A — only strictly necessary storage and cookieless analytics (no banner). Text: "We use only the cookies and storage listed below, which are strictly necessary for {{site.name}} to work. For this reason we do not ask for your consent for them. They cannot be switched off in our systems; you can block them in your browser, but parts of the service will then stop working." Then a table | Name | Provider | Purpose | Duration | with rows such as: session cookie (keeps you signed in; first party; until you sign out or at most 30 days); CSRF token (protects forms against forgery; first party; session); consent-choice cookie only if a banner exists; language preference ONLY if it is needed for the service you asked for. Then: "**Statistics without cookies.** We measure how the service is used with [tool, provider, location], which does not store anything on your device, does not use identifiers that follow you across visits or websites and does not allow us or the provider to identify you. The legal basis is our legitimate interest in improving the service (Art. 6(1)(f) GDPR). You can object at {{contact.privacyEmail}}."
 
-SCENARIO B — consent banner. Text: "Apart from strictly necessary cookies, we use cookies only if you accept them in our cookie banner." Then one table per category (| Name | Provider | Purpose | Duration | First/third party |): Strictly necessary (no consent); Preferences; Statistics; Marketing; Embedded content. Durations must be real values, not "varies". Add: "Consent is valid for up to 12 months, after which we ask again, or earlier if we change the purposes. To prove that you gave or refused consent we keep a record of your choice (date, policy version, choices) in a strictly necessary cookie or local storage entry." -->
+SCENARIO B — consent banner. Text: "Apart from strictly necessary cookies, we use cookies only if you accept them in our cookie banner." Then one table per category (| Name | Provider | Purpose | Duration | First/third party |): Strictly necessary (no consent); Preferences; Statistics; Marketing; Embedded content. Durations must be real values, not "varies". Add: "Consent is valid for [N] days (use the exact value of the app's consent setting; the web starter uses 180 days), after which we ask again, or earlier if we change the purposes. To prove that you gave or refused consent we keep a record of your choice (date, policy version, choices) in a strictly necessary cookie or local storage entry." -->
 
 ## 5. Your choices
 
@@ -54,7 +54,7 @@ SCENARIO B — consent banner. Text: "Apart from strictly necessary cookies, we 
 
 ## 7. Your rights
 
-If cookies involve personal data you have the rights described in our Privacy Policy: access, rectification, erasure, restriction, portability and objection, and the right to withdraw consent at any time. To use them, write to {{contact.privacyEmail}}.
+If cookies involve personal data you have the rights described in our Privacy Policy: access, rectification, erasure, restriction, portability and objection, and the right to withdraw consent at any time. To use them, write to [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}).
 
 ## 8. Changes to this policy
 
@@ -62,6 +62,6 @@ We may update this policy when our use of cookies or the law changes. We will pu
 
 ## 9. Contact and complaints
 
-Questions about cookies: {{contact.privacyEmail}} · {{company.legalName}}, {{company.address}}, {{company.country}}.
+Questions about cookies: [{{contact.privacyEmail}}](mailto:{{contact.privacyEmail}}) · {{company.legalName}}, {{company.address}}, {{company.country}}.
 
-You can complain to the supervisory authority, {{legal.supervisoryAuthority}} ({{legal.supervisoryAuthorityUrl}}).
+You can complain to the supervisory authority, {{legal.supervisoryAuthority}} ([{{legal.supervisoryAuthorityUrl}}]({{legal.supervisoryAuthorityUrl}})).
