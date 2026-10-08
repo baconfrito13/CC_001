@@ -65,7 +65,8 @@ apply everywhere.
 ## Commands (skills in `.claude/skills/`)
 
 `/ideia` new idea(s) · `/continuar` resume/advance a product · `/portfolio` status of all
-products and pending founder tasks · `/fabrica` foreman: process the inbox and keep every
+products and pending founder tasks · `/painel` refresh the founder's dashboard and give its
+link · `/fabrica` foreman: process the inbox and keep every
 product moving · `/lancar` go-live · `/crescer` post-launch growth cycle · `/spinout` move a
 product to its own repository · `/autopiloto` manage the scheduled autopilot · `/melhorar` the
 factory's weekly self-improvement · `/radar` monthly facts, trends and idea suggestions.
@@ -81,7 +82,8 @@ factory's weekly self-improvement · `/radar` monthly facts, trends and idea sug
 | `factory/templates/` | Templates for every phase document. |
 | `factory/checklists/` | Quality gates (security, accessibility, SEO, performance, legal, launch). |
 | `factory/starters/web/` | Tested Next.js launch starter. Copy it into a product; never edit a product in place there. |
-| `factory/scripts/factory.py` | Product state CLI: `new`, `set-phase`, `set`, `validate`, `render-status`, `status` (this checkout), `portfolio` (every branch), `next`, `inbox`, `slugify`, `scaffold`, `changed`, `lesson`, `metric`, `retro`, `doctor`. |
+| `factory/scripts/factory.py` | Product state CLI: `new`, `set-phase`, `set`, `validate`, `render-status`, `status` (this checkout), `portfolio` (every branch), `next`, `inbox`, `slugify`, `scaffold`, `changed`, `lesson`, `metric`, `retro`, `scope`, `dashboard`, `doctor`. |
+| `factory/dashboard/` | The founder's dashboard: a private Claude artifact (URL, data model, how it is refreshed) and its page source. |
 | `.claude/workflows/idea-to-product.js` | The multi-agent pipeline (Workflow tool `name: "idea-to-product"`, or `/idea-to-product`). |
 | `factory/LEARNINGS.md` | Active lessons by phase (curated weekly by `/melhorar` from `products/*/docs/lessons.md`). |
 | `factory/knowledge/` | What the factory has learned: proven patterns, radar of facts with recheck dates, trends, improvements and experiments, scoreboard, founder preferences. |

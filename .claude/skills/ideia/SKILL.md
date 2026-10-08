@@ -119,7 +119,8 @@ each phase. Then act on `result.stopped`:
    `python3 factory/scripts/factory.py lesson <slug> --phase <id> --kind mistake|win|method|trend --text "…"`
    — what failed or was slow (and the fix), and what worked and should be repeated (checkpoints
    already recorded the agents' own lessons); commit and push.
-2. Reply in pt-PT, at most ~12 lines: name + one-liner · G1 verdict and score · phases done ·
-   preview link if any · founder tasks (top 3 with minutes, link to `HUMAN_TASKS.md`) · what
-   happens next automatically. If the `PushNotification` tool exists and founder action is
-   needed or the product went live, send a one-line notification.
+2. Refresh the founder's dashboard (`.claude/skills/painel/SKILL.md`; best effort).
+3. Reply in pt-PT, at most ~12 lines: name + one-liner · G1 verdict and score · phases done ·
+   preview link if any · founder tasks (top 3 with minutes, link to `HUMAN_TASKS.md`) · the
+   dashboard link · what happens next automatically. If the `PushNotification` tool exists and
+   founder action is needed or the product went live, send a one-line notification.

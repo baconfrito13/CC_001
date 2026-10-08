@@ -18,6 +18,8 @@ The single way to create products and change their state. Agents and humans both
     python3 factory/scripts/factory.py metric <slug> qa_rounds=2 g2_passed=true
     python3 factory/scripts/factory.py retro [--fetch] [--json] [--new] [--since D] [--mark-seen ID ...]
     python3 factory/scripts/factory.py scope --base origin/main --head origin/<branch> --require product
+    python3 factory/scripts/factory.py dashboard [--fetch] [--out DIR] [--versions J] [--prune] [--queued J]
+    python3 factory/scripts/factory.py artifact-guard   # PreToolUse hook (reads the event on stdin)
     python3 factory/scripts/factory.py doctor
 
 Set FACTORY_ROOT to operate on another checkout and FACTORY_TODAY (YYYY-MM-DD) to pin dates.
@@ -38,6 +40,7 @@ import subprocess
 import sys
 import tempfile
 import unicodedata
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -883,7 +886,13 @@ def scan_branches(fx: Factory, fetch: bool = False) -> list[dict]:
         key = (stamp, branch not in ("main", "master"))
         current = found.get(slug)
         if current is None or key > current["key"]:
-            found[slug] = {"product": product, "branch": branch, "key": key, "tasks": count_tasks(tasks_text)}
+            found[slug] = {
+                "product": product,
+                "branch": branch,
+                "key": key,
+                "tasks": count_tasks(tasks_text),
+                "tasks_text": tasks_text,
+            }
 
     refs = _git(fx.root, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin") or ""
     for ref in refs.splitlines():
@@ -1152,11 +1161,30 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
 
     if args.since and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.since):
         raise FactoryError("--since must be YYYY-MM-DD")
-    if args.fetch:
-        _git(fx.root, "fetch", "--quiet", "--prune", "origin")
+    data = retro_data(fx, fetch=args.fetch)
+    products, all_lessons, totals = data["products"], data["lessons"], data["totals"]
+    by_status, kinds = totals["by_status"], totals["lessons_by_kind"]
+    shown = all_lessons
+    if args.new:
+        shown = [item for item in shown if not item["seen"]]
+    if args.since:
+        shown = [item for item in shown if item["date"] >= args.since]
+    report = {"generated": today(), "products": products, "lessons": shown, "totals": totals}
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    return _print_retro(report, by_status, kinds)
+
+
+def retro_data(fx: Factory, fetch: bool = False) -> dict:
+    """Every product (newest copy on any branch) with its metrics, every lesson on every branch,
+    and the totals the improvement cycle and the dashboard read. `fetched` says whether the
+    requested fetch worked (None when none was asked)."""
+    fetched = _git(fx.root, "fetch", "--quiet", "--prune", "origin") is not None if fetch else None
     seen = _seen_lessons(fx)
     products: list[dict] = []
-    for entry in scan_branches(fx):
+    entries = scan_branches(fx)
+    for entry in entries:
         p = entry["product"]
         slug = p["slug"]
         phases = p.get("phases") if isinstance(p.get("phases"), dict) else {}
@@ -1224,15 +1252,11 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
         "lessons_new": sum(1 for item in all_lessons if not item["seen"]),
         "lessons_unparsed": sum(unparsed.values()),
     }
-    shown = all_lessons
-    if args.new:
-        shown = [item for item in shown if not item["seen"]]
-    if args.since:
-        shown = [item for item in shown if item["date"] >= args.since]
-    report = {"generated": today(), "products": products, "lessons": shown, "totals": totals}
-    if args.json:
-        print(json.dumps(report, indent=2, ensure_ascii=False))
-        return 0
+    return {"products": products, "lessons": all_lessons, "totals": totals, "entries": entries, "fetched": fetched}
+
+
+def _print_retro(report: dict, by_status: dict, kinds: dict) -> int:
+    products, shown, totals = report["products"], report["lessons"], report["totals"]
     print(f"# Retro da fábrica — {report['generated']}\n")
     status_line = " · ".join(f"{PRODUCT_STATUS_LABELS.get(s, s)} {n}" for s, n in sorted(by_status.items())) or "nenhum"
     print(f"Produtos: {len(products)} ({status_line})")
@@ -1259,6 +1283,454 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
         print("\n## Lições por processar\n")
         for item in pending:
             print(f"- `{item['id']}` {item['slug']} · {item['phase']} · {item['kind']} · {item['text']}")
+    return 0
+
+
+# --------------------------------------------------------------------------- dashboard
+
+TASK_SECTIONS = {"🔴": "red", "🟡": "amber", "🟢": "green", "✅": "done"}
+
+
+def parse_founder_tasks(text: str) -> list[dict]:
+    """Checkbox tasks of a HUMAN_TASKS.md with their section (🔴/🟡/🟢/✅), id, minutes and cost."""
+    items: list[dict] = []
+    section = None
+    for line in strip_html_comments(text).splitlines():
+        heading = re.match(r"^#{2,3}\s+(🔴|🟡|🟢|✅)", line)
+        if heading:
+            section = TASK_SECTIONS[heading[1]]
+            continue
+        match = re.match(r"^\s*[-*] \[( |x|X)\] (.+)$", line)
+        if not match:
+            continue
+        body = match[2]
+        named = re.search(r"\*\*(HT-\d+)\s*·\s*(.+?)\*\*", body)
+        title = (named[2] if named else re.sub(r"\*\*", "", body).split(" — ")[0]).replace("`", "")
+        # "⏱ 4 min", "⏱ ≈ 3 min", "⏱ 10-15 min" (the upper bound), "⏱ 1 h"
+        time = re.search(r"⏱\s*≈?\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*(min|h)\b", body)
+        cost = re.search(r"💶\s*([^·]+)", body)
+        items.append(
+            {
+                "id": named[1] if named else None,
+                "title": title.strip()[:160],
+                "done": match[1] != " " or section == "done",
+                "priority": section,
+                "minutes": int(time[2] or time[1]) * (60 if time[3] == "h" else 1) if time else None,
+                "cost": cost[1].strip()[:40] if cost else None,
+            }
+        )
+    return items
+
+
+def _markdown_table(text: str, after_heading: str | None = None, header: bool = False) -> list[list[str]]:
+    """Rows (cells) of the first markdown table, optionally the first after a heading; the header
+    row is dropped unless `header` is set."""
+    lines = text.splitlines()
+    start = 0
+    if after_heading:
+        start = next((i for i, line in enumerate(lines) if line.strip().startswith(after_heading)), len(lines))
+    rows: list[list[str]] = []
+    for line in lines[start:]:
+        stripped = line.strip()
+        if stripped.startswith("|"):
+            cells = [c.strip() for c in stripped.strip("|").split("|")]
+            if all(re.fullmatch(r":?-{3,}:?", c) for c in cells if c):
+                continue
+            rows.append(cells)
+        elif rows:
+            break
+    return rows if header else rows[1:]
+
+
+def _product_docs(fx: Factory, branch: str, slug: str) -> list[str]:
+    """Paths of a product's founder-readable documents (docs/, HUMAN_TASKS.md, README.md) on the
+    branch its newest copy came from."""
+    prefix = f"products/{slug}/"
+    if branch == "(local)":
+        base = fx.product_dir(slug)
+        paths = [str(p.relative_to(fx.root)) for p in base.rglob("*.md") if p.is_file()] if base.is_dir() else []
+    else:
+        paths = (_git(fx.root, "ls-tree", "-r", "--name-only", f"origin/{branch}", prefix) or "").splitlines()
+    keep = [
+        p
+        for p in paths
+        if p.endswith(".md")
+        and (p.startswith(prefix + "docs/") or p in (prefix + "HUMAN_TASKS.md", prefix + "README.md"))
+        and not p.endswith("/lessons.md")
+    ]
+    return sorted(keep)[:60]
+
+
+def _main_text(fx: Factory, rel: str) -> str:
+    """A factory file as it is on origin/main (product branches carry an older copy), else this
+    checkout's copy."""
+    text = _git(fx.root, "show", f"origin/main:{rel}")
+    if text is not None:
+        return text
+    path = fx.root / rel
+    return path.read_text(encoding="utf-8") if path.is_file() else ""
+
+
+def _knowledge_summary(fx: Factory) -> dict:
+    """What the factory has learned, as origin/main has it."""
+
+    def read(rel: str) -> str:
+        return _main_text(fx, rel)
+
+    learnings: dict[str, int] = {}
+    section = None
+    for line in read("factory/LEARNINGS.md").splitlines():
+        if line.startswith("## "):
+            section = line[3:].strip()
+            learnings.setdefault(section, 0)
+        elif section and re.match(r"^- \d{4}-\d{2}-\d{2} · ", line):
+            learnings[section] += 1
+    trends_text = read("factory/knowledge/trends.md")
+    trend_lines = re.findall(r"^- \d{4}-\d{2}-\d{2} · ", trends_text.split("## Ideias sugeridas")[0], flags=re.MULTILINE)
+    suggestions = [
+        {"n": r[0], "date": r[1], "idea": r[2], "why": r[3], "g1": r[4], "status": r[5]}
+        for r in _markdown_table(trends_text, "## Ideias sugeridas")
+        if len(r) >= 6 and r[0]
+    ]
+    radar_text = read("factory/knowledge/radar.md")
+    sweep = re.search(r"Last sweep:\s*(\d{4}-\d{2}-\d{2})", radar_text)
+    radar = []
+    for r in _markdown_table(radar_text)[:60]:
+        if len(r) >= 6:
+            radar.append(
+                {"area": r[0], "fact": r[1], "verified": r[3], "recheck_by": r[5], "due": bool(r[5]) and r[5] <= today()}
+            )
+    improvements_text = read("factory/knowledge/improvements.md")
+    scoreboard = _markdown_table(read("factory/knowledge/scoreboard.md"), header=True)
+    return {
+        "learnings_by_phase": learnings,
+        "learnings": sum(learnings.values()),
+        "patterns": len(re.findall(r"^### P-\d+", read("factory/knowledge/patterns.md"), flags=re.MULTILINE)),
+        "trends": len(trend_lines),
+        "suggestions": suggestions[-12:],
+        "radar": radar,
+        "radar_last_sweep": sweep[1] if sweep else None,
+        "improvements": len([r for r in _markdown_table(improvements_text, "## Changelog") if r and r[0]]),
+        "experiments_open": len(
+            [r for r in _markdown_table(improvements_text, "## Experiments") if r and r[0] and not (r[-1:] and r[-1])]
+        ),
+        "scoreboard": {"header": scoreboard[0] if scoreboard else [], "rows": scoreboard[1:][-12:]},
+    }
+
+
+def _dashboard_links(links: dict) -> dict[str, str]:
+    """https links only (the page opens them); a bare domain becomes its https URL."""
+    out: dict[str, str] = {}
+    for key, value in links.items():
+        if not isinstance(value, str):
+            continue
+        value = value.strip()
+        if key == "domain" and re.fullmatch(r"(?:[a-z0-9-]+\.)+[a-z]{2,}", value.lower()):
+            value = "https://" + value.lower()
+        if value.startswith("https://") and not re.search(r"\s", value):
+            out[key] = value
+    return out
+
+
+def _safe_branch(name: Any) -> str | None:
+    """A branch name that is safe inside a GitHub URL (git ref rules; no `.` or `..` segment)."""
+    if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9._/-]{1,200}", name) or name.startswith("-"):
+        return None
+    if any(part in ("", ".", "..") or part.startswith(".") or part.endswith(".lock") for part in name.split("/")):
+        return None
+    return name
+
+
+def dashboard_data(fx: Factory, fetch: bool = False) -> dict:
+    """The founder's dashboard: one document per product plus a factory summary (CLAUDE.md:
+    no personal or customer data — lesson texts stay out, only their counts go in)."""
+    data = retro_data(fx, fetch=fetch)
+    retro_rows = {p["slug"]: p for p in data["products"]}
+    lessons_by_slug: dict[str, dict[str, int]] = {}
+    for item in data["lessons"]:
+        kinds = lessons_by_slug.setdefault(item["slug"], {})
+        kinds[item["kind"]] = kinds.get(item["kind"], 0) + 1
+    # a copy that comes from the working tree links to the checked-out branch when origin has it
+    current = _git(fx.root, "branch", "--show-current") or ""
+    local_branch = current if current and _git(fx.root, "rev-parse", "--verify", "--quiet", f"refs/remotes/origin/{current}") is not None else None
+    products = []
+    for entry in data["entries"]:
+        p = entry["product"]
+        slug = p["slug"]
+        if not isinstance(slug, str) or not SLUG_RE.match(slug) or len(slug) > 80:
+            continue  # never a path or a document id
+        phases = p.get("phases") if isinstance(p.get("phases"), dict) else {}
+        rows = []
+        for meta in fx.phases:
+            state = phases.get(meta["id"]) if isinstance(phases.get(meta["id"]), dict) else {}
+            rows.append(
+                {
+                    "id": meta["id"],
+                    "n": meta["n"],
+                    "name": meta["name"],
+                    "stage": meta.get("stage"),
+                    "status": state.get("status", "pending"),
+                    "started": state.get("started"),
+                    "completed": state.get("completed"),
+                    "summary": str(state.get("summary") or "")[:240],
+                }
+            )
+        tasks = parse_founder_tasks(entry.get("tasks_text", ""))
+        open_tasks = [t for t in tasks if not t["done"]]
+        decision = p.get("decision") if isinstance(p.get("decision"), dict) else None
+        links = p.get("links") if isinstance(p.get("links"), dict) else {}
+        stack = p.get("stack") if isinstance(p.get("stack"), dict) else {}
+        kinds = lessons_by_slug.get(slug, {})
+        remote_branch = entry["branch"] if entry["branch"] != "(local)" else local_branch or links.get("branch")
+        metrics = retro_rows.get(slug, {}).get("metrics", {})
+        products.append(
+            {
+                "slug": slug,
+                "name": p.get("name", slug),
+                "one_liner": p.get("one_liner") or "",
+                "idea": str(p.get("idea") or "")[:900],
+                "type": p.get("type"),
+                "status": p.get("status", "active"),
+                "phase": p.get("phase"),
+                "depth": p.get("depth"),
+                "branch": entry["branch"],
+                "progress": {"done": sum(1 for r in rows if r["status"] in ("done", "skipped")), "total": len(rows)},
+                "phases": rows,
+                "decision": (
+                    {
+                        "verdict": decision.get("verdict"),
+                        "score": decision.get("score"),
+                        "rationale": str(decision.get("rationale") or "")[:400],
+                        "forced": bool(decision.get("forced")),
+                    }
+                    if decision
+                    else None
+                ),
+                "metrics": {
+                    k: (v[:60] if isinstance(v, str) else v)
+                    for k, v in list(metrics.items())[:40]
+                    if isinstance(v, (str, int, float, bool))
+                },
+                "phase_hours": retro_rows.get(slug, {}).get("phase_hours", {}),
+                "founder_tasks": {
+                    "open": len(open_tasks),
+                    "done": len(tasks) - len(open_tasks),
+                    "minutes_open": sum(t["minutes"] or 0 for t in open_tasks),
+                    "items": open_tasks[:12],
+                },
+                "lessons": {"total": sum(kinds.values()), "by_kind": kinds},
+                "links": _dashboard_links(links),
+                "remote_branch": _safe_branch(remote_branch),
+                "docs": _product_docs(fx, entry["branch"], slug),
+                "stack": {
+                    k: v
+                    for k, v in stack.items()
+                    if k != "app_dir" and (isinstance(v, str) and v or isinstance(v, list) and v)
+                },
+                "source": p.get("source") if isinstance(p.get("source"), dict) else None,
+                "created": p.get("created"),
+                "updated": p.get("updated"),
+            }
+        )
+    try:
+        items, _, _ = _inbox_items(strip_html_comments(_main_text(fx, "ideas/INBOX.md")))
+    except FactoryError:
+        items = []
+    taken = {_normalize_idea(str(e["product"].get("idea", ""))) for e in data["entries"]}
+    inbox = [idea[:400] for idea in items if _normalize_idea(idea) not in taken][:50]
+    remote = _git(fx.root, "remote", "get-url", "origin") or ""
+    repo = re.search(r"([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?/?$", remote)
+    totals = dict(data["totals"])
+    totals["by_phase"] = {}
+    totals["by_type"] = {}
+    for p in products:
+        totals["by_phase"][p["phase"]] = totals["by_phase"].get(p["phase"], 0) + 1
+        totals["by_type"][p["type"]] = totals["by_type"].get(p["type"], 0) + 1
+    totals["founder_tasks_open"] = sum(p["founder_tasks"]["open"] for p in products)
+    totals["founder_minutes_open"] = sum(p["founder_tasks"]["minutes_open"] for p in products)
+    summary = {
+        "generated_at": now(),
+        "factory_rev": factory_revision(fx),
+        "repo": repo[1] if repo else None,
+        "pipeline": [{"id": m["id"], "n": m["n"], "name": m["name"], "stage": m.get("stage")} for m in fx.phases],
+        "totals": totals,
+        "inbox": inbox,
+        "knowledge": _knowledge_summary(fx),
+    }
+    return {"summary": summary, "products": products, "fetched": data["fetched"]}
+
+
+DASHBOARD_BATCH_WRITES = 50  # ArtifactData batch: at most 50 writes …
+DASHBOARD_BATCH_BYTES = 900_000  # … and 1 MiB per call
+
+
+def _dashboard_versions(raw: str | None) -> dict[str, int]:
+    """`{"state/summary": 3, "products/<slug>": 2}` — the versions the artifact store reported,
+    as a JSON object or @file. A write to an existing document must carry its version."""
+    if not raw:
+        return {}
+    text = Path(raw[1:]).read_text(encoding="utf-8") if raw.startswith("@") else raw
+    try:
+        versions = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise FactoryError(f"--versions is not JSON: {exc}") from exc
+    if not isinstance(versions, dict) or not all(
+        isinstance(k, str) and re.fullmatch(r"(state|products)/[A-Za-z0-9_.~:@+-]+", k)
+        and isinstance(v, int) and not isinstance(v, bool) and v > 0
+        for k, v in versions.items()
+    ):
+        raise FactoryError('--versions maps "state/summary" or "products/<slug>" to a positive version number')
+    return versions
+
+
+def _dashboard_queued(raw: str | None) -> list[dict]:
+    """Ideas queued as GitHub issues, as the session listed them with the GitHub tools:
+    `[{"number": 12, "title": "💡 …", "url": "https://github.com/<owner>/<repo>/issues/12"}]`."""
+    if not raw:
+        return []
+    text = Path(raw[1:]).read_text(encoding="utf-8") if raw.startswith("@") else raw
+    try:
+        items = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise FactoryError(f"--queued is not JSON: {exc}") from exc
+    if not isinstance(items, list):
+        raise FactoryError("--queued is a JSON list of {number, title, url}")
+    queued = []
+    for item in items[:50]:
+        item = item if isinstance(item, dict) else {}
+        number, title, url = item.get("number"), item.get("title"), item.get("url")
+        if not (isinstance(number, int) and not isinstance(number, bool) and isinstance(title, str) and isinstance(url, str)
+                and re.fullmatch(rf"https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/{number}", url)):
+            raise FactoryError("--queued entries need an integer number, a title and that issue's https://github.com URL")
+        queued.append({"number": number, "title": title.strip()[:200], "url": url})
+    return queued
+
+
+def _github_queued(fx: Factory) -> list[dict] | None:
+    """The owner's open idea issues (labels `ideia`/`na-fila`, not `em-curso`), read straight from
+    the GitHub REST API so their text never passes through an agent. None when GitHub cannot be
+    read (cloud sessions reach it through the session proxy; elsewhere a private repo answers 404)."""
+    remote = _git(fx.root, "remote", "get-url", "origin") or ""
+    match = re.search(r"([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$", remote)
+    if not match:
+        return None
+    owner, repo = match[1], match[2]
+    found: dict[int, dict] = {}
+    for label in ("ideia", "na-fila"):
+        url = f"https://api.github.com/repos/{owner}/{repo}/issues?state=open&creator={owner}&labels={label}&per_page=100"
+        request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "factory.py"})
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                items = json.load(response)
+        except (OSError, ValueError):
+            return None
+        for item in items if isinstance(items, list) else []:
+            if not isinstance(item, dict) or "pull_request" in item:
+                continue
+            labels = {lab.get("name") for lab in item.get("labels") or [] if isinstance(lab, dict)}
+            author = (item.get("user") or {}).get("login") if isinstance(item.get("user"), dict) else None
+            number = item.get("number")
+            if "em-curso" in labels or str(author).lower() != owner.lower() or not isinstance(number, int):
+                continue
+            found[number] = {
+                "number": number,
+                "title": str(item.get("title") or "").strip()[:200],
+                "url": f"https://github.com/{owner}/{repo}/issues/{number}",
+            }
+    return [found[n] for n in sorted(found)]
+
+
+def _dashboard_url(fx: Factory) -> str | None:
+    """The dashboard artifact's URL: the `URL:` line of factory/dashboard/README.md."""
+    path = fx.root / "factory" / "dashboard" / "README.md"
+    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    match = re.search(r"^URL:\s*(https://claude\.ai/artifact/[A-Za-z0-9_-]+)\s*$", text, flags=re.MULTILINE)
+    return match[1] if match else None
+
+
+ARTIFACT_GUARD_ACTIONS = {"get", "list", "query", "batch"}
+
+
+def cmd_artifact_guard(fx: Factory, args: argparse.Namespace) -> int:
+    """PreToolUse hook for ArtifactData (.claude/settings.json). The allow list pre-approves the
+    tool so unattended refreshes never stall; this narrows that to reads and batches on the
+    dashboard's own store. Any other call asks the person."""
+    try:
+        event = json.loads(sys.stdin.read() or "{}")
+    except json.JSONDecodeError:
+        event = {}
+    tool_input = event.get("tool_input") if isinstance(event, dict) else None
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    url = str(tool_input.get("url") or "").split("#")[0].split("?")[0].rstrip("/")
+    allowed = _dashboard_url(fx)
+    if allowed and url == allowed and tool_input.get("action") in ARTIFACT_GUARD_ACTIONS:
+        return 0
+    decision = {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "ask",
+        "permissionDecisionReason": "ArtifactData is pre-approved only for reading and refreshing the factory "
+        "dashboard (factory/dashboard/README.md); this call needs your confirmation.",
+    }
+    print(json.dumps({"hookSpecificOutput": decision}))
+    return 0
+
+
+DASHBOARD_DOC_BYTES = 240_000  # the store refuses documents over 256 KiB
+
+
+def cmd_dashboard(fx: Factory, args: argparse.Namespace) -> int:
+    """Write the dashboard documents (`state/summary`, `state/queue` with --queued,
+    `products/<slug>`) and the ArtifactData batches that publish them (factory/dashboard/README.md)."""
+    versions = _dashboard_versions(args.versions)
+    if args.queued == "github":
+        queued = _github_queued(fx)
+        if queued is None:
+            print("warning: GitHub issues could not be read — the queue document is left as it is", file=sys.stderr)
+    else:
+        queued = _dashboard_queued(args.queued) if args.queued is not None else None
+    data = dashboard_data(fx, fetch=args.fetch)
+    docs = [("state", "summary", data["summary"])]
+    if queued is not None:  # only the foreman and /painel list issues; checkpoints leave the queue as is
+        docs.append(("state", "queue", {"updated_at": now(), "items": queued}))
+    docs += [("products", p["slug"], p) for p in data["products"]]
+    if not args.out:
+        print(json.dumps({f"{c}/{d}": body for c, d, body in docs}, indent=2, ensure_ascii=False))
+        return 0
+    out = Path(args.out)
+    writes: list[dict] = []
+    sizes: list[int] = []
+    for collection, doc_id, body in docs:
+        path = out / collection / f"{doc_id}.json"
+        write_json(path, body)
+        if path.stat().st_size > DASHBOARD_DOC_BYTES:
+            raise FactoryError(f"{collection}/{doc_id} is {path.stat().st_size} bytes, over the store's limit: trim dashboard_data")
+        entry: dict[str, Any] = {"op": "set", "collection": collection, "doc_id": doc_id, "file_path": str(path.resolve())}
+        if f"{collection}/{doc_id}" in versions:
+            entry["if_version"] = versions[f"{collection}/{doc_id}"]
+        writes.append(entry)
+        sizes.append(path.stat().st_size)
+    stale = sorted(k for k in versions if k.startswith("products/") and k not in {f"{c}/{d}" for c, d, _ in docs})
+    # deleting needs a complete picture: a fresh fetch that worked and found products
+    prune = bool(args.prune and stale and data["fetched"] and data["products"])
+    if args.prune and stale and not prune:
+        print("warning: stale product documents kept — pruning needs a successful --fetch that found products", file=sys.stderr)
+    if prune:
+        for key in stale:
+            writes.append({"op": "delete", "collection": "products", "doc_id": key.split("/", 1)[1], "if_version": versions[key]})
+            sizes.append(200)
+    batches: list[list[dict]] = [[]]
+    used = 0
+    for entry, size in zip(writes, sizes):
+        if batches[-1] and (len(batches[-1]) >= DASHBOARD_BATCH_WRITES or used + size > DASHBOARD_BATCH_BYTES):
+            batches.append([])
+            used = 0
+        batches[-1].append(entry)
+        used += size
+    write_json(out / "batches.json", batches)
+    print(
+        f"{len(docs)} document(s) in {out}; {len(batches)} ArtifactData batch(es) in {out / 'batches.json'}"
+        + (f"; {len(stale)} stale product document(s) " + ("deleted" if prune else "kept") if stale else "")
+    )
     return 0
 
 
@@ -1576,6 +2048,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--slug", help="with --require product: the product the change must stay inside")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_scope)
+
+    p = sub.add_parser("dashboard", help="documents for the founder's dashboard (summary + one per product)")
+    p.add_argument("--fetch", action="store_true", help="git fetch --prune origin first")
+    p.add_argument("--out", help="write state/summary.json, products/<slug>.json and batches.json here")
+    p.add_argument("--versions", help='JSON (or @file) of the store\'s current versions: {"products/<slug>": 2, ...}')
+    p.add_argument("--prune", action="store_true", help="also delete product documents no branch has any more")
+    p.add_argument("--queued", help='"github" (read the owner\'s idea issues from the API) or JSON/@file: [{"number": 12, "title": "…", "url": "…"}]')
+    p.set_defaults(func=cmd_dashboard)
+
+    p = sub.add_parser("artifact-guard", help="PreToolUse hook: ArtifactData runs unasked only on the dashboard")
+    p.set_defaults(func=cmd_artifact_guard)
 
     p = sub.add_parser("doctor", help="which credentials/tools are available for autonomous work")
     p.set_defaults(func=cmd_doctor)

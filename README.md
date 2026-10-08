@@ -59,6 +59,11 @@ Commits, pull requests e merges não são contigo: a fábrica trata deles (`merg
 
 ## Acompanhar e dar feedback
 
+- **[Painel da Fábrica](https://claude.ai/artifact/R8Eqjh67MTbGhDDuA5qPqe)** (privado, abre com
+  a tua conta Claude): todas as ideias e produtos com a fase de cada um, a linha de montagem, o
+  que precisa de ti (com minutos e custos), estatísticas, o que a fábrica aprendeu e as sessões a
+  trabalhar ao vivo. Atualiza-se a cada fase concluída; `/painel` força uma atualização.
+  Detalhes em [`factory/dashboard/`](factory/dashboard/README.md).
 - **PR de cada produto:** comenta para pedir alterações ("muda o nome", "baixa o preço",
   "acrescenta login com Google"). A sessão do produto acorda, faz e responde.
 - **`/portfolio`:** todos os produtos, o que precisa de ti e o que está na fila.
@@ -72,6 +77,7 @@ Commits, pull requests e merges não são contigo: a fábrica trata deles (`merg
 | `/ideia <texto>` | nova(s) ideia(s) → produto(s) |
 | `/continuar [produto]` | retomar ou avançar; `--fase legal` repete uma fase; `--forcar` ignora um KILL |
 | `/portfolio` | estado de tudo e o que precisa de ti |
+| `/painel` | atualizar o painel da fábrica e receber o link |
 | `/lancar <produto>` | pôr em produção |
 | `/crescer <produto>` | ciclo de crescimento |
 | `/fabrica` | capataz: processa as ideias novas e põe tudo a avançar |
