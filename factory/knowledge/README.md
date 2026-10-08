@@ -17,10 +17,11 @@ improvement cycle (`/melhorar`) and the monthly radar (`/radar`) keep it current
 
 ## How knowledge flows
 
-1. **Capture** — while working on a product, agents report lessons (`mistake`, `win`, `method`,
-   `trend`, `preference`) and checkpoints record them with run metrics:
-   `factory.py lesson` → `products/<slug>/docs/lessons.md`, `factory.py metric` →
-   `product.json` `metrics`. Founder corrections and growth outcomes are recorded the same way.
+1. **Capture** — while working on a product, every agent records its own lessons (`mistake`,
+   `win`, `method`, `trend`) with `factory.py lesson` → `products/<slug>/docs/lessons.md`;
+   checkpoints record the run's metrics with `factory.py metric` → `product.json` `metrics`.
+   `/continuar` records founder corrections as `preference`/`mistake` lessons, and `/crescer`
+   records outcomes (visitors, signups, revenue, bugs and incidents after launch).
 2. **Consolidate** — `/melhorar` reads `factory.py retro --new --json` (every product on every
    branch), fixes causes where agents will meet them (playbooks, templates, checklists, stack
    recipes, starters), reinforces what worked (`patterns.md` + the playbook default), measures
@@ -44,9 +45,11 @@ improvement cycle (`/melhorar`) and the monthly radar (`/radar`) keep it current
 4. **Measure before keeping.** A change whose effect is uncertain starts as an experiment in
    `improvements.md` (hypothesis, metric, target) and is kept or reverted on evidence from at
    least 3 products.
-5. **Self-modification limits.** The factory merges its own improvement PRs only when every
-   changed file is knowledge — `factory/LEARNINGS.md`, `factory/knowledge/`, `factory/playbooks/`,
-   `factory/stacks/`, `factory/templates/`, `factory/checklists/`, `factory/starters/` — the checks
-   pass and a `devils-advocate` review found nothing blocking. Rules, permissions, skills, agents,
-   pipeline code and workflows wait for the founder (`CLAUDE.md`, Merges); with
-   `self_improvement: propose` in `FOUNDER.md`, every improvement PR waits.
+5. **Self-modification limits** are set in `CLAUDE.md` (not here) and enforced with
+   `factory.py scope`: with `self_improvement: auto` the factory merges its own `data` and
+   `method` changes (lessons, knowledge, playbooks, stacks, templates) after checks and an
+   independent review; legal, launch and monetization playbooks, legal templates, checklists,
+   starters, this file, and every rule, permission, skill, agent, pipeline or workflow change
+   wait for the founder.
+6. **No personal or customer data** in lessons, metrics or knowledge; in a public repository,
+   revenue only as bands.

@@ -58,7 +58,7 @@ Columns: `id · area (acquisition|activation|conversion|retention|referral|prici
 1. **Spec** (in the backlog row): `If we <change> for <segment> then <metric> improves by <MDE> because <reason>`; primary metric, guardrail (e.g. refund rate, bounce, errors), duration, decision rule, rollback.
 2. **Sample size reality check:** a 5% → 6% conversion lift needs ~8,000 visitors per variant for 95% confidence; with < 1,000 visitors/week do **not** A/B test — ship the best-evidence change serially (before/after with ≥ 2 weeks per state), and judge with qualitative signals; use A/B only for traffic ≥ 5k/week or when the metric is high-frequency.
 3. **Implement** on the product branch with a feature flag or env switch, keep copy in `marketing/copy/*` as the source of truth and mirror into the app; run lint, typecheck, unit, e2e, build; deploy with the launch flow (`vercel deploy --prod` after smoke; see `09-launch.md` Step 15); annotate the date in analytics.
-4. **Read-out** after the planned duration: result (win/loss/inconclusive), effect size, decision (keep/revert/iterate), learning (one line). Put wins that generalise into `factory/LEARNINGS.md`.
+4. **Read-out** after the planned duration: result (win/loss/inconclusive), effect size, decision (keep/revert/iterate), learning (one line). Record it with `python3 factory/scripts/factory.py lesson <slug> --phase growth --kind win|mistake` (`/melhorar` turns wins that generalise into proven patterns).
 
 ### Step 6 — SEO content production (weekly)
 1. Take the next 1–2 briefs from `marketing/seo/briefs/` (bottom-funnel first; then articles whose keywords show impressions in Search Console).
@@ -149,7 +149,7 @@ Evaluate at **day 30, 60, 90 after launch, then monthly**, and record one verdic
 | `marketing/seo/articles/*` or app content | published articles; refresh log |
 | Changelog/roadmap | updated entries per locale |
 | `HUMAN_TASKS.md` | new founder-only items |
-| `docs/lessons.md` | one-line dated lessons that generalise (the foreman consolidates them into `factory/LEARNINGS.md`) |
+| `docs/lessons.md` | lessons that generalise, written with `factory.py lesson` (`/melhorar` folds them into the factory) |
 
 ## Definition of Done
 

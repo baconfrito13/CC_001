@@ -16,7 +16,8 @@ The single way to create products and change their state. Agents and humans both
     python3 factory/scripts/factory.py changed --base origin/main
     python3 factory/scripts/factory.py lesson <slug> --phase qa --kind win --text "..."
     python3 factory/scripts/factory.py metric <slug> qa_rounds=2 g2_passed=true
-    python3 factory/scripts/factory.py retro [--fetch] [--json] [--new] [--mark-seen ID ...]
+    python3 factory/scripts/factory.py retro [--fetch] [--json] [--new] [--since D] [--mark-seen ID ...]
+    python3 factory/scripts/factory.py scope --base origin/main --head origin/<branch> --require product
     python3 factory/scripts/factory.py doctor
 
 Set FACTORY_ROOT to operate on another checkout and FACTORY_TODAY (YYYY-MM-DD) to pin dates.
@@ -134,6 +135,18 @@ def today() -> str:
             raise FactoryError(f"FACTORY_TODAY must be YYYY-MM-DD, got {pinned!r}")
         return pinned
     return dt.date.today().isoformat()
+
+
+def now() -> str:
+    """UTC timestamp for phase timing (FACTORY_NOW, else midnight of a pinned FACTORY_TODAY)."""
+    pinned = os.environ.get("FACTORY_NOW")
+    if pinned:
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", pinned):
+            raise FactoryError(f"FACTORY_NOW must be YYYY-MM-DDTHH:MM:SSZ, got {pinned!r}")
+        return pinned
+    if os.environ.get("FACTORY_TODAY"):
+        return f"{today()}T00:00:00Z"
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def read_json(path: Path) -> Any:
@@ -363,7 +376,7 @@ def cmd_new(fx: Factory, args: argparse.Namespace) -> int:
 
     date = today()
     phases = {pid: {"status": "pending"} for pid in fx.phase_ids}
-    phases["intake"] = {"status": "in_progress", "started": date}
+    phases["intake"] = {"status": "in_progress", "started": date, "started_at": now()}
     product = {
         "schema_version": 1,
         "slug": slug,
@@ -506,14 +519,16 @@ def cmd_set_phase(fx: Factory, args: argparse.Namespace) -> int:
                 + " (use --force only for phases that genuinely do not apply)"
             )
     entry["status"] = args.status
-    date = today()
-    if args.status == "in_progress":
+    date, stamp = today(), now()
+    if args.status in ("in_progress", "done", "skipped"):
         entry.setdefault("started", date)
+        entry.setdefault("started_at", stamp)
     if args.status in ("done", "skipped"):
-        entry.setdefault("started", date)
         entry["completed"] = date
+        entry["completed_at"] = stamp
     else:
         entry.pop("completed", None)
+        entry.pop("completed_at", None)
     if args.summary:
         entry["summary"] = args.summary
     product["phase"] = fx.current_phase(product)
@@ -962,7 +977,7 @@ def lesson_id(slug: str, text: str) -> str:
 def parse_lessons(text: str) -> list[dict]:
     """Lesson lines of a lessons file; lines written before kinds existed read as kind "note"."""
     lessons = []
-    for line in strip_html_comments(text).splitlines():
+    for line in text.splitlines():
         match = LESSON_LINE.match(line.strip())
         if match:
             lessons.append(
@@ -971,18 +986,30 @@ def parse_lessons(text: str) -> list[dict]:
     return lessons
 
 
+def unparsed_lessons(text: str) -> int:
+    """List items in a lessons file that are not in the lesson format (they would be ignored)."""
+    return sum(
+        1
+        for line in text.splitlines()
+        if re.match(r"^\s*[-*] \S", line) and not LESSON_LINE.match(line.strip())
+    )
+
+
 def cmd_lesson(fx: Factory, args: argparse.Namespace) -> int:
     """Append one lesson to products/<slug>/docs/lessons.md. Never fails a checkpoint over its text."""
     product = fx.load(args.slug)
     if args.phase not in (*fx.phase_ids, "general"):
         raise FactoryError(f"unknown phase '{args.phase}' (valid: {', '.join(fx.phase_ids)}, general)")
     text = re.sub(r"\s+", " ", args.text).strip().lstrip("-").strip()
-    if args.source:
-        text = f"{text} (source: {args.source.strip()})"
+    text = text.replace("<!--", "<!-").replace("-->", "->")
     if len(text) < 10:
         print(f"{args.slug}: lesson skipped (too short to be useful)")
         return 0
-    text = text[:500]
+    text = text[:400]
+    if args.source:
+        text = f"{text} (source: {args.source.strip()[:200]})"
+    elif args.kind == "trend" and "http" not in text:
+        text = f"{text} (unsourced)"
     path = fx.product_dir(args.slug) / "docs" / "lessons.md"
     existing = path.read_text(encoding="utf-8") if path.is_file() else ""
     if any(_normalize_idea(item["text"]) == _normalize_idea(text) for item in parse_lessons(existing)):
@@ -998,32 +1025,60 @@ def cmd_lesson(fx: Factory, args: argparse.Namespace) -> int:
     return 0
 
 
+def factory_revision(fx: Factory) -> str:
+    """Short hash of the last commit that changed the factory itself (rules, skills, pipeline)."""
+    return _git(fx.root, "log", "-1", "--format=%h", "--", "factory", ".claude", "CLAUDE.md") or "unknown"
+
+
 def cmd_metric(fx: Factory, args: argparse.Namespace) -> int:
-    """Merge run/outcome metrics (numbers, text or true/false) into product.json `metrics`."""
+    """Merge run/outcome metrics into product.json `metrics`: key=value sets, key+=N adds."""
     product = fx.load(args.slug)
-    metrics = dict(product.get("metrics") or {})
+    metrics = product.get("metrics") if isinstance(product.get("metrics"), dict) else {}
+    metrics = dict(metrics)
     changed = []
-    for pair in args.pairs:
-        key, sep, raw = pair.partition("=")
+    for pair in args.pairs or []:
+        add = "+=" in pair
+        key, sep, raw = pair.partition("+=" if add else "=")
         key = key.strip()
         if not sep or not METRIC_KEY.match(key):
-            raise FactoryError(f"expected key=value with a snake_case key, got {pair!r}")
+            raise FactoryError(f"expected key=value or key+=N with a snake_case key, got {pair!r}")
         value = _parse_value(raw.strip())
         if isinstance(value, (dict, list)):
             raise FactoryError(f"metric '{key}' must be a number, text or true/false")
+        if add:
+            old = metrics.get(key, 0)
+            if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (value, old)):
+                raise FactoryError(f"'{key}+=' needs numbers")
+            value = round(old + value, 4) if isinstance(old + value, float) else old + value
         metrics[key] = value
         changed.append(key)
+    if args.factory_rev:
+        metrics["factory_rev"] = factory_revision(fx)
+        changed.append("factory_rev")
+    if not changed:
+        raise FactoryError("nothing to record: give key=value pairs and/or --factory-rev")
     product["metrics"] = metrics
     fx.save(product)
     print(f"{args.slug}: " + ", ".join(f"{k}={json.dumps(metrics[k], ensure_ascii=False)}" for k in changed))
     return 0
 
 
-def _branch_file(fx: Factory, branch: str, rel: str) -> str:
-    if branch == "(local)":
-        path = fx.root / rel
-        return path.read_text(encoding="utf-8") if path.is_file() else ""
-    return _git(fx.root, "show", f"origin/{branch}:{rel}") or ""
+def _lesson_files(fx: Factory) -> list[tuple[str, str, str]]:
+    """(slug, source, text) for every products/<slug>/docs/lessons.md on every remote branch and
+    in the working tree: lessons can sit on a branch that is not the product's newest copy."""
+    files: list[tuple[str, str, str]] = []
+    refs = _git(fx.root, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin") or ""
+    for ref in refs.splitlines():
+        if ref in ("origin", "origin/HEAD"):
+            continue
+        listing = _git(fx.root, "ls-tree", "-r", "--name-only", ref, "products/") or ""
+        for path in listing.splitlines():
+            parts = path.split("/")
+            if len(parts) == 4 and parts[2:] == ["docs", "lessons.md"]:
+                files.append((parts[1], ref.removeprefix("origin/"), _git(fx.root, "show", f"{ref}:{path}") or ""))
+    for path in sorted(fx.products_dir.glob("*/docs/lessons.md")) if fx.products_dir.is_dir() else []:
+        files.append((path.parents[1].name, "(local)", path.read_text(encoding="utf-8")))
+    return files
 
 
 def _seen_lessons(fx: Factory) -> set[str]:
@@ -1037,11 +1092,18 @@ def _seen_lessons(fx: Factory) -> set[str]:
     }
 
 
-def _days(start: Any, end: Any) -> int | None:
-    try:
-        return (dt.date.fromisoformat(end) - dt.date.fromisoformat(start)).days
-    except (TypeError, ValueError):
-        return None
+def _hours(entry: dict) -> float | None:
+    """Hours a phase took: exact with timestamps, else whole days from the dates."""
+    for start, end, scale in (("started_at", "completed_at", 3600), ("started", "completed", None)):
+        try:
+            if scale:
+                begin = dt.datetime.strptime(entry[start], "%Y-%m-%dT%H:%M:%SZ")
+                finish = dt.datetime.strptime(entry[end], "%Y-%m-%dT%H:%M:%SZ")
+                return round((finish - begin).total_seconds() / scale, 1)
+            return float((dt.date.fromisoformat(entry[end]) - dt.date.fromisoformat(entry[start])).days * 24)
+        except (KeyError, TypeError, ValueError):
+            continue
+    return None
 
 
 def _median(values: list[Any]) -> float | int | None:
@@ -1070,79 +1132,107 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
         print(f"{len(new)} lesson(s) marked as processed")
         return 0
 
+    if args.since and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.since):
+        raise FactoryError("--since must be YYYY-MM-DD")
+    if args.fetch:
+        _git(fx.root, "fetch", "--quiet", "--prune", "origin")
     seen = _seen_lessons(fx)
     products: list[dict] = []
-    lessons: list[dict] = []
-    for entry in scan_branches(fx, fetch=args.fetch):
+    for entry in scan_branches(fx):
         p = entry["product"]
         slug = p["slug"]
-        phases = p.get("phases", {})
-        decision = p.get("decision") or {}
-        phase_days = {}
+        phases = p.get("phases") if isinstance(p.get("phases"), dict) else {}
+        decision = p.get("decision") if isinstance(p.get("decision"), dict) else {}
+        metrics = p.get("metrics") if isinstance(p.get("metrics"), dict) else {}
+        phase_hours = {}
         for pid in fx.phase_ids:
-            days = _days(phases.get(pid, {}).get("started"), phases.get(pid, {}).get("completed"))
-            if days is not None:
-                phase_days[pid] = days
-        for item in parse_lessons(_branch_file(fx, entry["branch"], f"products/{slug}/docs/lessons.md")):
-            lid = lesson_id(slug, item["text"])
-            lessons.append({"id": lid, "slug": slug, **item, "seen": lid in seen})
+            hours = _hours(phases.get(pid) or {})
+            if hours is not None:
+                phase_hours[pid] = hours
         products.append(
             {
                 "slug": slug,
                 "name": p.get("name", slug),
                 "type": p.get("type"),
-                "status": p.get("status"),
+                "status": str(p.get("status") or "unknown"),
                 "phase": p.get("phase"),
                 "depth": p.get("depth"),
                 "branch": entry["branch"],
                 "verdict": decision.get("verdict"),
                 "score": decision.get("score"),
                 "forced": bool(decision.get("forced")),
-                "blocked": [pid for pid in fx.phase_ids if phases.get(pid, {}).get("status") == "blocked"],
-                "phase_days": phase_days,
-                "metrics": p.get("metrics") or {},
+                "blocked": [pid for pid in fx.phase_ids if (phases.get(pid) or {}).get("status") == "blocked"],
+                "phase_hours": phase_hours,
+                "metrics": metrics,
                 "founder_tasks_open": entry["tasks"][0],
                 "founder_tasks_done": entry["tasks"][1],
                 "created": p.get("created"),
                 "updated": p.get("updated"),
             }
         )
+    lessons: dict[str, dict] = {}
+    unparsed: dict[str, int] = {}
+    for slug, source, text in _lesson_files(fx):
+        unparsed[slug] = max(unparsed.get(slug, 0), unparsed_lessons(text))
+        for item in parse_lessons(text):
+            lid = lesson_id(slug, item["text"])
+            if lid not in lessons:
+                lessons[lid] = {"id": lid, "slug": slug, **item, "branch": source, "seen": lid in seen}
+    all_lessons = sorted(lessons.values(), key=lambda item: (item["date"], item["slug"], item["id"]))
     by_status: dict[str, int] = {}
     for p in products:
         by_status[p["status"]] = by_status.get(p["status"], 0) + 1
     kinds: dict[str, int] = {}
-    for item in lessons:
+    for item in all_lessons:
         kinds[item["kind"]] = kinds.get(item["kind"], 0) + 1
-    numeric = sorted(
-        {k for p in products for k, v in p["metrics"].items() if isinstance(v, (int, float)) and not isinstance(v, bool)}
-    )
+
+    def is_num(v: Any) -> bool:
+        return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+    numeric = sorted({k for p in products for k, v in p["metrics"].items() if is_num(v)})
+    flags = sorted({k for p in products for k, v in p["metrics"].items() if isinstance(v, bool)})
     totals = {
         "products": len(products),
         "by_status": by_status,
-        "median_phase_days": {
-            pid: m for pid in fx.phase_ids if (m := _median([p["phase_days"].get(pid) for p in products])) is not None
+        "median_phase_hours": {
+            pid: m for pid in fx.phase_ids if (m := _median([p["phase_hours"].get(pid) for p in products])) is not None
         },
         "median_metrics": {k: _median([p["metrics"].get(k) for p in products]) for k in numeric},
+        "rates": {
+            k: round(
+                sum(1 for p in products if p["metrics"].get(k) is True)
+                / max(1, sum(1 for p in products if isinstance(p["metrics"].get(k), bool))),
+                2,
+            )
+            for k in flags
+        },
         "lessons_by_kind": kinds,
-        "lessons_new": sum(1 for item in lessons if not item["seen"]),
+        "lessons_new": sum(1 for item in all_lessons if not item["seen"]),
+        "lessons_unparsed": sum(unparsed.values()),
     }
+    shown = all_lessons
     if args.new:
-        lessons = [item for item in lessons if not item["seen"]]
-    report = {"generated": today(), "products": products, "lessons": lessons, "totals": totals}
+        shown = [item for item in shown if not item["seen"]]
+    if args.since:
+        shown = [item for item in shown if item["date"] >= args.since]
+    report = {"generated": today(), "products": products, "lessons": shown, "totals": totals}
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
         return 0
     print(f"# Retro da fábrica — {report['generated']}\n")
     status_line = " · ".join(f"{PRODUCT_STATUS_LABELS.get(s, s)} {n}" for s, n in sorted(by_status.items())) or "nenhum"
     print(f"Produtos: {len(products)} ({status_line})")
-    if totals["median_phase_days"]:
-        print("Dias por fase (mediana): " + " · ".join(f"{k} {v}" for k, v in totals["median_phase_days"].items()))
+    if totals["median_phase_hours"]:
+        print("Horas por fase (mediana): " + " · ".join(f"{k} {v}" for k, v in totals["median_phase_hours"].items()))
     if totals["median_metrics"]:
         print("Métricas (mediana): " + " · ".join(f"{k} {v}" for k, v in totals["median_metrics"].items()))
+    if totals["rates"]:
+        print("Taxas: " + " · ".join(f"{k} {round(v * 100)}%" for k, v in totals["rates"].items()))
     print(
         f"Lições: {sum(kinds.values())} ("
         + (" · ".join(f"{k} {v}" for k, v in sorted(kinds.items())) or "nenhuma")
         + f") · por processar: {totals['lessons_new']}"
+        + (f" · fora do formato: {totals['lessons_unparsed']}" if totals["lessons_unparsed"] else "")
     )
     if products:
         print("\n| Produto | Estado | G1 | Fase | Bloqueado |\n|---|---|---|---|---|")
@@ -1150,12 +1240,85 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
             g1 = f"{p['score']} {str(p['verdict']).upper()}{' (forçado)' if p['forced'] else ''}" if p["score"] is not None else "—"
             status = PRODUCT_STATUS_LABELS.get(p["status"], p["status"])
             print(f"| {p['name']} (`{p['slug']}`) | {status} | {g1} | {p['phase']} | {', '.join(p['blocked']) or '—'} |")
-    pending = [item for item in lessons if not item["seen"]]
+    pending = [item for item in shown if not item["seen"]]
     if pending:
         print("\n## Lições por processar\n")
         for item in pending:
             print(f"- `{item['id']}` {item['slug']} · {item['phase']} · {item['kind']} · {item['text']}")
     return 0
+
+
+# Merge scope: what a pull request touches decides who may merge it (CLAUDE.md, Merges).
+SCOPE_ORDER = ("product", "data", "method", "sensitive", "control")
+SENSITIVE_PATHS = (
+    "factory/knowledge/README.md",
+    "factory/playbooks/07-legal.md",
+    "factory/playbooks/09-launch.md",
+    "factory/playbooks/monetization.md",
+    "factory/templates/legal/",
+    "factory/checklists/",
+    "factory/starters/",
+)
+
+
+def scope_of(path: str) -> str:
+    """product (products/<slug>/…) · data (lessons, knowledge) · method (playbooks, stacks,
+    templates) · sensitive (legal, launch, payments, gates, starters, knowledge rules) · control."""
+    if re.match(r"^products/[a-z0-9]+(-[a-z0-9]+)*/", path):
+        return "product"
+    if any(path == s or (s.endswith("/") and path.startswith(s)) for s in SENSITIVE_PATHS):
+        return "sensitive"
+    if path == "factory/LEARNINGS.md" or path.startswith("factory/knowledge/"):
+        return "data"
+    if path.startswith(("factory/playbooks/", "factory/stacks/", "factory/templates/")):
+        return "method"
+    return "control"
+
+
+def cmd_scope(fx: Factory, args: argparse.Namespace) -> int:
+    """Classify every path a change touches (both sides of renames) and check a merge requirement."""
+    raw = _git(fx.root, "diff", "--name-status", "-M", "-C", f"{args.base}...{args.head}")
+    if raw is None:
+        raise FactoryError(f"cannot diff {args.base}...{args.head} (fetch both refs first)")
+    paths: list[str] = []
+    for line in raw.splitlines():
+        fields = line.split("\t")
+        paths.extend(f for f in fields[1:] if f)
+    paths = sorted(set(paths))
+    classes = {path: scope_of(path) for path in paths}
+    slugs = sorted({path.split("/")[1] for path, c in classes.items() if c == "product"})
+    worst = max((SCOPE_ORDER.index(c) for c in classes.values()), default=-1)
+    verdict = SCOPE_ORDER[worst] if worst >= 0 else "empty"
+    report = {
+        "base": args.base,
+        "head": args.head,
+        "verdict": verdict,
+        "product_slugs": slugs,
+        "paths": [{"path": p, "scope": c} for p, c in classes.items()],
+    }
+    problems: list[str] = []
+    if args.require == "product":
+        if set(classes.values()) != {"product"} or len(slugs) != 1 or (args.slug and slugs != [args.slug]):
+            problems.append(f"a product change may only touch products/{args.slug or '<one slug>'}/")
+    elif args.require in ("data", "method"):
+        allowed = SCOPE_ORDER[1 : SCOPE_ORDER.index(args.require) + 1]
+        outside = [p for p, c in classes.items() if c not in allowed]
+        if outside:
+            problems.append(f"outside the {args.require} scope: {', '.join(outside)}")
+    if args.require and not paths:
+        problems.append("the change is empty")
+    report["ok"] = not problems
+    report["problems"] = problems
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(f"scope {verdict}: {len(paths)} path(s)" + (f", products: {', '.join(slugs)}" if slugs else ""))
+        for path, c in classes.items():
+            if c != "product":
+                print(f"  {c:<9} {path}")
+        for problem in problems:
+            print(f"✗ {problem}")
+    return 0 if not problems else 1
 
 
 SCAFFOLD_IGNORE = (
@@ -1329,9 +1492,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", help="URL backing a trend (with the access date in the text if useful)")
     p.set_defaults(func=cmd_lesson)
 
-    p = sub.add_parser("metric", help="record run/outcome metrics in product.json: key=value …")
+    p = sub.add_parser("metric", help="record run/outcome metrics in product.json: key=value sets, key+=N adds")
     p.add_argument("slug")
-    p.add_argument("pairs", nargs="+", metavar="key=value")
+    p.add_argument("pairs", nargs="*", metavar="key=value")
+    p.add_argument("--factory-rev", action="store_true", help="also record the factory revision this branch carries")
     p.set_defaults(func=cmd_metric)
 
     p = sub.add_parser("retro", help="lessons and metrics of every product on every branch (improvement cycle)")
@@ -1339,7 +1503,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--fetch", action="store_true", help="git fetch --prune origin first")
     p.add_argument("--new", action="store_true", help="list only lessons not processed yet")
     p.add_argument("--mark-seen", nargs="+", metavar="ID", help="record lesson ids as processed")
+    p.add_argument("--since", help="list only lessons dated on or after YYYY-MM-DD")
     p.set_defaults(func=cmd_retro)
+
+    p = sub.add_parser("scope", help="classify the paths a change touches; --require checks who may merge it")
+    p.add_argument("--base", default="origin/main")
+    p.add_argument("--head", default="HEAD")
+    p.add_argument("--require", choices=("product", "data", "method"))
+    p.add_argument("--slug", help="with --require product: the product the change must stay inside")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_scope)
 
     p = sub.add_parser("doctor", help="which credentials/tools are available for autonomous work")
     p.set_defaults(func=cmd_doctor)

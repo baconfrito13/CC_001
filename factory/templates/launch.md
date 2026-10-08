@@ -90,7 +90,7 @@
 | T-1 | Deploy de produção sem anunciar; teste de fumo | Claude | §13 | ☐ |
 | T0 | Aprovação → modo de pagamento → publicações às horas marcadas | Fundador+Claude | erros, checkout | ☐ |
 | T0 +1 h/+4 h/+24 h | Teste de fumo e métricas | Claude | §15 | ☐ |
-| T+1 / T+3 / T+7 | Agradecimentos e correções; rever testes de canais; retrospetiva | Claude | LEARNINGS | ☐ |
+| T+1 / T+3 / T+7 | Agradecimentos e correções; rever testes de canais; retrospetiva | Claude | lições (`factory.py lesson`) | ☐ |
 
 ## 12. Plano de reversão
 
@@ -124,4 +124,4 @@
 
 ## 17. Lições
 
-<!-- One dated line each; also copy to factory/LEARNINGS.md if they generalise. -->
+<!-- Record each lesson with `python3 factory/scripts/factory.py lesson <slug> --phase launch --kind …`; /melhorar folds the ones that generalise into the factory. -->

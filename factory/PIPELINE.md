@@ -231,12 +231,14 @@ that is `paused`, has a `blocked` phase, or has an unforced KILL.
 
 Every product makes the factory better (`factory/knowledge/README.md`):
 
-- **During a run:** agents report lessons (`mistake`, `win`, `method`, `trend`) in their
-  `lessons` field and every checkpoint records them in `docs/lessons.md` (`factory.py lesson`),
-  together with run metrics in `product.json` `metrics` (`factory.py metric`): research tracks
-  and critic objections, G1 score, slices and retries, QA rounds, P0/P1 and security findings,
-  fix rounds, Lighthouse scores, G2. Founder corrections become `preference`/`mistake` lessons
-  (`/continuar`); growth cycles add outcomes (visitors, signups, MRR) and experiment results.
+- **During a run:** every agent records its lessons (`mistake`, `win`, `method`, `trend`) in
+  `docs/lessons.md` with `factory.py lesson`, and every checkpoint records the run's metrics in
+  `product.json` `metrics` with `factory.py metric`: research tracks and critic objections, G1
+  score, slices and retries, QA rounds, unique P0/P1 and security findings, fix rounds,
+  Lighthouse scores, G2, output tokens and the factory revision. Phases record start and end
+  timestamps. Founder corrections become `preference`/`mistake` lessons (`/continuar`); growth
+  cycles add outcomes (visitors, signups, revenue, bugs and incidents after launch) and
+  experiment results.
 - **Weekly — `/melhorar`:** `factory.py retro` gathers every product's lessons and metrics on
   every branch; recurring mistakes are fixed at their cause (playbook, template, checklist, stack
   recipe, starter), wins become proven patterns and defaults, uncertain changes run as measured
@@ -244,8 +246,10 @@ Every product makes the factory better (`factory/knowledge/README.md`):
 - **Monthly — `/radar`:** facts past their recheck date are verified again (versions, prices,
   platform rules, laws), trends are recorded with sources, and idea suggestions are offered to the
   founder (never started without them).
-- **Limits:** the factory merges its own knowledge changes after checks and an adversarial review;
-  rules, permissions, skills, agents, pipeline code and workflows wait for the founder.
+- **Limits** (`CLAUDE.md`, "Self-modification limits", enforced with `factory.py scope`): the
+  factory merges its own lessons, knowledge and method changes after checks and an independent
+  review; legal, launch and payments playbooks, legal templates, checklists, starters, rules,
+  permissions, skills, agents, pipeline code and workflows wait for the founder.
 
 ## Launch-ready means
 

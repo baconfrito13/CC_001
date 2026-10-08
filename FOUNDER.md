@@ -13,7 +13,7 @@
 autonomy: max                 # max = decide tudo o que é reversível sem perguntar
 go_live: approval             # approval = aprovas cada lançamento em produção · auto = lança sozinho
 merges: claude                # claude = a fábrica faz os merges dos PRs (regras em CLAUDE.md) · fundador = fazes tu
-self_improvement: auto        # auto = a fábrica aplica sozinha o que aprende (playbooks, starters…; regras e permissões esperam por ti) · propose = tudo espera por ti · off
+self_improvement: auto        # auto = aplica sozinha lições, conhecimento e métodos (playbooks); legal, lançamento, pagamentos, starters, regras e permissões esperam por ti · data = só lições e conhecimento · propose = tudo espera por ti · off
 radar: monthly                # monthly = radar mensal de versões, preços, leis e tendências · off
 radar_ideas_per_month: 3      # ideias sugeridas por mês a partir das tendências (nunca começam sem ti; 0 = nenhuma)
 max_parallel_products: 3      # quantos produtos avançam ao mesmo tempo (sessões em paralelo)

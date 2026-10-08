@@ -162,4 +162,4 @@ Tokens are environment variables (`VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN`, `CLOUD
 
 Open a factory PR (`🛠️ Fábrica: …`). A recipe must keep the headings of the existing recipes,
 every command must have been executed once (note date + versions in the PR), and every price or
-limit needs a URL and an access date. Add a lesson to `products/<slug>/docs/lessons.md` when a recipe step failed (the foreman moves it into `factory/LEARNINGS.md`).
+limit needs a URL and an access date. Record a lesson with `factory.py lesson <slug> --phase <id> --kind mistake` when a recipe step failed (`/melhorar` fixes the recipe).

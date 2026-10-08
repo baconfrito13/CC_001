@@ -7,7 +7,7 @@ retired from `factory/LEARNINGS.md`. Written by `/melhorar` and `/radar`.
 
 | Date | Change | Evidence | Watch | PR |
 |---|---|---|---|---|
-| 2026-10-08 | Self-improvement system: lessons and run metrics recorded at every checkpoint (`factory.py lesson`, `metric`, `retro`), weekly `/melhorar`, monthly `/radar`, this knowledge base | founder request | lessons per product, founder corrections per product, `qa_p0p1_found`, days per phase | founder-requested PR |
+| 2026-10-08 | Self-improvement system: agents record lessons (`factory.py lesson`), checkpoints record run metrics (`factory.py metric`), `factory.py retro` gathers them, weekly `/melhorar`, monthly `/radar`, this knowledge base; self-merges limited by `factory.py scope` and an independent review | founder request; adversarial review of the first version | lessons per product, founder corrections per product, `qa_p0p1_found`, G2 pass rate, hours per phase, output tokens | founder-requested PR |
 
 ## Experiments
 

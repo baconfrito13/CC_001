@@ -109,7 +109,7 @@ each phase. Then act on `result.stopped`:
 | `stop_after` | `--so-validar` finished; product paused | report the verdict |
 | `qa-blocked`, `build-failed` | the phase is marked blocked | report the blocking items; never relaunch automatically |
 | `incomplete` | a phase before launch failed | run `/continuar <slug> --aqui` once; if it fails again, report |
-| workflow error | a step threw (e.g. a checkpoint could not push) | read its journal, fix the cause, resume once with `resumeFromRunId`; if it fails again, report |
+| workflow error | a step threw (e.g. a checkpoint could not push) | read its journal, fix the cause, resume once with `resumeFromRunId`; if it fails again, report. Either way record the cause with `factory.py lesson <slug> --phase <id> --kind mistake` |
 
 ## 6. Close the loop
 

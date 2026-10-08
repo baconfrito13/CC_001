@@ -149,7 +149,7 @@ Env names (see `src/lib/env.ts` and `.env.example`), never committed: `STRIPE_SE
 - **Defaults for prices:** EUR, VAT-inclusive, monthly + annual (10×), 14-day refund, no free trial below €15/month unless freemium, minimum €9/month.
 - **Never** collect card data on the product's own forms (use hosted checkout), never store PANs, never hard-code price IDs, never switch to live keys outside phase 09.
 - **Zero-code first:** start with `checkoutUrl`; add `stripePriceId` + webhooks only when automatic access control is part of the PRD "must" stories.
-- **Re-check rail every 6 months** or when fees/eligibility change; log in `factory/LEARNINGS.md`.
+- **Re-check rail every 6 months** or when fees/eligibility change; record what changed as a `trend` lesson with its source (`factory.py lesson … --kind trend --source <url>`).
 - **Conflicts:** consumer-law doubts → `legal-counsel` decides; tax doubts → founder task to the accountant, product proceeds on MoR.
 
 ## Output specification

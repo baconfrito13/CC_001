@@ -17,6 +17,8 @@ method, trend, preference. Keep about 15 per section; add a factory-wide problem
 - 2026-10-08 · mistake · Routines created through the `create_trigger` MCP tool with `create_new_session_on_fire` run WITHOUT connectors: no GitHub MCP, no `add_repo`, no `create_session`, `gh api` 403. A `persistent_session_id` set from another session was ignored by `fire_trigger` (it started a fresh session). Use a routine created by the foreman session itself (self-bound) or one made in the claude.ai Routines UI with the repo selected.
 - 2026-10-08 · mistake · Dependabot proposed `@types/node` 22 → 26 while the runtime is Node 22 (engines, CI): type majors must follow the runtime, so its majors are ignored (→ fixed in `.github/dependabot.yml`); move `engines`, CI `node-version` and `@types/node` together.
 - 2026-10-08 · mistake · Cloud sessions in "Accept edits" mode ask before any tool call not in `permissions.allow`, and `.claude/settings.json` edits apply to running sessions at once: every tool an unattended run needs must be allowed there (→ fixed in `.claude/settings.json`).
+- 2026-10-08 · mistake · A limit written only in prose is not a limit: self-merges are gated by `factory.py scope` run from `origin/main` plus an independent review pinned to the head SHA, and product PRs must stay inside `products/<slug>/` (→ fixed in `CLAUDE.md`, `fabrica`, factory CI).
+- 2026-10-08 · method · Never route text an agent produced (lessons, findings) through another agent's command list: let the author record it itself (`factory.py lesson`) and pass only numbers and flags the script computed (→ fixed in the workflow).
 
 ## Research
 
