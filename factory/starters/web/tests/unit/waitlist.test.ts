@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  type WaitlistAdapter,
   createConsoleAdapter,
   createResendAdapter,
   createWebhookAdapter,
   selectWaitlistAdapter,
+  type WaitlistAdapter,
 } from "@/lib/waitlist/adapters";
-import { type WaitlistDeps, handleWaitlist } from "@/lib/waitlist/handler";
+import { handleWaitlist, type WaitlistDeps } from "@/lib/waitlist/handler";
 import { createRateLimiter } from "@/lib/waitlist/rate-limit";
 import { parseWaitlistRequest } from "@/lib/waitlist/schema";
 
@@ -22,13 +22,19 @@ describe("parseWaitlistRequest", () => {
   });
 
   it("accepts a submission without the honeypot field", () => {
-    expect(parseWaitlistRequest({ email: "a@b.co", consent: true, locale: "en" }).ok).toBe(true);
+    expect(
+      parseWaitlistRequest({ email: "a@b.co", consent: true, locale: "en" }).ok,
+    ).toBe(true);
   });
 
   it("requires explicit consent", () => {
     for (const consent of [false, undefined, "true", 1, null]) {
       const result = parseWaitlistRequest({ ...valid, consent });
-      expect(result).toMatchObject({ ok: false, reason: "invalid", fieldErrors: { consent: "required" } });
+      expect(result).toMatchObject({
+        ok: false,
+        reason: "invalid",
+        fieldErrors: { consent: "required" },
+      });
     }
   });
 
@@ -42,7 +48,9 @@ describe("parseWaitlistRequest", () => {
     expect(parseWaitlistRequest({ ...valid, email: "not-an-email" })).toMatchObject({
       fieldErrors: { email: "invalid" },
     });
-    expect(parseWaitlistRequest({ ...valid, email: `${"a".repeat(260)}@example.com` })).toMatchObject({
+    expect(
+      parseWaitlistRequest({ ...valid, email: `${"a".repeat(260)}@example.com` }),
+    ).toMatchObject({
       fieldErrors: { email: "invalid" },
     });
   });
@@ -54,7 +62,9 @@ describe("parseWaitlistRequest", () => {
   });
 
   it("reports every invalid field at once", () => {
-    expect(parseWaitlistRequest({ email: "x", consent: false, locale: "en" })).toMatchObject({
+    expect(
+      parseWaitlistRequest({ email: "x", consent: false, locale: "en" }),
+    ).toMatchObject({
       ok: false,
       fieldErrors: { email: "invalid", consent: "required" },
     });
@@ -81,7 +91,11 @@ describe("createRateLimiter", () => {
     expect(limiter.check("a")).toMatchObject({ allowed: true, remaining: 1 });
     expect(limiter.check("a")).toMatchObject({ allowed: true, remaining: 0 });
     now += 10_000;
-    expect(limiter.check("a")).toEqual({ allowed: false, remaining: 0, retryAfterSeconds: 50 });
+    expect(limiter.check("a")).toEqual({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 50,
+    });
     expect(limiter.check("b").allowed).toBe(true);
   });
 
@@ -117,9 +131,10 @@ describe("adapters", () => {
 
   it("webhook adapter POSTs email, locale, consentAt and source as JSON", async () => {
     const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
-    await createWebhookAdapter("https://hooks.example/waitlist", fetchMock as unknown as typeof fetch).subscribe(
-      entry,
-    );
+    await createWebhookAdapter(
+      "https://hooks.example/waitlist",
+      fetchMock as unknown as typeof fetch,
+    ).subscribe(entry);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://hooks.example/waitlist");
     expect(init.method).toBe("POST");
@@ -130,7 +145,10 @@ describe("adapters", () => {
   it("webhook adapter fails when the endpoint answers with an error", async () => {
     const fetchMock = vi.fn(async () => new Response("no", { status: 500 }));
     await expect(
-      createWebhookAdapter("https://hooks.example/w", fetchMock as unknown as typeof fetch).subscribe(entry),
+      createWebhookAdapter(
+        "https://hooks.example/w",
+        fetchMock as unknown as typeof fetch,
+      ).subscribe(entry),
     ).rejects.toThrow(/HTTP 500/);
   });
 
@@ -156,7 +174,10 @@ describe("adapters", () => {
       createClient: () => ({ contacts: { create } }),
     });
     await expect(adapter.subscribe(entry)).rejects.toThrow(/domain not verified/);
-    expect(create).toHaveBeenCalledWith({ email: "ana@example.com", unsubscribed: false });
+    expect(create).toHaveBeenCalledWith({
+      email: "ana@example.com",
+      unsubscribed: false,
+    });
   });
 });
 
@@ -208,10 +229,12 @@ describe("selectWaitlistAdapter", () => {
       ok: false,
       reason: "misconfigured",
     });
-    expect(selectWaitlistAdapter({ ...base, WAITLIST_ADAPTER: "webhook" })).toMatchObject({
-      ok: false,
-      reason: "misconfigured",
-    });
+    expect(selectWaitlistAdapter({ ...base, WAITLIST_ADAPTER: "webhook" })).toMatchObject(
+      {
+        ok: false,
+        reason: "misconfigured",
+      },
+    );
   });
 });
 
@@ -253,7 +276,10 @@ describe("POST /api/waitlist handler", () => {
 
   it("answers 400 with field errors and stores nothing when validation fails", async () => {
     const { all, subscribe } = deps();
-    const response = await handleWaitlist(request({ email: "bad", consent: false, locale: "en" }), all);
+    const response = await handleWaitlist(
+      request({ email: "bad", consent: false, locale: "en" }),
+      all,
+    );
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
       error: "validation",
@@ -271,7 +297,9 @@ describe("POST /api/waitlist handler", () => {
   });
 
   it("rate limits per IP with Retry-After", async () => {
-    const { all, subscribe } = deps({ limiter: createRateLimiter({ limit: 2, windowMs: 60_000 }) });
+    const { all, subscribe } = deps({
+      limiter: createRateLimiter({ limit: 2, windowMs: 60_000 }),
+    });
     const headers = { "x-forwarded-for": "203.0.113.7, 10.0.0.1" };
     expect((await handleWaitlist(request(valid, headers), all)).status).toBe(200);
     expect((await handleWaitlist(request(valid, headers), all)).status).toBe(200);
@@ -279,18 +307,27 @@ describe("POST /api/waitlist handler", () => {
     expect(blocked.status).toBe(429);
     expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
     expect(subscribe).toHaveBeenCalledTimes(2);
-    const other = await handleWaitlist(request(valid, { "x-forwarded-for": "203.0.113.8" }), all);
+    const other = await handleWaitlist(
+      request(valid, { "x-forwarded-for": "203.0.113.8" }),
+      all,
+    );
     expect(other.status).toBe(200);
   });
 
   it("answers 503 and logs an error when no adapter is configured", async () => {
     const { all, logError } = deps({
-      select: () => ({ ok: false, reason: "not_configured", message: "No waitlist adapter configured." }),
+      select: () => ({
+        ok: false,
+        reason: "not_configured",
+        message: "No waitlist adapter configured.",
+      }),
     });
     const response = await handleWaitlist(request(valid), all);
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ error: "not_configured" });
-    expect(logError).toHaveBeenCalledWith(expect.stringContaining("No waitlist adapter configured"));
+    expect(logError).toHaveBeenCalledWith(
+      expect.stringContaining("No waitlist adapter configured"),
+    );
   });
 
   it("answers 502 and logs when the adapter fails", async () => {
@@ -312,18 +349,30 @@ describe("POST /api/waitlist handler", () => {
 
   it("rejects non-JSON, malformed and oversized bodies", async () => {
     const { all } = deps();
-    expect((await handleWaitlist(request(valid, { "content-type": "text/plain" }), all)).status).toBe(415);
+    expect(
+      (await handleWaitlist(request(valid, { "content-type": "text/plain" }), all))
+        .status,
+    ).toBe(415);
     expect((await handleWaitlist(request(null, {}, "{not json"), all)).status).toBe(400);
-    const huge = await handleWaitlist(request(null, {}, JSON.stringify({ email: "a".repeat(20_000) })), all);
+    const huge = await handleWaitlist(
+      request(null, {}, JSON.stringify({ email: "a".repeat(20_000) })),
+      all,
+    );
     expect(huge.status).toBe(413);
   });
 
   it("rejects cross-origin browser requests", async () => {
     const { all, subscribe } = deps();
-    const response = await handleWaitlist(request(valid, { origin: "https://evil.example" }), all);
+    const response = await handleWaitlist(
+      request(valid, { origin: "https://evil.example" }),
+      all,
+    );
     expect(response.status).toBe(403);
     expect(subscribe).not.toHaveBeenCalled();
-    const sameOrigin = await handleWaitlist(request(valid, { origin: "http://localhost:3000" }), all);
+    const sameOrigin = await handleWaitlist(
+      request(valid, { origin: "http://localhost:3000" }),
+      all,
+    );
     expect(sameOrigin.status).toBe(200);
   });
 

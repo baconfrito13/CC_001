@@ -36,7 +36,13 @@ describe("parseAcceptLanguage", () => {
 
 describe("negotiateLocale", () => {
   it("maps every Portuguese variant to pt", () => {
-    for (const header of ["pt", "pt-PT", "pt-BR", "PT-pt,en;q=0.5", "pt-PT,pt;q=0.9,en;q=0.5"]) {
+    for (const header of [
+      "pt",
+      "pt-PT",
+      "pt-BR",
+      "PT-pt,en;q=0.5",
+      "pt-PT,pt;q=0.9,en;q=0.5",
+    ]) {
       expect(negotiateLocale(header)).toBe("pt");
     }
   });
@@ -94,11 +100,18 @@ describe("locale helpers", () => {
       rest: "/legal/privacy",
     });
     expect(splitLocalePath("/en", ["en", "pt"])).toEqual({ locale: "en", rest: "" });
-    expect(splitLocalePath("/pricing", ["en", "pt"])).toEqual({ locale: null, rest: "/pricing" });
+    expect(splitLocalePath("/pricing", ["en", "pt"])).toEqual({
+      locale: null,
+      rest: "/pricing",
+    });
     expect(splitLocalePath("/", ["en", "pt"])).toEqual({ locale: null, rest: "" });
-    expect(switchLocalePath("/en/legal/terms", "pt", ["en", "pt"])).toBe("/pt/legal/terms");
+    expect(switchLocalePath("/en/legal/terms", "pt", ["en", "pt"])).toBe(
+      "/pt/legal/terms",
+    );
     expect(switchLocalePath("/pt", "en", ["en", "pt"])).toBe("/en");
-    expect(absoluteUrl("pt", "/pricing", "https://acme.example")).toBe("https://acme.example/pt/pricing");
+    expect(absoluteUrl("pt", "/pricing", "https://acme.example")).toBe(
+      "https://acme.example/pt/pricing",
+    );
   });
 });
 
@@ -143,7 +156,13 @@ describe("proxy (locale redirect)", () => {
     const matcher = new RegExp(`^${config.matcher[0]}$`);
     expect(matcher.test("/")).toBe(true);
     expect(matcher.test("/pricing")).toBe(true);
-    for (const path of ["/api/waitlist", "/_next/static/a.js", "/sitemap.xml", "/robots.txt", "/icon.svg"]) {
+    for (const path of [
+      "/api/waitlist",
+      "/_next/static/a.js",
+      "/sitemap.xml",
+      "/robots.txt",
+      "/icon.svg",
+    ]) {
       expect(matcher.test(path)).toBe(false);
     }
   });

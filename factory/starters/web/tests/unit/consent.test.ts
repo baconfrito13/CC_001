@@ -24,15 +24,28 @@ describe("consent storage", () => {
   });
 
   it("ignores missing, malformed or tampered values", () => {
-    for (const raw of [null, undefined, "", "{", "null", '{"v":2,"status":"granted","at":"2026-10-08T10:00:00Z"}']) {
+    for (const raw of [
+      null,
+      undefined,
+      "",
+      "{",
+      "null",
+      '{"v":2,"status":"granted","at":"2026-10-08T10:00:00Z"}',
+    ]) {
       expect(parseStoredConsent(raw, now)).toBeNull();
     }
-    expect(parseStoredConsent('{"v":1,"status":"maybe","at":"2026-10-08T10:00:00Z"}', now)).toBeNull();
-    expect(parseStoredConsent('{"v":1,"status":"granted","at":"yesterday"}', now)).toBeNull();
+    expect(
+      parseStoredConsent('{"v":1,"status":"maybe","at":"2026-10-08T10:00:00Z"}', now),
+    ).toBeNull();
+    expect(
+      parseStoredConsent('{"v":1,"status":"granted","at":"yesterday"}', now),
+    ).toBeNull();
   });
 
   it("builds a first-party cookie with a bounded lifetime", () => {
-    expect(consentCookie("denied", false)).toBe("consent=denied; Path=/; Max-Age=15552000; SameSite=Lax");
+    expect(consentCookie("denied", false)).toBe(
+      "consent=denied; Path=/; Max-Age=15552000; SameSite=Lax",
+    );
     expect(consentCookie("granted", true)).toContain("; Secure");
   });
 

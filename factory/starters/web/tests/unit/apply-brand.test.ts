@@ -60,7 +60,9 @@ describe("parseTokens", () => {
 
   it("reports missing top-level sections", () => {
     expect(() => parseTokens({})).toThrow(/missing "color" object/);
-    expect(() => parseTokens({ color: { light: example.color.light } })).toThrow(/color\.dark/);
+    expect(() => parseTokens({ color: { light: example.color.light } })).toThrow(
+      /color\.dark/,
+    );
     expect(() => parseTokens(null)).toThrow(/JSON object/);
     expect(() => parseTokens([])).toThrow(/JSON object/);
   });
@@ -85,7 +87,9 @@ describe("renderTokensCss", () => {
     const css = renderTokensCss(parseTokens(example));
     expect(css).toMatch(/:root \{[^}]*--brand: #4f46e5;/);
     expect(css).toContain("@media (prefers-color-scheme: dark)");
-    expect(css).toMatch(/@media \(prefers-color-scheme: dark\) \{\s*:root \{[^}]*--brand: #818cf8;/);
+    expect(css).toMatch(
+      /@media \(prefers-color-scheme: dark\) \{\s*:root \{[^}]*--brand: #818cf8;/,
+    );
     for (const key of COLOR_KEYS) expect(css).toContain(`--${key}:`);
     expect(css).toContain("--font-sans:");
     expect(css).toContain("--font-display:");
@@ -124,7 +128,11 @@ describe("run (CLI behaviour)", () => {
   let out: string;
   let stdout: string[];
   let stderr: string[];
-  const io = () => ({ cwd: dir, stdout: (s: string) => stdout.push(s), stderr: (s: string) => stderr.push(s) });
+  const io = () => ({
+    cwd: dir,
+    stdout: (s: string) => stdout.push(s),
+    stderr: (s: string) => stderr.push(s),
+  });
 
   beforeEach(() => {
     dir = mkdtempSync(path.join(tmpdir(), "apply-brand-"));
@@ -146,7 +154,9 @@ describe("run (CLI behaviour)", () => {
   it("resolves the input path relative to the working directory", () => {
     writeFileSync(path.join(dir, "tokens.json"), JSON.stringify(example));
     expect(run(["tokens.json", "--out", "css/out.css"], io())).toBe(0);
-    expect(readFileSync(path.join(dir, "css", "out.css"), "utf8")).toContain("--brand: #4f46e5;");
+    expect(readFileSync(path.join(dir, "css", "out.css"), "utf8")).toContain(
+      "--brand: #4f46e5;",
+    );
   });
 
   it("fails with a clear message and writes nothing when keys are missing", () => {
@@ -193,17 +203,25 @@ describe("run (CLI behaviour)", () => {
   it("runs as a real command (npm run brand:apply uses the same entry point)", () => {
     const input = path.join(dir, "tokens.json");
     writeFileSync(input, JSON.stringify(example));
-    const ok = spawnSync(process.execPath, [path.join(root, "scripts", "apply-brand.mjs"), input, "--out", out], {
-      encoding: "utf8",
-    });
+    const ok = spawnSync(
+      process.execPath,
+      [path.join(root, "scripts", "apply-brand.mjs"), input, "--out", out],
+      {
+        encoding: "utf8",
+      },
+    );
     expect(ok.status).toBe(0);
     expect(readFileSync(out, "utf8")).toContain("--brand: #4f46e5;");
 
     const broken = path.join(dir, "broken.json");
     writeFileSync(broken, JSON.stringify({ color: {} }));
-    const fail = spawnSync(process.execPath, [path.join(root, "scripts", "apply-brand.mjs"), broken], {
-      encoding: "utf8",
-    });
+    const fail = spawnSync(
+      process.execPath,
+      [path.join(root, "scripts", "apply-brand.mjs"), broken],
+      {
+        encoding: "utf8",
+      },
+    );
     expect(fail.status).toBe(1);
     expect(fail.stderr).toContain("Invalid brand tokens");
   });

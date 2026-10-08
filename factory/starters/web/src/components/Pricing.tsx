@@ -5,6 +5,7 @@ import { fill, formatPrice } from "@/lib/format";
 import { localeMeta } from "@/lib/i18n";
 import { primaryCtaHref } from "@/lib/links";
 import { localizedPath } from "@/lib/locale-path";
+import { planActionKind } from "@/lib/plans";
 import { CheckoutButton } from "./CheckoutButton";
 import { Section } from "./Section";
 import { button } from "./ui";
@@ -42,14 +43,16 @@ function PlanAction({
   const planName = plan.name[locale];
   const style = plan.highlighted ? button.primary : button.secondary;
 
-  if (plan.checkoutUrl) {
+  const kind = planActionKind(plan);
+
+  if (kind === "link" && plan.checkoutUrl) {
     return (
       <a href={plan.checkoutUrl} rel="noopener noreferrer" className={`${style} w-full`}>
         {fill(dict.pricing.ctaCheckout, { plan: planName })}
       </a>
     );
   }
-  if (plan.stripePriceId) {
+  if (kind === "stripe") {
     return (
       <CheckoutButton
         planId={plan.id}

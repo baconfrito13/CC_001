@@ -13,12 +13,12 @@
 
 | ID | Check (pass when) | How to verify | N/A when |
 |---|---|---|---|
-| P1 | Lint, typecheck, unit, e2e and production build all pass **[P0]** | commands from `docs/05-build.md`; attach summary lines | never |
+| P1 | Lint, typecheck, unit, e2e and production build all pass **[P0]** | `npm run check` (lint + typecheck + unit + build) and `npm run test:e2e`, or the commands in `docs/05-build.md`; attach summary lines | never |
 | P2 | Every PRD "must" story works end to end **[P1]** | story table in `docs/05-build.md` + e2e names | never |
 | P3 | No placeholders in shipped output **[P1]** | `grep -rniI -e '{{' -e lorem -e TODO -e FIXME -e 'example\.com' -e your-domain -e placeholder <app_dir>/src marketing/copy` → only intentional hits | never |
 | P4 | All locales complete: no missing keys, `lang`/hreflang right, switcher works **[P1]** | Playwright visits each page per locale; compare key sets; pt-PT grep from `08-gtm.md` Step 4 clean | single-locale product |
 | P5 | Empty, loading, error, 404 and 500 states exist, localized, with a way out **[P2]** | visit unknown URL, force an API error | never |
-| P6 | Waitlist/sign-up: validation, double opt-in or confirmation, consent text stored with timestamp, unsubscribe works **[P0]** | submit twice, confirm email, unsubscribe | no collection of emails |
+| P6 | Waitlist/sign-up: validation, explicit consent checkbox, consent timestamp stored (starter: `consentAt`), duplicate handling, rate limit, unsubscribe path works (confirmation email if the product requires double opt-in) **[P0]** | submit twice, hit the endpoint in a burst, unsubscribe from the provider's link | no collection of emails |
 | P7 | Mobile/extension: installs on device/emulator, permissions minimal and justified **[P1]** | EAS preview build / unpacked extension run; permission list reviewed | `type` is not mobile/extension |
 
 ## 2. Legal and privacy
@@ -39,7 +39,7 @@
 |---|---|---|---|
 | M1 | Monetization path configured: plans in `src/config/site.ts` with env-driven `checkoutUrl` or `stripePriceId` (or documented free model) **[P1]** | read config; env names in `docs/05-build.md` | free product with no payment |
 | M2 | Test-mode flow passes twice: purchase → webhook/redirect → access → receipt → refund → access revoked → cancel **[P0]** | Playwright + provider test dashboard; evidence per step | no payment |
-| M3 | Webhook verifies the signature on the raw body and is idempotent (replaying an event does not double-grant) **[P0]** | unit test + `stripe trigger` / provider replay | no webhook (pure `checkoutUrl`) |
+| M3 | Webhook verifies the signature on the raw body (starter does) and `onPaymentEvent` is implemented and idempotent (replaying an event does not double-grant) **[P0]** | unit test + `stripe trigger` / provider replay | no webhook (pure `checkoutUrl`, access managed outside the app) |
 | M4 | Price shown on the site = price at checkout, VAT-inclusive for consumers; currency correct **[P0]** | compare pricing page to hosted checkout in test mode | B2B-only with explicit "sem IVA" labelling |
 | M5 | Failure paths: declined card, abandoned checkout, delayed payment method, provider outage show a clear message **[P1]** | test cards / forced errors | no payment |
 | M6 | No secret keys or webhook secrets in client bundle or repo **[P0]** | `grep -rE -e 'sk_live_' -e 'sk_test_' -e 'whsec_' .next/static public` and a history scan (gitleaks / GitHub secret scanning) = none | never |
@@ -82,7 +82,7 @@
 | ID | Check (pass when) | How to verify | N/A when |
 |---|---|---|---|
 | S1 | Unique `<title>` ≤ 60 and meta description ≤ 155 per page **and** locale; one `<h1>` per page **[P1]** | crawl script over sitemap URLs | never |
-| S2 | `hreflang` pairs + canonical correct; `sitemap.xml` lists every indexable URL per locale; `robots.txt` allows production and **preview is `noindex`** **[P1]** | fetch files; check `X-Robots-Tag` on preview | single locale (still canonical/sitemap) |
+| S2 | `hreflang` pairs + canonical correct; `sitemap.xml` lists every indexable URL per locale; `robots.txt` allows production and **preview is `noindex`** (the starter's `robots.ts` allows everything: add a `noindex` header for non-production hosts) **[P1]** | fetch files; check `X-Robots-Tag` on the preview URL | single locale (still canonical/sitemap) |
 | S3 | OG/Twitter image 1200×630 per page; share preview correct **[P2]** | fetch `og:image`; Playwright screenshot | never |
 | S4 | JSON-LD valid (`Organization`, `SoftwareApplication`/`Product`, `FAQPage` where FAQ exists) **[P2]** | schema validator output | never |
 | S5 | Unknown URLs return HTTP 404; redirects are 301/308; no broken internal links **[P1]** | link crawler (e.g. `linkinator`) = 0 broken | never |
@@ -92,7 +92,7 @@
 
 | ID | Check (pass when) | How to verify | N/A when |
 |---|---|---|---|
-| A1 | Analytics events (`page_view`, `cta_click`, `waitlist_joined`/`signup`, `checkout_started`, `purchase`) arrive, with `locale` and `utm_*`; no PII in events **[P1]** | Playwright run + provider query/API | never |
+| A1 | Analytics provider loads only per consent; page views and the planned events (`cta_click`, `waitlist_joined`/`signup`, `checkout_started`, `purchase`) arrive, with `locale` and `utm_*`; no PII in events (the starter itself only sends page views — custom events are added at Integration) **[P1]** | Playwright run + provider query/API | analytics deliberately off (state it in the privacy policy) |
 | A2 | UTM captured on first visit and persisted to signup/purchase **[P2]** | e2e with `?utm_source=test` | no signup/purchase |
 | O1 | Error monitoring enabled by env DSN; a deliberate test error appears; PII scrubbed **[P1]** | Sentry event id in evidence | never |
 | O2 | `/api/health` returns 200 and checks dependencies without leaking secrets; log access documented **[P1]** | `curl` | static site with no backend |

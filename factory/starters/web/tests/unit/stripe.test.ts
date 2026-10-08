@@ -18,7 +18,12 @@ const plan = (overrides: Partial<PricingPlan>): PricingPlan => ({
 
 const plans = [
   plan({ id: "pro", stripePriceId: "price_pro_monthly" }),
-  plan({ id: "lifetime", interval: "one_time", price: 99, stripePriceId: "price_lifetime" }),
+  plan({
+    id: "lifetime",
+    interval: "one_time",
+    price: 99,
+    stripePriceId: "price_lifetime",
+  }),
   plan({ id: "link", checkoutUrl: "https://pay.example/buy" }),
   plan({ id: "free", price: 0 }),
 ];
@@ -33,7 +38,9 @@ function checkoutRequest(body: unknown, headers: Record<string, string> = {}) {
 
 describe("POST /api/checkout", () => {
   function setup() {
-    const create = vi.fn(async () => ({ url: "https://checkout.stripe.com/c/pay/cs_test_1" }));
+    const create = vi.fn(async () => ({
+      url: "https://checkout.stripe.com/c/pay/cs_test_1",
+    }));
     const client: CheckoutClient = { checkout: { sessions: { create } } };
     const logError = vi.fn();
     return {
@@ -45,10 +52,13 @@ describe("POST /api/checkout", () => {
 
   it("answers 501 with a clear message when Stripe is not configured", async () => {
     const { deps } = setup();
-    const response = await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }), {
-      ...deps,
-      getClient: () => null,
-    });
+    const response = await handleCheckout(
+      checkoutRequest({ planId: "pro", locale: "en" }),
+      {
+        ...deps,
+        getClient: () => null,
+      },
+    );
     expect(response.status).toBe(501);
     const body = await response.json();
     expect(body.error).toBe("stripe_not_configured");
@@ -57,14 +67,20 @@ describe("POST /api/checkout", () => {
 
   it("creates a subscription session with localized return URLs", async () => {
     const { deps, create } = setup();
-    const response = await handleCheckout(checkoutRequest({ planId: "pro", locale: "pt" }), deps);
+    const response = await handleCheckout(
+      checkoutRequest({ planId: "pro", locale: "pt" }),
+      deps,
+    );
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ url: "https://checkout.stripe.com/c/pay/cs_test_1" });
+    expect(await response.json()).toEqual({
+      url: "https://checkout.stripe.com/c/pay/cs_test_1",
+    });
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: "subscription",
         line_items: [{ price: "price_pro_monthly", quantity: 1 }],
-        success_url: "https://acme.example/pt/pricing?checkout=success&session_id={CHECKOUT_SESSION_ID}",
+        success_url:
+          "https://acme.example/pt/pricing?checkout=success&session_id={CHECKOUT_SESSION_ID}",
         cancel_url: "https://acme.example/pt/pricing?checkout=cancelled",
         locale: "pt",
         metadata: { planId: "pro", locale: "pt" },
@@ -85,7 +101,10 @@ describe("POST /api/checkout", () => {
   it("answers 404 for unknown plans and plans without a stripePriceId", async () => {
     const { deps, create } = setup();
     for (const planId of ["missing", "link", "free"]) {
-      const response = await handleCheckout(checkoutRequest({ planId, locale: "en" }), deps);
+      const response = await handleCheckout(
+        checkoutRequest({ planId, locale: "en" }),
+        deps,
+      );
       expect(response.status).toBe(404);
     }
     expect(create).not.toHaveBeenCalled();
@@ -93,32 +112,54 @@ describe("POST /api/checkout", () => {
 
   it("validates the body, content type and origin", async () => {
     const { deps } = setup();
-    expect((await handleCheckout(checkoutRequest({ planId: "pro" }), deps)).status).toBe(400);
-    expect((await handleCheckout(checkoutRequest({ planId: "pro", locale: "xx" }), deps)).status).toBe(400);
+    expect((await handleCheckout(checkoutRequest({ planId: "pro" }), deps)).status).toBe(
+      400,
+    );
     expect(
-      (await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }, { "content-type": "text/plain" }), deps))
+      (await handleCheckout(checkoutRequest({ planId: "pro", locale: "xx" }), deps))
         .status,
+    ).toBe(400);
+    expect(
+      (
+        await handleCheckout(
+          checkoutRequest(
+            { planId: "pro", locale: "en" },
+            { "content-type": "text/plain" },
+          ),
+          deps,
+        )
+      ).status,
     ).toBe(415);
     expect(
-      (await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }, { origin: "https://evil.example" }), deps))
-        .status,
+      (
+        await handleCheckout(
+          checkoutRequest(
+            { planId: "pro", locale: "en" },
+            { origin: "https://evil.example" },
+          ),
+          deps,
+        )
+      ).status,
     ).toBe(403);
   });
 
   it("answers 502 and logs when Stripe fails", async () => {
     const { deps, logError } = setup();
-    const response = await handleCheckout(checkoutRequest({ planId: "pro", locale: "en" }), {
-      ...deps,
-      getClient: () => ({
-        checkout: {
-          sessions: {
-            create: async () => {
-              throw new Error("stripe down");
+    const response = await handleCheckout(
+      checkoutRequest({ planId: "pro", locale: "en" }),
+      {
+        ...deps,
+        getClient: () => ({
+          checkout: {
+            sessions: {
+              create: async () => {
+                throw new Error("stripe down");
+              },
             },
           },
-        },
-      }),
-    });
+        }),
+      },
+    );
     expect(response.status).toBe(502);
     expect(logError).toHaveBeenCalled();
   });
@@ -146,7 +187,10 @@ describe("POST /api/webhooks/stripe", () => {
     return new Request("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
       headers: {
-        "stripe-signature": stripe.webhooks.generateTestHeaderString({ payload, secret: signingSecret }),
+        "stripe-signature": stripe.webhooks.generateTestHeaderString({
+          payload,
+          secret: signingSecret,
+        }),
       },
       body: payload,
     });
@@ -155,7 +199,11 @@ describe("POST /api/webhooks/stripe", () => {
   function setup() {
     const onEvent = vi.fn(async (_event: PaymentEvent) => {});
     const logError = vi.fn();
-    return { onEvent, logError, deps: { getClient: () => stripe, secret: () => secret, onEvent, logError } };
+    return {
+      onEvent,
+      logError,
+      deps: { getClient: () => stripe, secret: () => secret, onEvent, logError },
+    };
   }
 
   it("verifies the signature against the raw body and forwards checkout.session.completed", async () => {
@@ -172,13 +220,18 @@ describe("POST /api/webhooks/stripe", () => {
     expect(onEvent).toHaveBeenCalledOnce();
     const forwarded = onEvent.mock.calls[0]?.[0];
     expect(forwarded).toMatchObject({ type: "checkout.completed", planId: "pro" });
-    expect(forwarded?.type === "checkout.completed" && forwarded.session.id).toBe("cs_test_1");
+    expect(forwarded?.type === "checkout.completed" && forwarded.session.id).toBe(
+      "cs_test_1",
+    );
   });
 
   it("forwards customer.subscription.created / updated / deleted", async () => {
     const { deps, onEvent } = setup();
     for (const suffix of ["created", "updated", "deleted"]) {
-      const payload = event(`customer.subscription.${suffix}`, { id: "sub_1", object: "subscription" });
+      const payload = event(`customer.subscription.${suffix}`, {
+        id: "sub_1",
+        object: "subscription",
+      });
       expect((await handleStripeWebhook(signed(payload), deps)).status).toBe(200);
     }
     expect(onEvent.mock.calls.map(([e]) => e.type)).toEqual([
@@ -190,16 +243,24 @@ describe("POST /api/webhooks/stripe", () => {
 
   it("acknowledges but ignores other event types", async () => {
     const { deps, onEvent } = setup();
-    const response = await handleStripeWebhook(signed(event("invoice.paid", { id: "in_1", object: "invoice" })), deps);
+    const response = await handleStripeWebhook(
+      signed(event("invoice.paid", { id: "in_1", object: "invoice" })),
+      deps,
+    );
     expect(response.status).toBe(200);
     expect(onEvent).not.toHaveBeenCalled();
   });
 
   it("rejects a bad signature, a tampered body and a missing signature with 400", async () => {
     const { deps, onEvent } = setup();
-    const payload = event("customer.subscription.created", { id: "sub_1", object: "subscription" });
+    const payload = event("customer.subscription.created", {
+      id: "sub_1",
+      object: "subscription",
+    });
 
-    expect((await handleStripeWebhook(signed(payload, "whsec_other"), deps)).status).toBe(400);
+    expect((await handleStripeWebhook(signed(payload, "whsec_other"), deps)).status).toBe(
+      400,
+    );
 
     const tampered = new Request("http://localhost:3000/api/webhooks/stripe", {
       method: "POST",
@@ -208,7 +269,10 @@ describe("POST /api/webhooks/stripe", () => {
     });
     expect((await handleStripeWebhook(tampered, deps)).status).toBe(400);
 
-    const unsigned = new Request("http://localhost:3000/api/webhooks/stripe", { method: "POST", body: payload });
+    const unsigned = new Request("http://localhost:3000/api/webhooks/stripe", {
+      method: "POST",
+      body: payload,
+    });
     expect((await handleStripeWebhook(unsigned, deps)).status).toBe(400);
     expect(onEvent).not.toHaveBeenCalled();
   });
@@ -216,8 +280,14 @@ describe("POST /api/webhooks/stripe", () => {
   it("answers 501 when the secret or the client is missing", async () => {
     const { deps } = setup();
     const payload = event("invoice.paid", { id: "in_1", object: "invoice" });
-    expect((await handleStripeWebhook(signed(payload), { ...deps, secret: () => undefined })).status).toBe(501);
-    expect((await handleStripeWebhook(signed(payload), { ...deps, getClient: () => null })).status).toBe(501);
+    expect(
+      (await handleStripeWebhook(signed(payload), { ...deps, secret: () => undefined }))
+        .status,
+    ).toBe(501);
+    expect(
+      (await handleStripeWebhook(signed(payload), { ...deps, getClient: () => null }))
+        .status,
+    ).toBe(501);
   });
 
   it("answers 500 when the onPaymentEvent hook throws, so Stripe retries", async () => {
@@ -228,16 +298,33 @@ describe("POST /api/webhooks/stripe", () => {
         throw new Error("db down");
       },
     };
-    const payload = event("customer.subscription.deleted", { id: "sub_1", object: "subscription" });
+    const payload = event("customer.subscription.deleted", {
+      id: "sub_1",
+      object: "subscription",
+    });
     expect((await handleStripeWebhook(signed(payload), failing)).status).toBe(500);
     expect(logError).toHaveBeenCalled();
   });
 
   it("toPaymentEvent maps only the supported events", () => {
     const base = { id: "evt", object: "event", data: { object: {} } };
-    expect(toPaymentEvent({ ...base, type: "invoice.paid" } as unknown as Stripe.Event)).toBeNull();
     expect(
-      toPaymentEvent({ ...base, type: "customer.subscription.updated" } as unknown as Stripe.Event)?.type,
+      toPaymentEvent({ ...base, type: "invoice.paid" } as unknown as Stripe.Event),
+    ).toBeNull();
+    expect(
+      toPaymentEvent({
+        ...base,
+        type: "customer.subscription.updated",
+      } as unknown as Stripe.Event)?.type,
     ).toBe("subscription.updated");
+  });
+});
+
+describe("planActionKind", () => {
+  it("picks the pricing button behaviour from the plan configuration", async () => {
+    const { planActionKind } = await import("@/lib/plans");
+    expect(planActionKind({ checkoutUrl: "https://pay.example/buy" })).toBe("link");
+    expect(planActionKind({ stripePriceId: "price_123" })).toBe("stripe");
+    expect(planActionKind({})).toBe("waitlist");
   });
 });

@@ -3,18 +3,18 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { config, supportedLocales } from "@/config/site";
 import {
+  getPublishedLegalDocs,
   LEGAL_CONTENT_DIR,
   LEGAL_DOCS,
-  getPublishedLegalDocs,
   readLegalSource,
   renderLegalDoc,
   renderLegalMarkdown,
 } from "@/lib/legal";
 import {
-  PLACEHOLDER_KEYS,
-  UnreplacedPlaceholderError,
   applyPlaceholders,
   buildPlaceholderMap,
+  PLACEHOLDER_KEYS,
+  UnreplacedPlaceholderError,
 } from "@/lib/placeholders";
 
 const EXPECTED_KEYS = [
@@ -44,7 +44,9 @@ const EXPECTED_KEYS = [
 describe("placeholder map", () => {
   it("exposes exactly the documented flattened keys", () => {
     expect([...PLACEHOLDER_KEYS]).toEqual(EXPECTED_KEYS);
-    expect(Object.keys(buildPlaceholderMap(config)).sort()).toEqual([...EXPECTED_KEYS].sort());
+    expect(Object.keys(buildPlaceholderMap(config)).sort()).toEqual(
+      [...EXPECTED_KEYS].sort(),
+    );
   });
 
   it("flattens config values and never produces an empty value", () => {
@@ -63,10 +65,16 @@ describe("placeholder map", () => {
   });
 
   it("localizes dates and localized values for a locale", () => {
-    const pt = buildPlaceholderMap({ ...config, legal: { ...config.legal, effectiveDate: "2026-03-05" } }, "pt");
+    const pt = buildPlaceholderMap(
+      { ...config, legal: { ...config.legal, effectiveDate: "2026-03-05" } },
+      "pt",
+    );
     expect(pt["legal.effectiveDate"]).toBe("5 de março de 2026");
     expect(pt["legal.governingLaw"]).toBe(config.legal.governingLaw.pt);
-    const en = buildPlaceholderMap({ ...config, legal: { ...config.legal, effectiveDate: "2026-03-05" } }, "en");
+    const en = buildPlaceholderMap(
+      { ...config, legal: { ...config.legal, effectiveDate: "2026-03-05" } },
+      "en",
+    );
     expect(en["legal.effectiveDate"]).toBe("5 March 2026");
   });
 });
@@ -75,24 +83,37 @@ describe("applyPlaceholders", () => {
   const values = { "site.name": "Acme", "company.legalName": "Acme, Lda." };
 
   it("replaces every occurrence, tolerating inner whitespace", () => {
-    expect(applyPlaceholders("{{site.name}} by {{ company.legalName }} - {{site.name}}", values)).toBe(
-      "Acme by Acme, Lda. - Acme",
-    );
+    expect(
+      applyPlaceholders(
+        "{{site.name}} by {{ company.legalName }} - {{site.name}}",
+        values,
+      ),
+    ).toBe("Acme by Acme, Lda. - Acme");
   });
 
   it("throws, listing the key, when a placeholder is unknown", () => {
-    expect(() => applyPlaceholders("Hello {{site.nme}}", values)).toThrow(UnreplacedPlaceholderError);
+    expect(() => applyPlaceholders("Hello {{site.nme}}", values)).toThrow(
+      UnreplacedPlaceholderError,
+    );
     expect(() => applyPlaceholders("Hello {{site.nme}}", values)).toThrow(/site\.nme/);
   });
 
   it("throws on malformed or half-open placeholders left in the text", () => {
-    expect(() => applyPlaceholders("Hello {{site.name", values)).toThrow(UnreplacedPlaceholderError);
-    expect(() => applyPlaceholders("Hello site.name}}", values)).toThrow(UnreplacedPlaceholderError);
-    expect(() => applyPlaceholders("Hello {{ }}", values)).toThrow(UnreplacedPlaceholderError);
+    expect(() => applyPlaceholders("Hello {{site.name", values)).toThrow(
+      UnreplacedPlaceholderError,
+    );
+    expect(() => applyPlaceholders("Hello site.name}}", values)).toThrow(
+      UnreplacedPlaceholderError,
+    );
+    expect(() => applyPlaceholders("Hello {{ }}", values)).toThrow(
+      UnreplacedPlaceholderError,
+    );
   });
 
   it("does not treat Object.prototype keys as values", () => {
-    expect(() => applyPlaceholders("{{constructor}}", values)).toThrow(UnreplacedPlaceholderError);
+    expect(() => applyPlaceholders("{{constructor}}", values)).toThrow(
+      UnreplacedPlaceholderError,
+    );
   });
 
   it("fails loudly when a value itself contains a placeholder", () => {
@@ -113,9 +134,9 @@ describe("legal documents", () => {
   });
 
   it("refuses to render a document with an unreplaced placeholder", () => {
-    expect(() => renderLegalMarkdown("Contact {{contact.phone}}", buildPlaceholderMap(config))).toThrow(
-      /contact\.phone/,
-    );
+    expect(() =>
+      renderLegalMarkdown("Contact {{contact.phone}}", buildPlaceholderMap(config)),
+    ).toThrow(/contact\.phone/);
   });
 
   it("ships every document in every locale, and nothing else", () => {
@@ -130,7 +151,11 @@ describe("legal documents", () => {
       it(`renders ${locale}/${doc} completely, marked as a template`, () => {
         const source = readLegalSource(locale, doc);
         const firstLine = source.split("\n")[0] ?? "";
-        expect(firstLine).toMatch(locale === "en" ? /Template — replaced by the factory legal phase/ : /Modelo — substituído pela fase legal da fábrica/);
+        expect(firstLine).toMatch(
+          locale === "en"
+            ? /Template — replaced by the factory legal phase/
+            : /Modelo — substituído pela fase legal da fábrica/,
+        );
 
         const html = renderLegalDoc(locale, doc);
         expect(html).not.toMatch(/\{\{|\}\}/);
@@ -152,6 +177,11 @@ describe("legal documents", () => {
   it("only publishes the withdrawal policy when selling to consumers", () => {
     expect(getPublishedLegalDocs(config)).toContain("withdrawal");
     const b2b = { ...config, legal: { ...config.legal, sellsToConsumers: false } };
-    expect(getPublishedLegalDocs(b2b)).toEqual(["privacy", "terms", "cookies", "legal-notice"]);
+    expect(getPublishedLegalDocs(b2b)).toEqual([
+      "privacy",
+      "terms",
+      "cookies",
+      "legal-notice",
+    ]);
   });
 });

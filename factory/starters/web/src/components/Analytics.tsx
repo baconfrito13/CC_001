@@ -31,9 +31,14 @@ export function posthogAssetsHost(apiHost: string): string {
   return apiHost.replace(".i.posthog.com", "-assets.i.posthog.com");
 }
 
+/** A JavaScript string literal that is also safe inside an inline <script> element. */
+function jsString(value: string): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 /**
  * Minimal PostHog loader (the official snippet without the method stubs we never call).
- * Key and host are embedded with JSON.stringify so they cannot break out of the script.
+ * Key and host are embedded as escaped string literals so they cannot break out of the script.
  */
 export function posthogSnippet(key: string, apiHost: string): string {
   return `(function(w,d){
@@ -43,10 +48,10 @@ ph._i=[];ph.__SV=1;
 ph.init=function(token,config,name){
 ph._i.push([token,config,name]);
 var s=d.createElement("script");s.async=true;s.crossOrigin="anonymous";
-s.src=${JSON.stringify(`${posthogAssetsHost(apiHost)}/static/array.js`)};
+s.src=${jsString(`${posthogAssetsHost(apiHost)}/static/array.js`)};
 d.head.appendChild(s);
 };
-ph.init(${JSON.stringify(key)},{api_host:${JSON.stringify(apiHost)},defaults:"2025-05-24",person_profiles:"identified_only"});
+ph.init(${jsString(key)},{api_host:${jsString(apiHost)},defaults:"2025-05-24",person_profiles:"identified_only"});
 })(window,document);`;
 }
 

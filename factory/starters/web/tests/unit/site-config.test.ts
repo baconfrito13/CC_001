@@ -119,17 +119,26 @@ describe("site config schema", () => {
     posthog.analytics = { provider: "posthog" };
     expect(() => parseSiteConfig(posthog)).toThrow(/posthogKey/);
     posthog.analytics.posthogKey = "phc_123";
-    expect(parseSiteConfig(posthog).analytics.posthogHost).toBe("https://eu.i.posthog.com");
+    expect(parseSiteConfig(posthog).analytics.posthogHost).toBe(
+      "https://eu.i.posthog.com",
+    );
 
     const none = draft();
     none.analytics = {};
-    expect(parseSiteConfig(none).analytics).toMatchObject({ provider: "none", cookieless: false });
+    expect(parseSiteConfig(none).analytics).toMatchObject({
+      provider: "none",
+      cookieless: false,
+    });
   });
 
   it("defaults feature flags", () => {
     const input = draft();
     input.features = {};
-    expect(parseSiteConfig(input).features).toEqual({ waitlist: true, pricing: true, blog: false });
+    expect(parseSiteConfig(input).features).toEqual({
+      waitlist: true,
+      pricing: true,
+      blog: false,
+    });
   });
 
   it("only accepts valid social URLs", () => {

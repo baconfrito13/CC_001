@@ -9,7 +9,7 @@ Decide who the product is for, why it wins, where the first 100 customers come f
 ## Before you start
 
 1. Read `factory/LEARNINGS.md`, `FOUNDER.md` (own audience, networks, hours/week, budget, `go_live`), `product.json` (`type`, depth), `docs/02-product.md` (locales, default `en` + `pt-PT`), `docs/03-brand.md` (voice, tagline, pt-PT glossary), `docs/02-business.md` (price, `target CAC`, break-even), `docs/research/{competitors,audience}.md` (competitor alternatives, community names, customers' own words).
-2. Decide the **mode**: `waitlist` (payments not live; CTA = join the waitlist) or `live` (CTA = start/buy). Write it at the top of `docs/08-gtm.md`; the copy for both CTAs is prepared, the mode switches in phase 09.
+2. Decide the **mode**: `waitlist` (payments not live; plans without `checkoutUrl`/`stripePriceId` fall back to the waitlist CTA in the starter) or `live` (CTA = start/buy). Write it at the top of `docs/08-gtm.md`; the copy for both CTAs is prepared, the mode switches in phase 09 by setting the plans' checkout fields.
 3. Tools: `ToolSearch select:WebSearch,WebFetch`. Optional: Figma MCP (`mcp__Figma__whoami`; load the `figma-use` skill before `use_figma`) for social/OG images; OpusClip MCP (`opusclip_whoami`, `opusclip_get_usage`) for clips — **its MCP/API needs a Pro, Max or Enterprise plan** (<https://www.opus.pro/pricing>); if the call fails or the plan lacks it, skip video and note it.
 4. Rules of the road: every claim is true and sourced (URL + date) or removed; no invented testimonials, user counts, logos, awards or scarcity; no copy that promises what the PRD does not ship; comply with GDPR/ePrivacy (Step 9) and platform rules (Step 11). `docs/08-gtm.md` is pt-PT (founder-facing); marketing assets are written **natively** in each target locale, never machine-translated.
 5. `python3 factory/scripts/factory.py set-phase <slug> gtm in_progress --summary "gtm started"`. Scratch files in `$SCRATCH`.
@@ -39,28 +39,31 @@ Write a one-page ICP: who (role/situation, size, geography/language), **trigger 
 Voice from `docs/03-brand.md`; keep the glossary. Hooks bank: 10 problem-first hooks, 10 outcome-first hooks (used by social/email/ads).
 
 ### Step 4 — Landing copy in every locale → `marketing/copy/landing.<locale>.md`
-One file per locale (`en`, `pt-PT`, others from `docs/02-product.md`), final and ready to paste into the web starter's sections. If the starter ships a copy/messages schema (`src/content/**` or i18n messages), match its keys exactly; otherwise use this format (keys on their own line so the lint in Step 18 can count characters):
+**Locale codes:** `<locale>` in every `marketing/` file name is the web starter's locale code (`src/config/site.ts` `supportedLocales`): `en` and `pt` (`pt` = European Portuguese, rendered as `pt-PT` in `<html lang>`/hreflang). Product-specific extra locales follow `docs/02-product.md`.
+One file per locale, final and ready to be copied **key by key** into the starter's dictionary (`src/content/<locale>.ts`, interface `Dictionary` in `src/content/types.ts`) and plans (`src/config/site.ts` `pricing.plans[]`). Use exactly the starter's key names so integration is mechanical; `{name}`, `{company}`, `{year}`, `{date}` placeholders are allowed. If the starter's `types.ts` has changed, `types.ts` wins. Format (one `key: value` per line so the lint in Step 18 can count characters):
 ```
 ---
-locale: pt-PT
+locale: pt                # pt = pt-PT
 mode: waitlist            # or live
 ---
-## seo                    # one block per page: /, /pricing, /blog, /about, /contact (+ legal pages: title/description only)
-- page: /
-  title: …                # ≤ 60 chars: primary keyword + brand
-  description: …          # ≤ 155 chars, benefit + action
-  og_title: …
-## hero      eyebrow · h1 (≤ 12 words) · subhead (≤ 30 words) · cta_primary · cta_secondary · proof_line
-## problem   h2 · 3 pain bullets in the customer's words (PAS: problem, agitate, solve)
-## features  h2 · 3–6 × {title ≤ 5 words, body ≤ 25 words, benefit first}
-## how-it-works  h2 · 3 steps × {title ≤ 4 words, body ≤ 20 words}
-## pricing   h2 · per plan {name, price string "9 € / mês · IVA incluído", 4–6 bullets, cta} · billing note · guarantee · payment methods
-## faq       6–8 × {q, a ≤ 60 words}: price/VAT, refund, data & privacy, cancellation, support, "why not X", AI/limits, languages
-## cta       h2 · one line · button (same action as the hero) · risk reversal
-## waitlist  label · placeholder · button · consent line · success · error · already-registered
+## meta                   # Dictionary.meta; lengths counted after {name} is replaced by the real name
+homeTitle: …              # <title> of /, ≤ 60 chars: primary keyword + {name}
+description: …            # ≤ 155 chars, benefit + action
+pricingTitle: …           # ≤ 60
+pricingDescription: …     # ≤ 155
+ogCaption: …              # ≤ 40
+## hero                   # eyebrow · title (≤ 12 words) · subtitle (≤ 30 words) · primaryCta · secondaryCta · note
+## problem                # title · intro · items[3] {title ≤ 5 words, body ≤ 25 words}  (PAS: problem, agitate, solve)
+## features               # title · intro · items[3–6] {title ≤ 5 words, body ≤ 25 words, benefit first}
+## howItWorks             # title · intro · steps[3] {title ≤ 4 words, body ≤ 20 words}
+## pricing                # section labels (title, intro, teaserTitle/Intro/Cta, perMonth, perYear, oneTime, free, mostPopular, ctaCheckout, ctaWaitlist, ctaContact, taxNote, included, checkout* messages) +
+## plans                  # per plan id: name · description · features[4–6] (these go to site.ts `pricing.plans[]`, localized); price strings stay numeric in site.ts
+## faq                    # title · intro · items[6–8] {question, answer ≤ 60 words}: price/VAT, refund, data & privacy, cancellation, support, "why not X", AI/limits, languages
+## cta                    # title · body (same action as the hero)
+## waitlist               # emailLabel · emailPlaceholder · submit · consentPrefix · consentLinkText · consentSuffix · successTitle · successBody (+ errors if the defaults need tuning)
 ```
-Rules: one primary action per page; hero says *who + outcome + how in 5 seconds*; benefits before features; reading level ≈ grade 8; second-person singular; specific numbers; no superlatives without proof; the waitlist asks for **email only**, with an explicit consent line (purpose + how to withdraw + link to the privacy policy), double opt-in on; CTA labels name the outcome ("Quero a lista de espera", "Começar grátis"), not "Submit". Prices are VAT-inclusive for consumers (monetization.md Step 7); a launch discount names its end date and uses no fake reference price.
-**pt-PT quality gate** (blocking): genuine European Portuguese, AO90 spelling, *tu* for B2C and neutral/impersonal forms for B2B/finance/health/legal, **never "você"**. Banned (Brazilianisms): você/vocês, tela, celular, arquivo, usuário, baixar/download→descarregar/transferir, cadastro/cadastrar→registo/registar, senha→palavra-passe, login→iniciar sessão, assinatura→subscrição, equipe/time→equipa, gerenciar→gerir, deletar→eliminar, salvar→guardar, compartilhar→partilhar, recurso (=feature)→funcionalidade, planilha→folha de cálculo, nota fiscal→fatura, CPF→NIF, "estou fazendo/vou fazendo"→"estou a fazer". Run the check on all pt-PT files (`grep -niE "\b(você|vocês|tela|celular|arquivo|usuário|baixar|cadastr|senha|assinatura|equipe|gerenci|deletar|salvar|compartilh|planilha)\b"`).
+Keep what the starter already provides well (consent banner, footer, legal labels, a11y strings) unless the brand voice needs changes; list any such overrides under `## overrides`. Rules: one primary action per page; hero says *who + outcome + how in 5 seconds*; benefits before features; reading level ≈ grade 8; second-person singular; specific numbers; no superlatives without proof; the waitlist asks for **email only**, with the explicit consent line (purpose + how to withdraw + privacy-policy link; the starter stores `consentAt` — add a confirmation email only if the product needs double opt-in); CTA labels name the outcome ("Quero entrar na lista", "Começar grátis"), not "Submit". Prices are VAT-inclusive for consumers (`monetization.md` Step 7) and `taxNote` says so truthfully; a launch discount names its end date and uses no fake reference price.
+**pt-PT quality gate** (blocking): genuine European Portuguese, AO90 spelling, *tu* for B2C and neutral/impersonal forms for B2B/finance/health/legal, **never "você"**. Banned (Brazilianisms): você/vocês, tela, celular, arquivo, usuário, baixar/download→descarregar/transferir, cadastro/cadastrar→registo/registar, senha→palavra-passe, login→iniciar sessão, assinatura→subscrição, equipe/time→equipa, gerenciar→gerir, deletar→eliminar, salvar→guardar, compartilhar→partilhar, recurso (=feature)→funcionalidade, planilha→folha de cálculo, nota fiscal→fatura, CPF→NIF, "estou fazendo/vou fazendo"→"estou a fazer". Run the check on all `pt` files (`grep -rniE "\b(você|vocês|tela|celular|arquivo|usuário|baixar|senha|assinatura|equipe|deletar|salvar|planilha)\b|cadastr|gerenci|compartilh" marketing/ <app_dir>/src/content`; review each hit).
 
 ### Step 5 — Channel selection (Bullseye framework, 19 traction channels)
 1. For each of the 19 channels write one concrete idea for *this* product (or "n/a" with a reason). Channels: viral marketing · publicity (PR) · unconventional PR · SEM · social & display ads · offline ads · SEO · content marketing · email marketing · engineering as marketing (free tools) · targeting blogs/newsletters · business development/partnerships · sales (outbound) · affiliate programs · existing platforms (stores, marketplaces, directories) · trade shows · offline events · speaking/podcasts · community building.
@@ -112,7 +115,7 @@ Prepare one file per platform, copy-paste ready, with the founder's batch ID in 
 - **Maker first comment** (150–250 words): who you are, the pain, what it does, what is free, what is next, one specific feedback question. Ask for feedback, never for upvotes ("the only real rule: you cannot ask people directly to upvote").
 - 10 prepared answers to likely questions (price, privacy, alternatives, roadmap, tech, AI use, data location, refunds, support, who is it for).
 - Product URL must be **plain: shortened and tracking links are not accepted** — create a dedicated landing path (e.g. `/ph`) for attribution. Accounts are personal (company accounts are prohibited); a hunter is optional; scheduling is possible up to 1 month ahead.
-- Timing: the launch day starts at **12:01 AM Pacific = 08:01 Lisbon** (07:01 during the 1–3 weeks when US and EU daylight-saving dates differ). Pick the day you are most prepared; Tue–Thu is the usual heuristic for traffic.
+- Timing: the launch day starts at **12:01 AM Pacific = 08:01 Lisbon** (07:01 during the 1–3 weeks when US and EU daylight-saving dates differ). Pick the day you are most prepared; sources disagree on weekdays (Tue/Wed for total traffic, weekends for an easier daily rank), so choose by goal and avoid clashing with big launches.
 - Launch-day schedule (Lisbon) in `schedule.md`: T-1 final checks · 08:01 live + first comment · reply to every comment within 30 min until 22:00 · 09:00 LinkedIn/X post · 10:30 email to the waitlist · 13:00 community posts · 17:00 progress update · 22:00 thank-you post + metrics snapshot into `docs/10-growth.md`.
 
 **Show HN → `showhn.md`** (rules: <https://news.ycombinator.com/showhn.html>, <https://news.ycombinator.com/newsguidelines.html>)
@@ -150,7 +153,7 @@ Prepare one file per platform, copy-paste ready, with the founder's batch ID in 
 List 10 partner candidates (complementary tools for integrations/co-marketing, newsletters, creators, agencies, communities) with the offer for them, the ask, and a ≤ 120-word message. **Affiliate**: only after payback is proven (≥ 20 paying customers, activation ≥ 30%); 20–30% recurring for 12 months is the usual shape; use the MoR's programme if it has one, otherwise a tool such as Rewardful/FirstPromoter/Tolt (verify price and EU consent handling); affiliates must disclose ("#publicidade"/"link de afiliado"). **Referral** in-product: give-get (e.g. one month each) after the activation moment; abuse limits; Omnibus-safe wording. Founder sends messages.
 
 ### Step 14 — Portugal-specific plays (when `pt-PT` is a locale)
-Portuguese-language SEO (separate keywords, `google.pt`); local payment methods that lift conversion (MB WAY, Multibanco — depends on the rail: Paddle offers MB WAY; Stripe Managed Payments' list does not); PT media/communities/events from Step 10; LinkedIn for B2B (Portuguese-language posts perform best for local SMEs); price in euros VAT-inclusive; support in Portuguese; founder-led story ("feito em Portugal"); funding/credibility lists (Startup Portugal, Portugal Startups directories — verify); seasonal hooks (IRS season Mar–Jun, back-to-school Sep, Black Friday). Brazil is **not** a free extension of pt-PT: write pt-BR separately or not at all.
+Portuguese-language SEO (separate keywords, `google.pt`); local payment methods that lift conversion (MB WAY, Multibanco — depends on the rail: Paddle offers MB WAY; Stripe Managed Payments' list does not); PT media/communities/events from Step 10; LinkedIn for B2B (write in Portuguese for local SMEs and test against English); price in euros VAT-inclusive; support in Portuguese; founder-led story ("feito em Portugal"); funding/credibility lists (Startup Portugal, Portugal Startups directories — verify); seasonal hooks (IRS season Mar–Jun, back-to-school Sep, Black Friday). Brazil is **not** a free extension of pt-PT: write pt-BR separately or not at all.
 
 ### Step 15 — ASO for mobile (`type: mobile`) → `marketing/copy/store.<locale>.md`
 - **App Store** (limits checked 2026-10-08): `name` ≤ 30 · `subtitle` ≤ 30 · `keywords` ≤ 100 **bytes**, comma-separated, no spaces, no words already in name/subtitle, no competitor names · `promotional_text` ≤ 170 (editable without a review) · `description` ≤ 4,000 (plain text) · `whats_new` ≤ 4,000.
@@ -162,16 +165,32 @@ Portuguese-language SEO (separate keywords, `google.pt`); local payment methods 
 
 ### Step 16 — KPIs, tracking plan, UTM conventions
 1. **North Star** (one metric that tracks delivered value, e.g. weekly active teams, invoices checked per week) + AARRR table with definition, source, baseline `n/a`, week-4 target, owner: **Acquisition** (visitors by channel), **Activation** (% of signups reaching the aha event within 24 h; target ≥ 40%), **Revenue** (trial→paid ≥ 15%; MRR; ARPA), **Retention** (week-4 retention; monthly logo churn ≤ 5%), **Referral** (invites/active user; K). Funnel defaults to sanity-check against (heuristics, not promises): cold visitor→waitlist/signup 2–5%, warm traffic 10%+, waitlist→paid 5–15%.
-2. **Tracking plan**: events `page_view`, `cta_click`, `waitlist_joined`, `signup`, `activated`, `checkout_started`, `purchase`, `refund` with properties `locale`, `plan`, `utm_*`; consent-gated; verified in phase 09.
+2. **Tracking plan**: events `page_view`, `cta_click`, `waitlist_joined`, `signup`, `activated`, `checkout_started`, `purchase`, `refund` with properties `locale`, `plan`, `utm_*`; consent-gated. The starter only loads the analytics provider (Plausible or PostHog via `NEXT_PUBLIC_ANALYTICS_PROVIDER`, after consent unless cookieless Plausible), so custom events and goals are added at Integration (`plausible(...)` / `posthog.capture(...)`) and verified in phase 09.
 3. **UTM convention** (lowercase, hyphens, no spaces): `utm_source` = platform (`producthunt`, `hackernews`, `reddit`, `linkedin`, `x`, `newsletter-<name>`, `google`, `meta`, `partner-<name>`), `utm_medium` ∈ `social|cpc|email|referral|affiliate|directory|pr|community|video|organic-social`, `utm_campaign` = `<yyyymm>-<slug>` (e.g. `202611-launch`), `utm_content` = variant (`a`,`b`, creative id), `utm_term` = keyword. Never on internal links; not on Product Hunt (use `/ph`) or where platforms strip them. Every outbound link in `marketing/` comes from `marketing/launch/links.csv` (`channel,asset,url,utm_*`).
 
 ### Step 17 — Timeline, founder tasks, document
 1. Timeline in `docs/08-gtm.md`: L-21 … L+30 aligned with the phase-09 runbook (T-7 → T+7). Fixed lead times: Google Play closed testing 14+ days (mobile), BetaList review, Chrome Web Store review days, domain/email DNS 1–2 days.
 2. `marketing/launch/schedule.md`: every public action with `date/time Europe/Lisbon (UTC)`, platform, asset path, `HT-xx`. Group into **founder batches ≤ 5 min** (e.g. "HT-07 · Publicar os 5 posts da semana 1 (copiar/colar)", "HT-08 · Lançar no Product Hunt às 08:01", "HT-09 · Enviar 10 mensagens de parceria"). Add tasks to `HUMAN_TASKS.md` in the format of `factory/templates/HUMAN_TASKS.md` (pt-PT, 🟡 before launch / 🟢 later).
-3. Fill `docs/08-gtm.md` from `factory/templates/gtm.md` (pt-PT); remove guidance comments.
+3. Fill `docs/08-gtm.md` from `factory/templates/gtm.md` (pt-PT); remove guidance comments. If the founder should review the plan outside GitHub, publish it as a private Artifact (Artifact tool, HTML) or Claude Doc and put the link in the PR — private by default, shared only by the founder.
 
 ### Step 18 — Self-review (blocking), then close the phase
-1. **Lint** limits: `python3 - <<'EOF'` … `EOF` with `limits = {"title":60,"description":155,"tagline":60,"ph_description":500,"subject":45,"preview":90}`; for each `marketing/**/*.md` line matching `^\s*-?\s*(title|description|tagline|ph_description|subject|preview):\s*(.+)$` print any value longer than its limit; fix all.
+1. **Lint** the character limits (fix every hit; run from the product root):
+```bash
+python3 - <<'EOF'
+import glob, json, re
+name = json.load(open("product.json", encoding="utf-8"))["name"]
+limits = {"homeTitle": 60, "pricingTitle": 60, "title": 60, "description": 155, "pricingDescription": 155,
+          "ogCaption": 40, "tagline": 60, "ph_description": 500, "subject": 45, "preview": 90}
+pat = re.compile(r"^\s*-?\s*(%s):\s*(.+?)\s*$" % "|".join(limits))
+for f in glob.glob("marketing/**/*.md", recursive=True):
+    for n, line in enumerate(open(f, encoding="utf-8"), 1):
+        m = pat.match(line)
+        if m:
+            value = m.group(2).replace("{name}", name)
+            if len(value) > limits[m.group(1)]:
+                print(f"{f}:{n} {m.group(1)} is {len(value)} > {limits[m.group(1)]}")
+EOF
+```
 2. **Claims audit**: every number, comparison and "first/best" has a source or is removed; competitor comparisons are factual and dated (`legal-counsel` check for comparative advertising); no health/financial/legal promises.
 3. **pt-PT audit** (Step 4 grep) and a native read-through of every pt-PT file.
 4. **Adversarial pass**: spawn `devils-advocate` on positioning, ICP, channel ranking and landing copy ("what would make a skeptical customer bounce? which assumption is least supported?"); answer or fix every objection.

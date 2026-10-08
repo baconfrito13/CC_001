@@ -10,7 +10,11 @@ describe("parseEnv", () => {
   });
 
   it("treats blank values (copied .env.example lines) as unset", () => {
-    const env = parseEnv({ RESEND_API_KEY: "", WAITLIST_WEBHOOK_URL: "  ", NEXT_PUBLIC_SITE_URL: "" });
+    const env = parseEnv({
+      RESEND_API_KEY: "",
+      WAITLIST_WEBHOOK_URL: "  ",
+      NEXT_PUBLIC_SITE_URL: "",
+    });
     expect(env.RESEND_API_KEY).toBeUndefined();
     expect(env.WAITLIST_WEBHOOK_URL).toBeUndefined();
     expect(env.NEXT_PUBLIC_SITE_URL).toBeUndefined();
@@ -31,7 +35,10 @@ describe("parseEnv", () => {
       NEXT_PUBLIC_ANALYTICS_COOKIELESS: true,
       WAITLIST_ADAPTER: "webhook",
     });
-    expect(parseEnv({ NEXT_PUBLIC_ANALYTICS_COOKIELESS: "0" }).NEXT_PUBLIC_ANALYTICS_COOKIELESS).toBe(false);
+    expect(
+      parseEnv({ NEXT_PUBLIC_ANALYTICS_COOKIELESS: "0" })
+        .NEXT_PUBLIC_ANALYTICS_COOKIELESS,
+    ).toBe(false);
   });
 
   it("falls back to development for unknown NODE_ENV values", () => {
@@ -41,7 +48,10 @@ describe("parseEnv", () => {
   it("throws a readable error for invalid values", () => {
     let error: unknown;
     try {
-      parseEnv({ NEXT_PUBLIC_SITE_URL: "not-a-url", NEXT_PUBLIC_ANALYTICS_PROVIDER: "matomo" });
+      parseEnv({
+        NEXT_PUBLIC_SITE_URL: "not-a-url",
+        NEXT_PUBLIC_ANALYTICS_PROVIDER: "matomo",
+      });
     } catch (e) {
       error = e;
     }
