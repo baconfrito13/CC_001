@@ -43,6 +43,12 @@ export const envSchema = z.object({
   RESEND_SEGMENT_ID: optional(z.string().min(1)),
   WAITLIST_WEBHOOK_URL: optional(z.url()),
 
+  // Online withdrawal function (POST /api/withdrawal). Uses the same adapters as the waitlist.
+  /** Sender of the acknowledgement e-mails sent through Resend, e.g. "Acme <noreply@acme.example>". */
+  RESEND_FROM: optional(z.string().min(3)),
+  /** Separate endpoint for withdrawals; falls back to WAITLIST_WEBHOOK_URL. */
+  WITHDRAWAL_WEBHOOK_URL: optional(z.url()),
+
   // Payments (server only)
   STRIPE_SECRET_KEY: optional(z.string().min(1)),
   STRIPE_WEBHOOK_SECRET: optional(z.string().min(1)),
