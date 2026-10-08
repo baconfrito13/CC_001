@@ -81,6 +81,11 @@ rotinas recorrentes em teu nome. Desligar: `/autopiloto desligar`. **Não arquiv
 sessão** — é ela que a rotina acorda. Também podes falar com ela a qualquer hora (`/ideia …`,
 `/portfolio`).
 
+Nessa sessão, escolhe o modo **Auto** no menu ao lado da caixa de texto, se aparecer: as
+passagens noturnas e as sessões de produto que ela cria nunca ficam à espera de aprovação. Em
+*Accept edits* também funciona — a fábrica já autorizou à partida as ferramentas e comandos
+que usa (`.claude/settings.json`); algo fora dessa lista fica à espera de ti nessa sessão.
+
 Alternativa: [claude.ai/code](https://claude.ai/code) → *Routines* → *New routine* →
 repositório **CC_001** selecionado, horário diário, e como instrução o texto de
 `factory/routines/heartbeat.md`.
