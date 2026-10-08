@@ -113,24 +113,32 @@ factory's weekly self-improvement · `/radar` monthly facts, trends and idea sug
   feedback is unanswered. What gets merged:
   - a product PR once the product is `launched` (`/lancar`); a growth or follow-up PR of a
     launched product once its cycle is logged (`/crescer`, `/continuar`) — and only when
-    `python3 factory/scripts/factory.py scope --base origin/main --head origin/<branch> --require product --slug <slug>`
+    `python3 factory/scripts/factory.py scope --base origin/main --head <head SHA> --require product --slug <slug>`
     passes (the change stays inside `products/<slug>/`);
   - a `🛠️ Fábrica: melhoria…` or `🛠️ Fábrica: radar…` PR within the self-modification
     limits below;
-  - a Dependabot PR (author `dependabot[bot]`) once its checks pass (for app dependencies,
-    `Products · CI` must have run).
+  - a Dependabot PR (author `dependabot[bot]`) whose checks pass and that passes
+    `scope … --require deps` (only `package.json`/lockfiles; GitHub Actions updates wait for
+    the founder).
+
+  Pin every merge to one commit: take the head SHA from the PR (`pull_request_read`), fetch it,
+  run `scope` (and any review) on that SHA, and merge with `expectedHeadSha` = that SHA — GitHub
+  refuses the merge if the branch moved in between.
 
   Never merge a PR from a fork, or the PR of a product that is not launched, is paused or
   killed; close a killed product's PR instead (its branch stays). Any other PR waits for the
   founder (say so once), unless the founder asked for that change in their own words in this
   session. With `fundador`, only the founder merges, unless they ask in their own words.
-- **Self-modification limits.** `factory.py scope` sorts every path a change touches into
-  `data` (`factory/LEARNINGS.md`, `factory/knowledge/`), `method` (`factory/playbooks/`,
-  `factory/stacks/`, `factory/templates/`), `sensitive` (the legal, launch and monetization
-  playbooks, legal templates, checklists, starters, `factory/knowledge/README.md`) and `control`
-  (everything else outside `products/`: these rules, `.claude/`, `.github/`, scripts, pipeline,
-  schemas, routines, founder docs). Run it from an `origin/main` checkout — never the PR's own
-  copy. With `self_improvement: auto` in `FOUNDER.md` the factory merges its own improvement
+- **Self-modification limits.** `factory.py scope` sorts every path a change touches (both
+  sides of renames) into `data` (`.md`/`.txt` in `factory/LEARNINGS.md`, `factory/knowledge/`),
+  `method` (`.md`/`.txt` in the playbooks and templates that hold no gate: intake, research,
+  strategy, brand, build), `sensitive` (the architecture, QA, legal, GTM, launch, growth and
+  monetization playbooks, the legal, `HUMAN_TASKS`, launch and compliance templates,
+  checklists, stack recipes, starters, `factory/knowledge/README.md`) and `control` (everything
+  else: these rules, `.claude/`, `.github/`, scripts, pipeline, schemas, routines, founder docs,
+  and anywhere — even inside `products/` — rule or tool files such as `CLAUDE.md`,
+  `AGENTS.md`, `.mcp.json`, plus symlinks and submodules). Run it from an `origin/main`
+  checkout — never the PR's own copy. With `self_improvement: auto` in `FOUNDER.md` the factory merges its own improvement
   PRs up to `--require method`; with `data`, up to `--require data`; with `propose` or `off`,
   none. Before merging one, the merging session runs its own `devils-advocate` review of that
   exact head SHA (safety, quality, legal, the founder-only list, overfitting, evidence) and

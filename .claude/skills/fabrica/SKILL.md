@@ -43,17 +43,20 @@ title `🏭 <slug> · <Name>`, and the same prompt.
    `CLAUDE.md`, "Merges" and "Self-modification limits"). A PR is done when it is no longer a
    draft — sessions mark a PR ready only when its work is finished, and a product PR only at
    launch; Dependabot PRs count as done. For each done PR whose checks on the head all passed,
-   with `mergeable_state` clean and no unanswered founder feedback:
+   with `mergeable_state` clean and no unanswered founder feedback, take its head SHA from
+   `pull_request_read`, `git fetch origin <branch>` and confirm `git rev-parse origin/<branch>`
+   equals it, then from this checkout (it is `origin/main`):
    - product PR of a `launched` product →
-     `python3 factory/scripts/factory.py scope --base origin/main --head origin/<branch> --require product --slug <slug>`
-     from this checkout (it is `origin/main`) must pass;
-   - `🛠️ Fábrica: melhoria…` / `radar…` PR → the same command with `--require method` (or
+     `python3 factory/scripts/factory.py scope --base origin/main --head <sha> --require product --slug <slug>`
+     must pass;
+   - `🛠️ Fábrica: melhoria…` / `radar…` PR → the same with `--require method` (or
      `--require data` when `self_improvement: data`; nothing with `propose`/`off`), then your
-     own `devils-advocate` review of that head SHA; merge only if it finds nothing blocking;
-   - Dependabot PR → author `dependabot[bot]`, nothing else needed.
+     own `devils-advocate` review of that SHA; merge only if it finds nothing blocking;
+   - Dependabot PR (author `dependabot[bot]`) → `--require deps`.
 
-   Merge with `merge_method: merge` and `expectedHeadSha` = the head you checked. Scope failures
-   and anything else wait for the founder: one line in the report. Close the open PR of a killed
+   Merge with `merge_method: merge` and `expectedHeadSha` = that SHA (GitHub refuses if the
+   branch moved since). Scope failures and anything else wait for the founder: one line in the
+   report. Close the open PR of a killed
    product. A done PR with a failing check or a conflict → wake its product with
    `/continuar <slug> --aqui`; a factory or Dependabot PR → list it in the report.
 1. **Founder feedback or merge conflict** (`mergeable_state` dirty) on a product PR → wake it
@@ -97,11 +100,11 @@ step 2.0.
 
 ## 4. Report
 
-- Update (or create) the issue `📊 Portfólio da Fábrica` (label `portfolio`) with the
-  `/portfolio` digest and the lines `Último capataz: <YYYY-MM-DD HH:MM>`, `Última melhoria:` and
-  `Último radar:` (keep their dates unless you started a cycle), plus the latest "Aprendizagem"
-  summary a `/melhorar` or `/radar` run left there. Mention once that the founder can pin it on
-  GitHub (no tool can pin issues).
+- Update (or create) the issue `📊 Portfólio da Fábrica` (label `portfolio`): you alone write its
+  body — the `/portfolio` digest and the lines `Último capataz: <YYYY-MM-DD HH:MM>`,
+  `Última melhoria:` and `Último radar:` (keep their dates unless you started a cycle), plus a
+  link to the latest "Aprendizagem" or "Radar" comment that `/melhorar` and `/radar` post on it.
+  Mention once that the founder can pin it on GitHub (no tool can pin issues).
 - If there is new founder work (new open 🔴 tasks, a product waiting for go-live approval, a
   KILL verdict, a blocked phase) and `PushNotification` is available, send one short pt-PT
   notification summarizing it.

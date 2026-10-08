@@ -47,9 +47,9 @@ improvement cycle (`/melhorar`) and the monthly radar (`/radar`) keep it current
    least 3 products.
 5. **Self-modification limits** are set in `CLAUDE.md` (not here) and enforced with
    `factory.py scope`: with `self_improvement: auto` the factory merges its own `data` and
-   `method` changes (lessons, knowledge, playbooks, stacks, templates) after checks and an
-   independent review; legal, launch and monetization playbooks, legal templates, checklists,
-   starters, this file, and every rule, permission, skill, agent, pipeline or workflow change
-   wait for the founder.
+   `method` changes (lessons, knowledge, and the intake, research, strategy, brand and build
+   playbooks and templates) after checks and an independent review pinned to the commit; gates,
+   legal, launch, payments, growth, stack recipes, starters, this file, and every rule,
+   permission, skill, agent, pipeline or workflow change wait for the founder.
 6. **No personal or customer data** in lessons, metrics or knowledge; in a public repository,
    revenue only as bands.

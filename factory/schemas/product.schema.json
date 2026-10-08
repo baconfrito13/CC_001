@@ -145,6 +145,11 @@
       "description": "Run and outcome metrics written with factory.py metric (qa_rounds, qa_p0p1_found, build_slices, g2_passed, visitors_28d, mrr_eur, …); read by factory.py retro",
       "additionalProperties": { "type": ["number", "string", "boolean", "null"] }
     },
+    "metrics_applied": {
+      "type": "array",
+      "description": "Tokens of factory.py metric --once commands already applied (latest 100), so a replayed checkpoint does not count twice",
+      "items": { "type": "string" }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,

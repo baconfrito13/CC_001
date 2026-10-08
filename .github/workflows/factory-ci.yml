@@ -33,8 +33,9 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          # Product branches may only touch their product; improvement branches only lessons,
-          # knowledge and methods (CLAUDE.md, "Self-modification limits"). Others: report only.
+          # Advisory (a PR can edit this file): the real gate is the foreman running scope from
+          # origin/main before any merge. Product branches may only touch their product;
+          # improvement branches only lessons, knowledge and methods. Others: report only.
           set -o pipefail
           case "$HEAD_REF" in
             produto/*) require=(--require product) ;;

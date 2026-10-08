@@ -15,7 +15,8 @@ export const meta = {
 // args: {
 //   slug (required), type, depth ('lean'|'standard'|'deep'), depth_locked (bool),
 //   done: [phase ids already done/skipped], app_dir, pr (number), force (bool: ignore KILL),
-//   only: [phase ids to (re)run, ignoring done], stop_after: phase id
+//   only: [phase ids to (re)run, ignoring done], stop_after: phase id,
+//   run: id of this run, e.g. a UTC timestamp (a replayed checkpoint then never counts twice)
 // }
 const A = args || {}
 if (!A.slug) throw new Error('args.slug is required (e.g. {"slug": "my-product"})')
@@ -27,6 +28,7 @@ let depth = A.depth || 'standard'
 let appDir = A.app_dir || 'app'
 let builder = A.type === 'mobile' ? 'mobile-engineer' : 'fullstack-engineer'
 const pr = A.pr || null
+const runId = String(A.run || 'run').replace(/[^\w.:-]/g, '')
 const result = { slug, ran: [], gate1: null, gate2: null, stopped: null, preview: null, notes: [] }
 
 const PLAYBOOK = {
@@ -217,14 +219,16 @@ function measure(values) {
     if (typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))) flags[k] = v
   }
 }
-function metricCmd() {
+function metricCmd(label) {
+  // turn_output_tokens_k: output tokens of the whole session turn (all agents) since the last
+  // checkpoint — a cost proxy, not an exact per-product bill
   const spent = budget && budget.spent ? budget.spent() : 0
-  count({ output_tokens_k: Math.round((spent - tokensSeen) / 1000) })
+  count({ turn_output_tokens_k: Math.round((spent - tokensSeen) / 1000) })
   tokensSeen = spent
   const pairs = [...Object.entries(counters).map(([k, v]) => `${k}+=${v}`), ...Object.entries(flags).map(([k, v]) => `${k}=${v}`)]
   for (const k of Object.keys(counters)) delete counters[k]
   for (const k of Object.keys(flags)) delete flags[k]
-  return `${FX} metric ${slug} --factory-rev${pairs.length ? ' ' + pairs.join(' ') : ''}`
+  return `${FX} metric ${slug} --factory-rev --once ${runId}:${label}${pairs.length ? ' ' + pairs.join(' ') : ''}`
 }
 function jsonArg(obj) {
   // JSON as a single-quoted shell argument (single quotes become typographic apostrophes)
@@ -252,7 +256,8 @@ async function clerk(stage, label, commands, message, strict) {
 async function checkpoint(stage, phases, summaries, pre) {
   const marks = phases.map((p) => `${FX} set-phase ${slug} ${p} done --summary "${sq(summaries[p])}"`)
   const message = `${phases.join(' + ')} — ${phases.map((p) => summaries[p]).filter(Boolean).join('; ') || 'done'}`
-  await clerk(stage, `checkpoint:${phases.join('+')}`, [...(pre || []), metricCmd(), ...marks], message, true)
+  const label = `checkpoint:${phases.join('+')}`
+  await clerk(stage, label, [...(pre || []), metricCmd(label), ...marks], message, true)
   phases.forEach((p) => done.add(p))
   result.ran.push(...phases)
 }
@@ -521,7 +526,7 @@ if (buildJobs.length) {
 // ───────────────────────────── 4 · Qualidade ─────────────────────────────
 if (need('qa') && !buildAvailable) {
   await clerk('Construir', 'checkpoint:build-blocked',
-    [metricCmd(), `${FX} set-phase ${slug} build blocked --summary "build falhou; repetir com /continuar ${slug}"`], 'build — blocked', false)
+    [metricCmd('checkpoint:build-blocked'), `${FX} set-phase ${slug} build blocked --summary "build falhou; repetir com /continuar ${slug}"`], 'build — blocked', false)
   result.stopped = 'build-failed'
   log(`⛔ sem build utilizável — corre /continuar ${slug} para repetir a construção`)
   return result
@@ -547,8 +552,9 @@ if (need('qa')) {
         { label: `security:round-${round}`, phase: 'Qualidade', agentType: 'security-auditor', schema: SECURITY }),
     ])
     lastQa = qa
-    if (qa) qa.defects.filter((d) => d.severity === 'P0' || d.severity === 'P1').forEach((d) => found.add(d.id))
-    if (sec) sec.findings.filter((f) => f.severity === 'critical' || f.severity === 'high').forEach((f) => foundSecurity.add(f.title))
+    const key = (text) => String(text || '').toLowerCase().replace(/\s+/g, ' ').trim()
+    if (qa) qa.defects.filter((d) => d.severity === 'P0' || d.severity === 'P1').forEach((d) => found.add(key(d.title || d.id)))
+    if (sec) sec.findings.filter((f) => f.severity === 'critical' || f.severity === 'high').forEach((f) => foundSecurity.add(key(f.title)))
     const checksGreen = !!(qa && Object.values(qa.checks).every(Boolean))
     blocking = [
       ...(qa ? qa.defects.filter((d) => d.severity === 'P0' || d.severity === 'P1').map((d) => `${d.id} [${d.severity}] ${d.title}`) : ['QA agent failed']),
@@ -576,7 +582,7 @@ if (need('qa')) {
   if (blocking.length) {
     log(`⛔ G2 falhou: ${blocking.length} bloqueio(s) após ${maxRounds} ronda(s)`)
     await clerk('Qualidade', 'checkpoint:qa-blocked',
-      [metricCmd(), `${FX} set-phase ${slug} qa blocked --summary "${sq(blocking.length + ' bloqueios: ' + blocking.join('; '))}"`], 'qa — blocked', false)
+      [metricCmd('checkpoint:qa-blocked'), `${FX} set-phase ${slug} qa blocked --summary "${sq(blocking.length + ' bloqueios: ' + blocking.join('; '))}"`], 'qa — blocked', false)
     result.stopped = 'qa-blocked'
     return result
   }
@@ -613,7 +619,7 @@ if (need('launch')) {
   } else {
     const waiting = launch.blocking_tasks.length ? launch.blocking_tasks.join(', ') : `${launch.founder_tasks_open} tarefa(s)`
     await clerk('Lançar', 'checkpoint:launch-ready',
-      [metricCmd(), `${FX} set-phase ${slug} launch in_progress --summary "${sq('pronto; à espera do fundador: ' + waiting)}"`, `${FX} set ${slug} status needs-founder`],
+      [metricCmd('checkpoint:launch-ready'), `${FX} set-phase ${slug} launch in_progress --summary "${sq('pronto; à espera do fundador: ' + waiting)}"`, `${FX} set ${slug} status needs-founder`],
       'launch — ready, waiting for founder', true)
     result.stopped = 'waiting-founder'
     result.notes.push(`à espera do fundador: ${waiting}`)

@@ -522,6 +522,7 @@ def cmd_set_phase(fx: Factory, args: argparse.Namespace) -> int:
     date, stamp = today(), now()
     if args.status in ("in_progress", "done", "skipped"):
         entry.setdefault("started", date)
+    if args.status == "in_progress":
         entry.setdefault("started_at", stamp)
     if args.status in ("done", "skipped"):
         entry["completed"] = date
@@ -1008,7 +1009,7 @@ def cmd_lesson(fx: Factory, args: argparse.Namespace) -> int:
     text = text[:400]
     if args.source:
         text = f"{text} (source: {args.source.strip()[:200]})"
-    elif args.kind == "trend" and "http" not in text:
+    elif args.kind == "trend" and not re.search(r"https?://", text):
         text = f"{text} (unsourced)"
     path = fx.product_dir(args.slug) / "docs" / "lessons.md"
     existing = path.read_text(encoding="utf-8") if path.is_file() else ""
@@ -1033,6 +1034,10 @@ def factory_revision(fx: Factory) -> str:
 def cmd_metric(fx: Factory, args: argparse.Namespace) -> int:
     """Merge run/outcome metrics into product.json `metrics`: key=value sets, key+=N adds."""
     product = fx.load(args.slug)
+    applied = [t for t in product.get("metrics_applied") or [] if isinstance(t, str)]
+    if args.once and args.once in applied:
+        print(f"{args.slug}: metrics '{args.once}' already recorded")
+        return 0
     metrics = product.get("metrics") if isinstance(product.get("metrics"), dict) else {}
     metrics = dict(metrics)
     changed = []
@@ -1057,6 +1062,8 @@ def cmd_metric(fx: Factory, args: argparse.Namespace) -> int:
         changed.append("factory_rev")
     if not changed:
         raise FactoryError("nothing to record: give key=value pairs and/or --factory-rev")
+    if args.once:
+        product["metrics_applied"] = (applied + [args.once])[-100:]
     product["metrics"] = metrics
     fx.save(product)
     print(f"{args.slug}: " + ", ".join(f"{k}={json.dumps(metrics[k], ensure_ascii=False)}" for k in changed))
@@ -1092,18 +1099,29 @@ def _seen_lessons(fx: Factory) -> set[str]:
     }
 
 
-def _hours(entry: dict) -> float | None:
-    """Hours a phase took: exact with timestamps, else whole days from the dates."""
-    for start, end, scale in (("started_at", "completed_at", 3600), ("started", "completed", None)):
-        try:
-            if scale:
-                begin = dt.datetime.strptime(entry[start], "%Y-%m-%dT%H:%M:%SZ")
-                finish = dt.datetime.strptime(entry[end], "%Y-%m-%dT%H:%M:%SZ")
-                return round((finish - begin).total_seconds() / scale, 1)
-            return float((dt.date.fromisoformat(entry[end]) - dt.date.fromisoformat(entry[start])).days * 24)
-        except (KeyError, TypeError, ValueError):
-            continue
-    return None
+def _stamp(value: Any) -> dt.datetime | None:
+    try:
+        return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError):
+        return None
+
+
+def phase_hours_of(phases: dict) -> dict[str, float]:
+    """Wall-clock hours each finished phase took: from the previous finished phase (or the start
+    of intake) to its own completion. Phases finished together share that stage's duration."""
+    finished = sorted(
+        (stamp, pid)
+        for pid, entry in phases.items()
+        if isinstance(entry, dict) and (stamp := _stamp(entry.get("completed_at"))) is not None
+    )
+    start = _stamp((phases.get("intake") or {}).get("started_at")) if isinstance(phases.get("intake"), dict) else None
+    hours: dict[str, float] = {}
+    for stamp, pid in finished:
+        before = [t for t, _ in finished if t < stamp]
+        begin = max(before) if before else start
+        if begin is not None:
+            hours[pid] = max(0.0, round((stamp - begin).total_seconds() / 3600, 1))
+    return hours
 
 
 def _median(values: list[Any]) -> float | int | None:
@@ -1144,11 +1162,7 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
         phases = p.get("phases") if isinstance(p.get("phases"), dict) else {}
         decision = p.get("decision") if isinstance(p.get("decision"), dict) else {}
         metrics = p.get("metrics") if isinstance(p.get("metrics"), dict) else {}
-        phase_hours = {}
-        for pid in fx.phase_ids:
-            hours = _hours(phases.get(pid) or {})
-            if hours is not None:
-                phase_hours[pid] = hours
+        phase_hours = {pid: h for pid, h in phase_hours_of(phases).items() if pid in fx.phase_ids}
         products.append(
             {
                 "slug": slug,
@@ -1252,50 +1266,87 @@ def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
 SCOPE_ORDER = ("product", "data", "method", "sensitive", "control")
 SENSITIVE_PATHS = (
     "factory/knowledge/README.md",
+    "factory/playbooks/04-architecture.md",
+    "factory/playbooks/06-qa.md",
     "factory/playbooks/07-legal.md",
+    "factory/playbooks/08-gtm.md",
     "factory/playbooks/09-launch.md",
+    "factory/playbooks/10-growth.md",
     "factory/playbooks/monetization.md",
+    "factory/templates/HUMAN_TASKS.md",
+    "factory/templates/compliance.md",
+    "factory/templates/launch.md",
     "factory/templates/legal/",
     "factory/checklists/",
+    "factory/stacks/",
     "factory/starters/",
 )
+# Files Claude Code or git act on wherever they sit (nested rules load on demand): always control.
+CONTROL_NAMES = {"claude.md", "claude.local.md", "agents.md", ".mcp.json", ".gitmodules", ".gitattributes"}
+CONTROL_DIRS = {".claude", ".github", ".husky", ".git"}
+DEPS_NAMES = {"package.json", "package-lock.json", "npm-shrinkwrap.json"}
 
 
 def scope_of(path: str) -> str:
-    """product (products/<slug>/…) · data (lessons, knowledge) · method (playbooks, stacks,
-    templates) · sensitive (legal, launch, payments, gates, starters, knowledge rules) · control."""
-    if re.match(r"^products/[a-z0-9]+(-[a-z0-9]+)*/", path):
+    """product (products/<slug>/…) · data (lessons, knowledge) · method (playbooks and templates
+    that hold no gate) · sensitive (gates, legal, launch, payments, growth, stacks, starters,
+    knowledge rules) · control (everything else, and rule or tool files anywhere)."""
+    parts = path.split("/")
+    if (
+        any(part in CONTROL_DIRS or part in ("", ".", "..") for part in parts)
+        or parts[-1].lower() in CONTROL_NAMES
+    ):
+        return "control"
+    if re.match(r"^products/[a-z0-9]+(-[a-z0-9]+)*/.", path):
         return "product"
     if any(path == s or (s.endswith("/") and path.startswith(s)) for s in SENSITIVE_PATHS):
         return "sensitive"
+    if not path.endswith((".md", ".txt")):
+        return "control"
     if path == "factory/LEARNINGS.md" or path.startswith("factory/knowledge/"):
         return "data"
-    if path.startswith(("factory/playbooks/", "factory/stacks/", "factory/templates/")):
+    if path.startswith(("factory/playbooks/", "factory/templates/")):
         return "method"
     return "control"
 
 
-def cmd_scope(fx: Factory, args: argparse.Namespace) -> int:
-    """Classify every path a change touches (both sides of renames) and check a merge requirement."""
-    raw = _git(fx.root, "diff", "--name-status", "-M", "-C", f"{args.base}...{args.head}")
+def _diff_entries(fx: Factory, base: str, head: str) -> list[tuple[str, str]] | None:
+    """(path, scope) for every path a change touches — both sides of renames and copies;
+    symlinks and submodules count as control. NUL-separated, so any file name parses."""
+    raw = _git(fx.root, "-c", "core.quotePath=false", "diff", "--raw", "-z", "-M", "-C", f"{base}...{head}")
     if raw is None:
+        return None
+    fields = raw.split("\0")
+    entries: list[tuple[str, str]] = []
+    i = 0
+    while i < len(fields):
+        header = fields[i]
+        if not header.startswith(":"):
+            i += 1
+            continue
+        meta = header[1:].split()
+        modes, status = meta[:2], meta[-1]
+        count = 2 if status[:1] in ("R", "C") else 1
+        special = any(mode in ("120000", "160000") for mode in modes)
+        for path in fields[i + 1 : i + 1 + count]:
+            entries.append((path, "control" if special else scope_of(path)))
+        i += 1 + count
+    return entries
+
+
+def cmd_scope(fx: Factory, args: argparse.Namespace) -> int:
+    """Classify every path a change touches and check a merge requirement (exit 1 if unmet)."""
+    entries = _diff_entries(fx, args.base, args.head)
+    if entries is None:
         raise FactoryError(f"cannot diff {args.base}...{args.head} (fetch both refs first)")
-    paths: list[str] = []
-    for line in raw.splitlines():
-        fields = line.split("\t")
-        paths.extend(f for f in fields[1:] if f)
-    paths = sorted(set(paths))
-    classes = {path: scope_of(path) for path in paths}
+    classes: dict[str, str] = {}
+    for path, scope in entries:
+        if SCOPE_ORDER.index(scope) >= SCOPE_ORDER.index(classes.get(path, "product")):
+            classes[path] = scope
+    classes = dict(sorted(classes.items()))
     slugs = sorted({path.split("/")[1] for path, c in classes.items() if c == "product"})
     worst = max((SCOPE_ORDER.index(c) for c in classes.values()), default=-1)
     verdict = SCOPE_ORDER[worst] if worst >= 0 else "empty"
-    report = {
-        "base": args.base,
-        "head": args.head,
-        "verdict": verdict,
-        "product_slugs": slugs,
-        "paths": [{"path": p, "scope": c} for p, c in classes.items()],
-    }
     problems: list[str] = []
     if args.require == "product":
         if set(classes.values()) != {"product"} or len(slugs) != 1 or (args.slug and slugs != [args.slug]):
@@ -1305,14 +1356,25 @@ def cmd_scope(fx: Factory, args: argparse.Namespace) -> int:
         outside = [p for p, c in classes.items() if c not in allowed]
         if outside:
             problems.append(f"outside the {args.require} scope: {', '.join(outside)}")
-    if args.require and not paths:
+    elif args.require == "deps":
+        outside = [p for p in classes if p.split("/")[-1] not in DEPS_NAMES or classes[p] == "control"]
+        if outside:
+            problems.append(f"not a dependency manifest or lockfile: {', '.join(outside)}")
+    if args.require and not classes:
         problems.append("the change is empty")
-    report["ok"] = not problems
-    report["problems"] = problems
+    report = {
+        "base": args.base,
+        "head": args.head,
+        "verdict": verdict,
+        "product_slugs": slugs,
+        "paths": [{"path": p, "scope": c} for p, c in classes.items()],
+        "ok": not problems,
+        "problems": problems,
+    }
     if args.json:
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
-        print(f"scope {verdict}: {len(paths)} path(s)" + (f", products: {', '.join(slugs)}" if slugs else ""))
+        print(f"scope {verdict}: {len(classes)} path(s)" + (f", products: {', '.join(slugs)}" if slugs else ""))
         for path, c in classes.items():
             if c != "product":
                 print(f"  {c:<9} {path}")
@@ -1496,6 +1558,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("slug")
     p.add_argument("pairs", nargs="*", metavar="key=value")
     p.add_argument("--factory-rev", action="store_true", help="also record the factory revision this branch carries")
+    p.add_argument("--once", help="token: apply this command only once (a replayed checkpoint does not count twice)")
     p.set_defaults(func=cmd_metric)
 
     p = sub.add_parser("retro", help="lessons and metrics of every product on every branch (improvement cycle)")
@@ -1509,7 +1572,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("scope", help="classify the paths a change touches; --require checks who may merge it")
     p.add_argument("--base", default="origin/main")
     p.add_argument("--head", default="HEAD")
-    p.add_argument("--require", choices=("product", "data", "method"))
+    p.add_argument("--require", choices=("product", "data", "method", "deps"))
     p.add_argument("--slug", help="with --require product: the product the change must stay inside")
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_scope)

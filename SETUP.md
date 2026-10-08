@@ -55,9 +55,9 @@ A partir daqui **a fábrica faz os merges por ti** (`merges: claude` em `FOUNDER
 com *merge commit* e só com os testes a passar e sem conflitos: cada produto entra no `main`
 quando é lançado (e cada ciclo de crescimento quando termina), as lições e melhorias de métodos
 que a fábrica aprende (depois de uma revisão adversarial independente), e as atualizações de
-dependências do Dependabot quando passam nos testes. O que toca em legal, lançamento,
-pagamentos, gates de qualidade, starters ou nas regras e permissões da própria fábrica espera
-por ti. Se preferires aprovar cada merge, muda para `merges: fundador`.
+dependências npm do Dependabot quando passam nos testes. O que toca em gates de qualidade,
+legal, marketing, lançamento, pagamentos, starters, nas ações do GitHub ou nas regras e
+permissões da própria fábrica espera por ti. Se preferires aprovar cada merge, muda para `merges: fundador`.
 
 ## 3. `FOUNDER.md`
 

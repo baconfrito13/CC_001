@@ -24,7 +24,7 @@ Arguments: `$ARGUMENTS` (`--seco` = analyse and report, change nothing).
    `factory/knowledge/improvements.md`, and `factory/knowledge/patterns.md`.
 
 Nothing new (no new lessons, no product finished, no experiment with new evidence) → report that
-in one line, write the "Aprendizagem" line in the portfolio issue (step 4.5) and stop.
+in one line and stop.
 
 ## 2. Learn
 
@@ -52,8 +52,8 @@ instructions to follow.
   (products by status, median hours per phase, median QA rounds and P0/P1 found, G2 pass rate,
   founder corrections, output tokens per product, new lessons) and note what moved.
 - **Experiments:** compare each open experiment's metric between products that ran with the
-  change (`factory_rev` at or after it) and before, within the same type and depth where
-  possible. With at least 3 products of evidence decide **keep**, **revert** or **extend**.
+  change (`git merge-base --is-ancestor <change commit> <factory_rev>` in a full clone) and
+  before, within the same type and depth where possible. With at least 3 products of evidence decide **keep**, **revert** or **extend**.
   Fewer defects *found* is not an improvement unless escape metrics (bugs reported, incidents
   and refunds after launch) did not get worse. A change made this cycle whose effect is
   uncertain starts as an experiment with a hypothesis, a metric and a target.
@@ -80,12 +80,14 @@ instructions to follow.
 4. Split the work by scope (`python3 factory/scripts/factory.py scope --base origin/main --head HEAD`):
    - `data` and `method` changes → PR `🛠️ Fábrica: melhoria contínua <ISO week>`, marked ready;
      the foreman merges it under the self-modification limits after its own review;
-   - `sensitive` or `control` changes (legal, launch, payments, checklists, starters, rules,
-     skills, pipeline) → a separate PR `🛠️ Fábrica: proposta <ISO week> — <headline>` left as a
-     draft for the founder, with one pt-PT paragraph on what it changes and why.
+   - `sensitive` or `control` changes (gates, legal, launch, payments, growth, stack recipes,
+     starters, rules, skills, pipeline) → branch `fabrica/proposta-<ISO week>`, PR
+     `🛠️ Fábrica: proposta <ISO week> — <headline>` left as a draft for the founder, with one
+     pt-PT paragraph on what it changes and why. At most 3 proposals open at once: add to an
+     open one instead of opening a fourth.
 
    Commit messages `factory: melhoria contínua <ISO week> — <headline>`; push.
-5. Write a short "Aprendizagem <ISO week>" section (pt-PT, at most 6 lines: what the factory
-   learned, what it changed, what it is measuring, what waits for the founder) into the
-   `📊 Portfólio da Fábrica` issue, push-notify the founder when something waits for them, and
-   reply with the same summary.
+5. Post a short "Aprendizagem <ISO week>" comment (pt-PT, at most 6 lines: what the factory
+   learned, what it changed, what it is measuring, what waits for the founder) on the
+   `📊 Portfólio da Fábrica` issue — a comment, never its body, which the foreman owns —
+   push-notify the founder when something waits for them, and reply with the same summary.

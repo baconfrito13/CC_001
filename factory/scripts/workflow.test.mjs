@@ -278,7 +278,9 @@ test('agents record their own lessons; no agent text reaches the clerk through l
 test('run metrics are recorded with every checkpoint, counters accumulating across runs', async () => {
   const { rt } = await run({ slug: 'demo', type: 'web-saas' }, { 'research:synthesis': go(3.8) })
   const research = rt.calls.find((c) => c.label === 'checkpoint:research').prompt
-  assert.ok(research.includes('metric demo --factory-rev'), research)
+  assert.ok(research.includes('metric demo --factory-rev --once run:checkpoint:research'), research)
+  const again = await run({ slug: 'demo', type: 'web-saas', run: '20261008T1200Z' }, { 'research:synthesis': go(3.8) })
+  assert.ok(again.rt.calls.find((c) => c.label === 'checkpoint:research').prompt.includes('--once 20261008T1200Z:checkpoint:research'))
   for (const m of ['research_tracks=4', 'research_tracks_failed=0', 'critic_fatal=0', 'rebuttal=false', 'g1_score=3.8']) assert.ok(research.includes(m), m)
   assert.ok(research.indexOf('metric demo') < research.indexOf('set-phase demo research done'))
   const build = rt.calls.find((c) => c.label === 'checkpoint:build').prompt
@@ -293,8 +295,9 @@ test('run metrics are recorded with every checkpoint, counters accumulating acro
 
 test('a blocked QA still records its numbers; a defect seen every round counts once', async () => {
   const p0 = qaWith([{ id: 'D1', severity: 'P0', title: 'checkout broken' }])
+  const renamed = qaWith([{ id: 'D7', severity: 'P0', title: 'Checkout  broken' }])
   const { rt, result } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture', 'build', 'legal', 'gtm'] }, {
-    'qa:round-1': p0, 'qa:round-2': p0, 'qa:round-3': p0,
+    'qa:round-1': p0, 'qa:round-2': renamed, 'qa:round-3': p0,
   })
   assert.equal(result.stopped, 'qa-blocked')
   const cp = rt.calls.find((c) => c.label === 'checkpoint:qa-blocked').prompt

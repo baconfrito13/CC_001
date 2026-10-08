@@ -93,7 +93,8 @@ Call the **Workflow** tool with `name: "idea-to-product"` and `args`:
 
 ```json
 {"slug": "<slug>", "type": "<type>", "depth": "<product.json depth>", "depth_locked": <product.json depth_locked>,
- "done": ["intake"], "app_dir": "app", "pr": <PR number or null>, "stop_after": <"research" with --so-validar, else omit>}
+ "done": ["intake"], "app_dir": "app", "pr": <PR number or null>, "stop_after": <"research" with --so-validar, else omit>,
+ "run": "<date -u +%Y%m%dT%H%M%SZ>"}
 ```
 
 The founder invoking `/ideia` (directly or through the foreman they set up) is the opt-in to
@@ -109,7 +110,8 @@ each phase. Then act on `result.stopped`:
 | `stop_after` | `--so-validar` finished; product paused | report the verdict |
 | `qa-blocked`, `build-failed` | the phase is marked blocked | report the blocking items; never relaunch automatically |
 | `incomplete` | a phase before launch failed | run `/continuar <slug> --aqui` once; if it fails again, report |
-| workflow error | a step threw (e.g. a checkpoint could not push) | read its journal, fix the cause, resume once with `resumeFromRunId`; if it fails again, report. Either way record the cause with `factory.py lesson <slug> --phase <id> --kind mistake` |
+| workflow error | a checkpoint failed (e.g. it could not push) | finish its job by hand (validate, commit, push), then start a fresh run with `/continuar <slug> --aqui` — a resumed run would replay the cached failure; record the cause with `factory.py lesson <slug> --phase <id> --kind mistake` |
+| workflow error | any other step threw | read its journal, fix the cause, resume once with `resumeFromRunId`; if it fails again, report; record the cause as a `mistake` lesson |
 
 ## 6. Close the loop
 

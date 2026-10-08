@@ -41,10 +41,10 @@ Then:
   than the sources, anything that loosens a rule in `CLAUDE.md`); fix or drop what it flags.
 - Split by scope (`python3 factory/scripts/factory.py scope --base origin/main --head HEAD`):
   `data`/`method` changes → PR `🛠️ Fábrica: radar <YYYY-MM>`, marked ready (the foreman merges
-  it under the self-modification limits); `sensitive`/`control` changes — anything in the legal,
-  launch or monetization playbooks, legal templates, checklists or starters — → a draft PR
-  `🛠️ Fábrica: proposta radar <YYYY-MM>` for the founder. Commit
-  `factory: radar <YYYY-MM> — <headline>`, push.
-- Write a short "Radar <YYYY-MM>" section in the `📊 Portfólio da Fábrica` issue and reply in
-  pt-PT, at most 12 lines: what changed that matters, what the factory updated, the idea
-  suggestions, any founder action. Push-notify when a live product is affected.
+  it under the self-modification limits); `sensitive`/`control` changes — gates, legal, launch,
+  payments, growth, stack recipes or starters — → branch `fabrica/proposta-radar-<YYYY-MM>`, a
+  draft PR `🛠️ Fábrica: proposta radar <YYYY-MM>` for the founder (at most 3 proposals open at
+  once across the factory). Commit `factory: radar <YYYY-MM> — <headline>`, push.
+- Post a short "Radar <YYYY-MM>" comment on the `📊 Portfólio da Fábrica` issue (never edit its
+  body) and reply in pt-PT, at most 12 lines: what changed that matters, what the factory
+  updated, the idea suggestions, any founder action. Push-notify when a live product is affected.

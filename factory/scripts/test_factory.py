@@ -429,7 +429,10 @@ class TestLearning(FactoryTestCase):
 
     def test_metric_sets_adds_and_records_the_factory_revision(self) -> None:
         slug = self.new()
-        self.assertEqual(run(self.root, "metric", slug, "qa_rounds+=2", "g2_passed=true", "mrr_eur=12.5")[0], 0)
+        self.assertEqual(run(self.root, "metric", slug, "qa_rounds+=2", "g2_passed=true", "mrr_eur=12.5", "--once", "run1:qa")[0], 0)
+        self.assertEqual(run(self.root, "metric", slug, "qa_rounds+=2", "--once", "run1:qa")[0], 0, "a replay is a no-op")
+        self.assertEqual(self.product(slug)["metrics"]["qa_rounds"], 2)
+        self.assertEqual(self.product(slug)["metrics_applied"], ["run1:qa"])
         self.assertEqual(run(self.root, "metric", slug, "qa_rounds+=1", "channel=reddit", "--factory-rev")[0], 0)
         metrics = self.product(slug)["metrics"]
         self.assertEqual({k: metrics[k] for k in ("qa_rounds", "g2_passed", "mrr_eur", "channel")},
@@ -442,16 +445,20 @@ class TestLearning(FactoryTestCase):
         self.assertEqual(run(self.root, "set", slug, "metrics.nested", '{"a": 1}')[0], 1, "metrics hold scalars only")
         self.assertEqual(run(self.root, "validate", slug)[0], 0)
 
-    def test_phases_record_timestamps(self) -> None:
+    def test_phase_hours_come_from_completion_times(self) -> None:
         os.environ["FACTORY_NOW"] = "2026-10-08T09:00:00Z"
         self.addCleanup(os.environ.pop, "FACTORY_NOW", None)
         slug = self.new()
-        os.environ["FACTORY_NOW"] = "2026-10-08T10:30:00Z"
-        self.assertEqual(run(self.root, "set-phase", slug, "intake", "done")[0], 0)
-        intake = self.product(slug)["phases"]["intake"]
-        self.assertEqual((intake["started_at"], intake["completed_at"]), ("2026-10-08T09:00:00Z", "2026-10-08T10:30:00Z"))
-        self.assertEqual(factory._hours(intake), 1.5)
-        self.assertEqual(factory._hours({"started": "2026-10-01", "completed": "2026-10-03"}), 48.0)
+        steps = [("10:30", ["intake"]), ("12:00", ["research"]), ("13:00", ["strategy", "brand"])]
+        for clock, phases in steps:
+            os.environ["FACTORY_NOW"] = f"2026-10-08T{clock}:00Z"
+            for phase in phases:  # straight to done, as the pipeline's checkpoints do
+                self.assertEqual(run(self.root, "set-phase", slug, phase, "done", "--force")[0], 0)
+        product = self.product(slug)
+        self.assertEqual(product["phases"]["intake"]["started_at"], "2026-10-08T09:00:00Z")
+        self.assertNotIn("started_at", product["phases"]["research"], "only a real start is stamped")
+        self.assertEqual(factory.phase_hours_of(product["phases"]), {"intake": 1.5, "research": 1.5, "strategy": 1.0, "brand": 1.0})
+        self.assertEqual(factory.phase_hours_of({"qa": {"status": "done"}, "intake": "odd"}), {})
 
 
 class TestRetro(GitRepoTestCase):
@@ -551,6 +558,15 @@ class TestScope(GitRepoTestCase):
 
     def test_classifies_paths_and_enforces_requirements(self) -> None:
         self.assertEqual(factory.scope_of("products/alpha/docs/lessons.md"), "product")
+        self.assertEqual(factory.scope_of("products/alpha/app/src/página.tsx"), "product")
+        # rule and tool files are control wherever they sit (nested CLAUDE.md loads on demand)
+        for control in ("factory/knowledge/CLAUDE.md", "factory/playbooks/claude.md", "products/foo/CLAUDE.md",
+                        "products/foo/app/.claude/skills/x/SKILL.md", "products/foo/.mcp.json", "factory/knowledge/AGENTS.md",
+                        "products/foo/../../CLAUDE.md", "factory/playbooks/helper.sh", "factory/knowledge/data.json"):
+            self.assertEqual(factory.scope_of(control), "control", control)
+        for sensitive in ("factory/playbooks/06-qa.md", "factory/playbooks/08-gtm.md", "factory/stacks/web-saas.md",
+                          "factory/templates/HUMAN_TASKS.md", "factory/templates/compliance.md"):
+            self.assertEqual(factory.scope_of(sensitive), "sensitive", sensitive)
         self.assertEqual(factory.scope_of("factory/LEARNINGS.md"), "data")
         self.assertEqual(factory.scope_of("factory/knowledge/patterns.md"), "data")
         self.assertEqual(factory.scope_of("factory/knowledge/README.md"), "sensitive")
@@ -583,10 +599,27 @@ class TestScope(GitRepoTestCase):
         self.assertEqual(self.scope("fabrica/melhoria-2", "--require", "method")[0], 0)
 
         # a rename out of a control path counts both sides
-        self.change("fabrica/melhoria-3", {}, rename=(".claude/settings.json", "factory/templates/" + "settings.json"))
+        self.change("fabrica/melhoria-3", {}, rename=(".claude/settings.json", "factory/templates/settings.json"))
         code, report = self.scope("fabrica/melhoria-3", "--require", "method")
         self.assertEqual(code, 1)
         self.assertIn(".claude/settings.json", [p["path"] for p in report["paths"]])
+
+        # symlinks count as control even where the path looks like knowledge
+        self.git("checkout", "-q", "main")
+        self.git("checkout", "-qb", "fabrica/melhoria-4")
+        (self.root / "factory" / "knowledge").mkdir(parents=True, exist_ok=True)
+        os.symlink("../../.claude/settings.json", self.root / "factory" / "knowledge" / "link.md")
+        self.commit_all("symlink")
+        code, report = self.scope("fabrica/melhoria-4", "--require", "data")
+        self.assertEqual((code, report["verdict"]), (1, "control"))
+
+        # non-ASCII names parse; dependency-only changes pass --require deps
+        self.change("produto/acentos", {"products/alpha/docs/ação.md": "a"})
+        self.assertEqual(self.scope("produto/acentos", "--require", "product", "--slug", "alpha")[0], 0)
+        self.change("dependabot/npm", {"products/alpha/app/package.json": "{}", "products/alpha/app/package-lock.json": "{}"})
+        self.assertEqual(self.scope("dependabot/npm", "--require", "deps")[0], 0)
+        self.change("dependabot/actions", {".github/workflows/ci.yml": "x"})
+        self.assertEqual(self.scope("dependabot/actions", "--require", "deps")[0], 1)
 
         self.git("checkout", "-q", "main")
         self.assertEqual(self.scope("main", "--require", "data")[0], 1, "an empty change is not mergeable")
@@ -767,6 +800,8 @@ class TestRepoStructure(unittest.TestCase):
             if p.is_file()
             and p.suffix in {".md", ".js", ".mjs", ".py", ".yml", ".json", ".sh"}
             and not any(part in {"node_modules", ".git", "products", ".next"} for part in p.parts)
+            and not p.name.startswith("test_")  # tests name made-up paths on purpose
+            and not p.name.endswith(".test.mjs")
         ]
         generated = {"node_modules", ".next", "out", "dist", "test-results", "playwright-report", "coverage"}
         missing = []

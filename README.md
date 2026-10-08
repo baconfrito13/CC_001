@@ -98,9 +98,10 @@ A fábrica fica melhor a cada produto, sem precisares de fazer nada:
   leis de que a fábrica depende; regista tendências de mercado, canais e tecnologia com fontes;
   e sugere até 3 ideias novas (nunca começam sem ti).
 - **Com limites, verificados por código:** aplica sozinha o que aprende em lições,
-  conhecimento e métodos (playbooks), com testes e uma revisão adversarial independente; o que
-  toca em legal, lançamento, pagamentos, gates de qualidade, starters, regras, permissões ou
-  automação fica num PR à tua espera. Controlas tudo em [`FOUNDER.md`](FOUNDER.md)
+  conhecimento e métodos de pesquisa, estratégia, marca e construção, com testes e uma revisão
+  adversarial independente do commit exato; o que toca em gates de qualidade, arquitetura,
+  legal, marketing, lançamento, pagamentos, starters, regras, permissões ou automação fica num
+  PR à tua espera (no máximo 3 de cada vez). Controlas tudo em [`FOUNDER.md`](FOUNDER.md)
   (`self_improvement`, `radar`, `radar_ideas_per_month`).
 
 O que a fábrica sabe está em [`factory/knowledge/`](factory/knowledge) e

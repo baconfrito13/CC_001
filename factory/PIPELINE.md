@@ -246,10 +246,11 @@ Every product makes the factory better (`factory/knowledge/README.md`):
 - **Monthly — `/radar`:** facts past their recheck date are verified again (versions, prices,
   platform rules, laws), trends are recorded with sources, and idea suggestions are offered to the
   founder (never started without them).
-- **Limits** (`CLAUDE.md`, "Self-modification limits", enforced with `factory.py scope`): the
-  factory merges its own lessons, knowledge and method changes after checks and an independent
-  review; legal, launch and payments playbooks, legal templates, checklists, starters, rules,
-  permissions, skills, agents, pipeline code and workflows wait for the founder.
+- **Limits** (`CLAUDE.md`, "Self-modification limits", enforced with `factory.py scope` on the
+  exact commit being merged): the factory merges its own lessons, knowledge and method changes
+  after checks and an independent review; gates, architecture, legal, GTM, launch, growth and
+  payments playbooks and templates, stack recipes, starters, rules, permissions, skills, agents,
+  pipeline code and workflows wait for the founder.
 
 ## Launch-ready means
 
