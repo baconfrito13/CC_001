@@ -1,0 +1,77 @@
+# CI for every product app (and the factory starters) touched by a change:
+# install → lint → typecheck → unit tests → build → e2e (Playwright).
+name: Products · CI
+
+on:
+  pull_request:
+    paths: ["products/**", "factory/starters/**", "factory/scripts/factory.py"]
+  push:
+    branches: [main]
+    paths: ["products/**", "factory/starters/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: products-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.changed.outputs.dirs }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: changed
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ] || [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            dirs=$(python3 factory/scripts/factory.py changed --all)
+          else
+            dirs=$(python3 factory/scripts/factory.py changed --base "$BASE_SHA" --head "$GITHUB_SHA")
+          fi
+          echo "dirs=$dirs" >> "$GITHUB_OUTPUT"
+          echo "Apps to check: $dirs"
+
+  check:
+    needs: detect
+    if: needs.detect.outputs.dirs != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: ${{ fromJSON(needs.detect.outputs.dirs) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+      - run: npm ci
+      - run: npm run lint --if-present
+      - run: npm run typecheck --if-present
+      - run: npm run test --if-present
+      - run: npm run build --if-present
+      - name: End-to-end tests
+        if: hashFiles(format('{0}/playwright.config.ts', matrix.dir)) != ''
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-${{ strategy.job-index }}
+          path: ${{ matrix.dir }}/playwright-report
+          if-no-files-found: ignore

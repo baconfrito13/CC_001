@@ -1,0 +1,39 @@
+name: 💡 Nova ideia
+description: Envia uma ideia de produto (app, serviço ou website) para a fábrica.
+title: "💡 "
+labels: ["ideia"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Escreve a ideia como te vier à cabeça — uma linha chega. A fábrica trata do resto:
+        pesquisa, validação, marca, código, legal, marketing e lançamento. Só te pede o que
+        for mesmo teu (contas, pagamentos, aprovações), tudo junto e preparado para minutos.
+  - type: textarea
+    id: ideia
+    attributes:
+      label: A ideia
+      description: O quê, para quem e porquê. Links, exemplos e inspiração são bem-vindos.
+      placeholder: "Ex.: uma app que lê faturas em PDF e prepara a declaração trimestral de IVA para trabalhadores independentes em Portugal."
+    validations:
+      required: true
+  - type: dropdown
+    id: profundidade
+    attributes:
+      label: Profundidade
+      options:
+        - Automática (recomendado — ajusta ao potencial da ideia)
+        - Rápida — validar e lançar o essencial
+        - A fundo — máxima qualidade em cada fase
+      default: 0
+  - type: checkboxes
+    id: opcoes
+    attributes:
+      label: Opções
+      options:
+        - label: Só validar por agora (pesquisa e veredicto, sem construir)
+  - type: textarea
+    id: notas
+    attributes:
+      label: Notas (opcional)
+      description: Mercado-alvo, preço que imaginas, o que NÃO queres, prazos, recursos que já tens.

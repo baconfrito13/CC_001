@@ -1,0 +1,30 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+.vercel/
+.turbo/
+.wrangler/
+.expo/
+
+# tests
+test-results/
+playwright-report/
+blob-report/
+.lighthouseci/
+*.tsbuildinfo
+
+# secrets — never commit; use environment variables (see SETUP.md)
+.env
+.env.*
+!.env.example
+
+# tooling
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+npm-debug.log*

@@ -1,0 +1,29 @@
+# Keeps the factory itself healthy: state CLI tests, workflow control-flow tests, repo structure,
+# and validation of every product.json on the branch.
+name: Factory · CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  factory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: State CLI and repository structure
+        run: python3 -m unittest discover -s factory/scripts -v
+      - name: Pipeline control flow (simulated agents)
+        run: node --test factory/scripts/workflow.test.mjs
+      - name: Validate products
+        run: python3 factory/scripts/factory.py validate
