@@ -61,7 +61,7 @@
   },
   "links": {
     "branch": "produto/visao-guiada",
-    "pr": null,
+    "pr": "https://github.com/baconfrito13/CC_001/pull/5",
     "issue": null,
     "session": "https://claude.ai/code/session_01PHw6osQUbYMevv5yPhTMZM",
     "preview": null,
