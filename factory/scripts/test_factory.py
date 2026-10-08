@@ -660,6 +660,37 @@ class TestDashboard(GitRepoTestCase):
         self.assertEqual(run(self.root, "dashboard", "--out", str(out))[0], 0)
         self.assertNotIn("queue", [w["doc_id"] for w in json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]], "a checkpoint refresh leaves the queue alone")
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", '["not an object"]')[0], 1)
+        # --queued github reads the owner's idea issues straight from the API (no agent in between)
+        self.git("remote", "set-url", "origin", "https://github.com/o/r.git")
+        pages = {
+            "ideia": [{"number": 3, "title": "💡 Ideia do dono", "user": {"login": "o"}, "labels": [{"name": "ideia"}]},
+                      {"number": 4, "title": "PR", "user": {"login": "o"}, "labels": [], "pull_request": {}},
+                      {"number": 5, "title": "already running", "user": {"login": "o"}, "labels": [{"name": "ideia"}, {"name": "em-curso"}]}],
+            "na-fila": [{"number": 7, "title": "Outra", "user": {"login": "someone-else"}, "labels": [{"name": "na-fila"}]},
+                        {"number": 3, "title": "💡 Ideia do dono", "user": {"login": "o"}, "labels": [{"name": "na-fila"}]}],
+        }
+        seen_urls = []
+
+        def fake_urlopen(request, timeout=None):
+            seen_urls.append(request.full_url)
+            label = re.search(r"labels=([^&]+)", request.full_url)[1]
+            return contextlib.closing(io.BytesIO(json.dumps(pages[label]).encode()))
+
+        with unittest.mock.patch.object(factory.urllib.request, "urlopen", fake_urlopen):
+            self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", "github")[0], 0)
+        self.assertTrue(all("creator=o&" in u for u in seen_urls), "the server filters by author")
+        queue = json.loads((out / "state" / "queue.json").read_text(encoding="utf-8"))["items"]
+        self.assertEqual(queue, [{"number": 3, "title": "💡 Ideia do dono", "url": "https://github.com/o/r/issues/3"}])
+
+        def offline(request, timeout=None):
+            raise OSError("no network")
+
+        (out / "state" / "queue.json").unlink()
+        with unittest.mock.patch.object(factory.urllib.request, "urlopen", offline):
+            code, _, err = run(self.root, "dashboard", "--out", str(out), "--queued", "github")
+        self.assertEqual(code, 0)
+        self.assertIn("left as it is", err)
+        self.assertFalse((out / "state" / "queue.json").exists(), "an unreadable GitHub never empties the queue")
         bad = '[{"number": 12, "title": "x", "url": "javascript:alert(1)//github.com/o/r/issues/12"}]'
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", bad)[0], 1)
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", '[{"number": 3, "title": "x", "url": "https://github.com/o/r/issues/4"}]')[0], 1)

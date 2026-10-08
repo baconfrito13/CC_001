@@ -16,7 +16,7 @@ page could not show live session status. `painel.html` in this folder is the pag
 | Source | What | Freshness |
 |---|---|---|
 | Artifact store, `state/summary` | factory totals, pipeline, the `ideas/INBOX.md` ideas not yet taken, knowledge base (learnings, patterns, radar, suggestions, scoreboard) | every refresh |
-| Artifact store, `state/queue` | the owner's open issues labeled `ideia`/`na-fila` without `em-curso` | the foreman and `/painel` |
+| Artifact store, `state/queue` | the owner's open issues labeled `ideia`/`na-fila` without `em-curso`, read by `factory.py` straight from the GitHub API (`--queued github`) | the foreman and `/painel` |
 | Artifact store, `products/<slug>` | one document per product: status, phases with dates and summaries, G1 decision, metrics, phase hours, open founder tasks, lesson counts by kind, links, document paths, stack | every refresh |
 | `Claude Code Remote` connector (`list_sessions`), called by the page as the viewer | live state of the factory's sessions | every minute while open |
 

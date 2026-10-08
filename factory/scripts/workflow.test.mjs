@@ -226,7 +226,7 @@ test('each saved phase checkpoint refreshes the founder dashboard in its own bes
   }
   assert.ok(!labels.some((l, i) => l.startsWith('save:') && (labels[i + 1] || '').startsWith('painel:')), 'mid-phase saves do not refresh')
   const refresh = rt.calls.find((c) => c.label === 'painel:research')
-  assert.ok(refresh.prompt.includes('.claude/skills/painel/SKILL.md') && refresh.prompt.includes('skip step 2'))
+  assert.ok(refresh.prompt.includes('.claude/skills/painel/SKILL.md') && refresh.prompt.includes('without `--queued`'))
   assert.ok(!rt.calls.some((c) => c.label.startsWith('checkpoint:') && c.prompt.includes('painel')), 'the checkpoint itself never refreshes')
   assert.equal(result.stopped, 'waiting-founder', 'a refresh that dies or throws never stops the run')
   assert.equal(rt.state.maxGitWriters, 1)

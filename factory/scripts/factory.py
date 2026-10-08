@@ -40,6 +40,7 @@ import subprocess
 import sys
 import tempfile
 import unicodedata
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -1605,6 +1606,40 @@ def _dashboard_queued(raw: str | None) -> list[dict]:
     return queued
 
 
+def _github_queued(fx: Factory) -> list[dict] | None:
+    """The owner's open idea issues (labels `ideia`/`na-fila`, not `em-curso`), read straight from
+    the GitHub REST API so their text never passes through an agent. None when GitHub cannot be
+    read (cloud sessions reach it through the session proxy; elsewhere a private repo answers 404)."""
+    remote = _git(fx.root, "remote", "get-url", "origin") or ""
+    match = re.search(r"([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$", remote)
+    if not match:
+        return None
+    owner, repo = match[1], match[2]
+    found: dict[int, dict] = {}
+    for label in ("ideia", "na-fila"):
+        url = f"https://api.github.com/repos/{owner}/{repo}/issues?state=open&creator={owner}&labels={label}&per_page=100"
+        request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "factory.py"})
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                items = json.load(response)
+        except (OSError, ValueError):
+            return None
+        for item in items if isinstance(items, list) else []:
+            if not isinstance(item, dict) or "pull_request" in item:
+                continue
+            labels = {lab.get("name") for lab in item.get("labels") or [] if isinstance(lab, dict)}
+            author = (item.get("user") or {}).get("login") if isinstance(item.get("user"), dict) else None
+            number = item.get("number")
+            if "em-curso" in labels or str(author).lower() != owner.lower() or not isinstance(number, int):
+                continue
+            found[number] = {
+                "number": number,
+                "title": str(item.get("title") or "").strip()[:200],
+                "url": f"https://github.com/{owner}/{repo}/issues/{number}",
+            }
+    return [found[n] for n in sorted(found)]
+
+
 def _dashboard_url(fx: Factory) -> str | None:
     """The dashboard artifact's URL: the `URL:` line of factory/dashboard/README.md."""
     path = fx.root / "factory" / "dashboard" / "README.md"
@@ -1647,7 +1682,12 @@ def cmd_dashboard(fx: Factory, args: argparse.Namespace) -> int:
     """Write the dashboard documents (`state/summary`, `state/queue` with --queued,
     `products/<slug>`) and the ArtifactData batches that publish them (factory/dashboard/README.md)."""
     versions = _dashboard_versions(args.versions)
-    queued = _dashboard_queued(args.queued) if args.queued is not None else None
+    if args.queued == "github":
+        queued = _github_queued(fx)
+        if queued is None:
+            print("warning: GitHub issues could not be read — the queue document is left as it is", file=sys.stderr)
+    else:
+        queued = _dashboard_queued(args.queued) if args.queued is not None else None
     data = dashboard_data(fx, fetch=args.fetch)
     docs = [("state", "summary", data["summary"])]
     if queued is not None:  # only the foreman and /painel list issues; checkpoints leave the queue as is
@@ -2014,7 +2054,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--out", help="write state/summary.json, products/<slug>.json and batches.json here")
     p.add_argument("--versions", help='JSON (or @file) of the store\'s current versions: {"products/<slug>": 2, ...}')
     p.add_argument("--prune", action="store_true", help="also delete product documents no branch has any more")
-    p.add_argument("--queued", help='JSON (or @file) of ideas queued as issues: [{"number": 12, "title": "…", "url": "…"}]')
+    p.add_argument("--queued", help='"github" (read the owner\'s idea issues from the API) or JSON/@file: [{"number": 12, "title": "…", "url": "…"}]')
     p.set_defaults(func=cmd_dashboard)
 
     p = sub.add_parser("artifact-guard", help="PreToolUse hook: ArtifactData runs unasked only on the dashboard")

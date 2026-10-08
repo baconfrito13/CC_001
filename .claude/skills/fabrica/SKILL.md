@@ -105,7 +105,7 @@ step 2.0.
   `Última melhoria:` and `Último radar:` (keep their dates unless you started a cycle), plus a
   link to the latest "Aprendizagem" or "Radar" comment that `/melhorar` and `/radar` post on it.
   Mention once that the founder can pin it on GitHub (no tool can pin issues).
-- Refresh the founder's dashboard (`.claude/skills/painel/SKILL.md`, steps 1–4; best effort) and
+- Refresh the founder's dashboard (`.claude/skills/painel/SKILL.md` with `--queued github`; best effort) and
   put its link in the issue body.
 - If there is new founder work (new open 🔴 tasks, a product waiting for go-live approval, a
   KILL verdict, a blocked phase) and `PushNotification` is available, send one short pt-PT
