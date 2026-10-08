@@ -200,7 +200,7 @@ export const pt: Dictionary = {
     blurb: "O {name} ajuda-o a passar da ideia ao produto lançado.",
     legalTitle: "Legal",
     contactTitle: "Contacto",
-    copyright: "© {year} {company}. Todos os direitos reservados.",
+    copyright: "© {year} {company} · Todos os direitos reservados.",
     complaintsBook: "Livro de Reclamações",
     complaintsBookHint: "Livro de Reclamações eletrónico oficial",
     companyDetails: "Dados da empresa",

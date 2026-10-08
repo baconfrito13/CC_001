@@ -195,7 +195,7 @@ export const en: Dictionary = {
     blurb: "{name} helps you go from idea to launched product.",
     legalTitle: "Legal",
     contactTitle: "Contact",
-    copyright: "© {year} {company}. All rights reserved.",
+    copyright: "© {year} {company} · All rights reserved.",
     complaintsBook: "Livro de Reclamações",
     complaintsBookHint:
       "Complaints book: the official electronic complaints book of Portugal",

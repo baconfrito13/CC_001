@@ -65,8 +65,68 @@ test.describe("legal pages", () => {
     await expect(book).toHaveAttribute("href", "https://www.livroreclamacoes.pt");
     await expect(book).toHaveAttribute("rel", /noopener/);
     await expect(
+      footer.getByRole("link", { name: "Cancelar contrato (livre resolução)" }),
+    ).toHaveAttribute("href", "/pt/withdraw");
+    await expect(
       footer.getByRole("button", { name: "Definições de cookies" }),
     ).toBeVisible();
     await expect(footer).toContainText("© 2026 Acme, Lda.");
+  });
+
+  test("the Livro de Reclamações is a prominent button-styled link in the footer of every page, in every language", async ({
+    page,
+  }) => {
+    const paths = [
+      "",
+      "/pricing",
+      "/withdraw",
+      "/legal/privacy",
+      "/legal/legal-notice",
+      "/not-a-page",
+    ];
+    for (const locale of ["en", "pt"]) {
+      for (const path of paths) {
+        await page.goto(`/${locale}${path}`);
+        const book = page
+          .getByRole("contentinfo")
+          .getByRole("link", { name: /^Livro de Reclamações/ });
+        await expect(book, `${locale}${path}`).toBeVisible();
+        await expect(book).toHaveAttribute("href", "https://www.livroreclamacoes.pt");
+        await expect(book).toHaveAttribute("target", "_blank");
+        await expect(book).toHaveAttribute("rel", /noopener/);
+        // Button style: a 2px border, padded, at least 44px tall (not a plain text link).
+        const box = await book.evaluate((el) => {
+          const css = getComputedStyle(el);
+          return {
+            border: css.borderTopWidth,
+            height: el.getBoundingClientRect().height,
+            display: css.display,
+          };
+        });
+        expect(box.border).toBe("2px");
+        expect(box.height).toBeGreaterThanOrEqual(44);
+        if (locale === "en") await expect(book).toHaveAccessibleName(/Complaints book/);
+      }
+    }
+  });
+
+  test("no page links to the discontinued EU online dispute resolution platform", async ({
+    page,
+  }) => {
+    const paths = [
+      "",
+      "/pricing",
+      "/withdraw",
+      ...LEGAL_DOCS.map((doc) => `/legal/${doc}`),
+    ];
+    for (const locale of ["en", "pt"]) {
+      for (const path of paths) {
+        await page.goto(`/${locale}${path}`);
+        expect(
+          await page.locator('a[href*="ec.europa.eu"], a[href*="/odr"]').count(),
+          `${locale}${path}`,
+        ).toBe(0);
+      }
+    }
   });
 });

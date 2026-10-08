@@ -21,6 +21,7 @@ end-to-end tests (including accessibility checks) all run from a clean install.
 | Analytics | Plausible or PostHog, loaded only after consent (Plausible may run cookieless), `track()` helper for product events |
 | Waitlist | `POST /api/waitlist`: zod validation, explicit consent + timestamp, honeypot, rate limit, adapters (Resend, webhook, console) |
 | Payments | `checkoutUrl` (Merchant of Record / Payment Link) or Stripe Checkout (`POST /api/checkout`, `POST /api/webhooks/stripe` with an `onPaymentEvent` hook), optional Stripe Managed Payments |
+| Consumer law | Livro de Reclamações button in the footer of every page (all locales), online **withdrawal function** (`/[locale]/withdraw`, `POST /api/withdrawal`) when selling to consumers |
 | Ops | `GET /api/health`, security headers + CSP, `.env.example`, deploy notes |
 | Quality | Biome (lint + format), Vitest unit tests, Playwright e2e against a production build, axe accessibility checks |
 
@@ -77,7 +78,8 @@ In a sandbox that has a different Chromium than Playwright expects, run e2e with
 7. **Analytics**: set `NEXT_PUBLIC_ANALYTICS_PROVIDER` (`plausible` | `posthog`) and its
    domain/key. Add your PRD events to `AnalyticsEvents` in `src/lib/track.ts`.
 8. **Payments**: pick one per plan (below). With neither, the plan button leads to the waitlist.
-9. **Waitlist**: set `RESEND_API_KEY` (+ `RESEND_SEGMENT_ID`) or `WAITLIST_WEBHOOK_URL`.
+9. **Waitlist and withdrawals**: set `RESEND_API_KEY` (+ `RESEND_SEGMENT_ID`, and `RESEND_FROM` for the
+   withdrawal acknowledgement emails) or `WAITLIST_WEBHOOK_URL` (/ `WITHDRAWAL_WEBHOOK_URL`).
 10. **Features**: switch `features.waitlist` / `features.pricing` off in `site.ts` if the product
     does not need them (CTAs adapt; the pricing route returns 404 when off).
 11. Run `npm run check && npm run test:e2e`, update tests that mention Acme copy, commit.
@@ -90,6 +92,33 @@ Legal placeholder keys (`{{key}}` in the markdown; exact and flattened from the 
 `legal.complaintsBookUrl`, `legal.supervisoryAuthority`, `legal.supervisoryAuthorityUrl`.
 Dates and `governingLaw`/`jurisdiction` are rendered in the reader's language.
 The `withdrawal` document is published only when `legal.sellsToConsumers` is true.
+
+## Consumer-law features (Portugal / EU)
+
+- **Livro de Reclamações.** DL 156/2005 (art. 5.º-B) requires a visible, prominent link to the
+  electronic complaints book on the website of a provider established in Portugal, whatever the
+  visitor's language. The footer of **every** page in **every** locale shows a button-styled
+  link named "Livro de Reclamações" (an English hint is added for screen readers in `en`) to
+  `legal.complaintsBookUrl`; the legal notice repeats it with the RAL entity. No page links to
+  the EU ODR platform, which was discontinued on 20 July 2025 (a test enforces it).
+- **Online withdrawal function** (Art. 11a of Directive 2011/83/EU, added by Directive (EU)
+  2023/2673, applicable from 19 June 2026). Only when `legal.sellsToConsumers` is true: a
+  clearly labelled footer link ("Withdraw from contract" / "Cancelar contrato (livre
+  resolução)") leads to `/[locale]/withdraw`, a short form (name, email, order/contract
+  reference, optional message, honeypot) that posts to `POST /api/withdrawal`. The consumer
+  then sees a confirmation with the time of receipt and is told an acknowledgement will be
+  emailed. With `sellsToConsumers: false` the link, the page and the API do not exist (404).
+  - Validation, same-origin check and an in-memory rate limiter (own bucket, 5 per 10 minutes
+    per IP) work like the waitlist. Production without an adapter answers `503` and logs an error.
+  - Delivery uses the waitlist's adapter choice. **Resend** (needs `RESEND_API_KEY` and
+    `RESEND_FROM`) emails the statement to `contact.supportEmail` first, then sends the consumer
+    the acknowledgement of receipt in their language. **Webhook** (`WITHDRAWAL_WEBHOOK_URL`, else
+    `WAITLIST_WEBHOOK_URL`) receives `{ type: "withdrawal", name, email, reference, message,
+    locale, submittedAt, source, acknowledgement: { subject, text } }`: **the receiving
+    automation must send the acknowledgement**. **Console** (development only) prints it.
+  - If delivery fails the page tells the consumer to email `contact.supportEmail` instead:
+    a technical failure must never block the right of withdrawal.
+  - Email copy lives in the dictionaries (`withdrawal.email`); the legal phase reviews it.
 
 ## Payments
 
@@ -227,6 +256,9 @@ Verified with `npm view` on 2026-10-08 and pinned exactly in `package.json` / `p
 - **Keep `dynamicParams` on for `legal/[doc]`.** With `false`, Next 16.4 answered RSC requests for
   unknown documents with a 307 redirect loop. Unknown documents call `notFound()` instead. The
   locale switcher links use `prefetch={false}` for the same reason.
+- **Never give a script element the id of a global.** Browsers expose elements by id on
+  `window`, so `<script id="plausible">` shadows `window.plausible` and `<script id="posthog">`
+  breaks the PostHog loader. The analytics scripts use `analytics-*` ids; `track()` also copes.
 - **Stale `.next` breaks `typecheck`.** `tsconfig.json` includes `.next/dev/types`; after deleting
   or renaming routes run `rm -rf .next`.
 - **`NEXT_PUBLIC_*` and indexing variables are build-time.** Change them, then redeploy.

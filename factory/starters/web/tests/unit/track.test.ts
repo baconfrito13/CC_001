@@ -53,6 +53,15 @@ describe("track()", () => {
     expect(plausible).toHaveBeenNthCalledWith(2, "anything_else", undefined);
   });
 
+  it("replaces a non-function window.plausible (a DOM element exposed by its id)", () => {
+    fakeWindow.plausible = {} as never;
+    configureTracking({ provider: "plausible", allowed: true });
+    track("waitlist_signup", { locale: "en" });
+    const stub = fakeWindow.plausible as unknown as { q?: unknown[][] };
+    expect(typeof stub).toBe("function");
+    expect(stub.q).toEqual([["waitlist_signup", { props: { locale: "en" } }]]);
+  });
+
   it("queues Plausible events until the script has loaded", () => {
     configureTracking({ provider: "plausible", allowed: true });
     track("waitlist_signup", { locale: "en" });

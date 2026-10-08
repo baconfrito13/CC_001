@@ -4,6 +4,7 @@ import { dictionaries } from "@/content";
 import { en } from "@/content/en";
 import { pt } from "@/content/pt";
 import { fill, formatPrice } from "@/lib/format";
+import { LEGAL_DOCS, readLegalSource } from "@/lib/legal";
 
 /** Flatten a dictionary to `path -> string` so locales can be compared key by key. */
 function flatten(
@@ -62,6 +63,12 @@ describe("dictionaries", () => {
       "plan",
       "price",
       "language",
+      "email",
+      "timestamp",
+      "reference",
+      "message",
+      "policyUrl",
+      "supportEmail",
     ]);
     for (const dictionary of [en, pt]) {
       for (const [key, value] of Object.entries(flatten(dictionary))) {
@@ -86,8 +93,24 @@ describe("dictionaries", () => {
     }
   });
 
-  it("names the complaints book in Portuguese", () => {
+  it("keeps the Portuguese name of the complaints book in every locale, with an English hint", () => {
     expect(pt.footer.complaintsBook).toBe("Livro de Reclamações");
+    expect(en.footer.complaintsBook).toBe("Livro de Reclamações");
+    expect(en.footer.complaintsBookHint).toMatch(/complaints book/i);
+  });
+
+  it("never links to the discontinued EU ODR platform (closed 20 July 2025)", () => {
+    const odr = /ec\.europa\.eu\/consumers\/odr|webgate\.ec\.europa\.eu|\/odr\b/i;
+    for (const dictionary of [en, pt]) {
+      for (const [key, value] of Object.entries(flatten(dictionary)))
+        expect(value, key).not.toMatch(odr);
+    }
+    for (const locale of supportedLocales) {
+      for (const doc of LEGAL_DOCS) {
+        expect(readLegalSource(locale, doc), `${locale}/${doc}`).not.toMatch(odr);
+      }
+    }
+    expect(JSON.stringify(config)).not.toMatch(odr);
   });
 
   it("covers every locale for every plan", () => {
