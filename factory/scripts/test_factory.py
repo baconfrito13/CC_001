@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 import importlib.util
@@ -487,7 +488,8 @@ class TestRetro(GitRepoTestCase):
         os.environ["FACTORY_TODAY"] = "2026-10-12"
         run(self.root, "lesson", "beta", "--phase", "gtm", "--kind", "win", "--text", "A niche subreddit launch beat Product Hunt")
         run(self.root, "metric", "beta", "qa_rounds=1", "g2_passed=false")
-        (self.root / "products" / "beta" / "docs" / "lessons.md").open("a", encoding="utf-8").write("- a free-form note\n")
+        with (self.root / "products" / "beta" / "docs" / "lessons.md").open("a", encoding="utf-8") as fh:
+            fh.write("- a free-form note\n")
         self.commit_all("beta")
         self.git("push", "-q", "origin", "produto/beta")
         # a branch with odd metrics must not break the report
@@ -535,6 +537,142 @@ class TestRetro(GitRepoTestCase):
         self.assertEqual(code, 0)
         self.assertIn("A niche subreddit launch beat Product Hunt", out)
         self.assertNotIn("Stripe webhooks", out.split("## Lições por processar")[-1])
+
+
+class TestDashboard(GitRepoTestCase):
+    """The founder's dashboard reads every branch and the knowledge base, never lesson texts."""
+
+    TASKS = (
+        "# Tarefas do fundador — Alpha\n\n"
+        "<!--\n- [ ] **HT-99 · Exemplo do modelo** — ⏱ 4 min · 💶 ≈ 12 €/ano\n-->\n\n"
+        "## 🔴 Bloqueiam o lançamento\n\n"
+        "- [ ] **HT-01 · Comprar o domínio `alpha.pt`** — ⏱ 4 min · 💶 ≈ 12 €/ano\n"
+        "  - **Porquê:** detalhe, não é tarefa\n"
+        "## 🟡 Antes do lançamento\n\n"
+        "- [ ] **HT-02 · Criar conta Stripe** — ⏱ 5 min · 💶 0 €\n"
+        "## ✅ Concluídas\n\n"
+        "- [x] **HT-03 · Escolher o nome** — ⏱ 1 min\n"
+    )
+
+    def test_tasks_and_knowledge_parsing(self) -> None:
+        tasks = factory.parse_founder_tasks(self.TASKS)
+        self.assertEqual([t["id"] for t in tasks], ["HT-01", "HT-02", "HT-03"], "the commented example is skipped")
+        self.assertEqual(tasks[0], {"id": "HT-01", "title": "Comprar o domínio alpha.pt", "done": False,
+                                    "priority": "red", "minutes": 4, "cost": "≈ 12 €/ano"})
+        self.assertEqual((tasks[1]["priority"], tasks[2]["priority"], tasks[2]["done"]), ("amber", "done", True))
+
+        knowledge = self.root / "factory" / "knowledge"
+        knowledge.mkdir(parents=True)
+        (self.root / "factory" / "LEARNINGS.md").write_text(
+            "# L\n\n## Factory (every phase)\n\n- 2026-10-01 · mistake · one\n- 2026-10-02 · win · two\n\n## QA\n\n_None yet._\n",
+            encoding="utf-8",
+        )
+        (knowledge / "radar.md").write_text(
+            "Last sweep: 2026-09-01 (x)\n\n| Area | Fact | Value | Verified | Source | Recheck by |\n|---|---|---|---|---|---|\n"
+            "| Stack | Old fact | v | 2026-08-01 | s | 2026-09-01 |\n| Legal | Fresh fact | v | 2026-10-01 | s | 2027-01-01 |\n",
+            encoding="utf-8",
+        )
+        (knowledge / "trends.md").write_text(
+            "# T\n\n## Channels\n\n- 2026-10-01 · AI answers · evidence: https://e.x (accessed 2026-10-01)\n\n## Ideias sugeridas\n\n"
+            "| # | Date | Idea | Why now | Rough G1 | Status |\n|---|---|---|---|---|---|\n| 1 | 2026-10-01 | Uma app | porque sim | 3.6 | sugerida |\n",
+            encoding="utf-8",
+        )
+        (knowledge / "improvements.md").write_text(
+            "## Changelog\n\n| Date | Change | Evidence | Watch | PR |\n|---|---|---|---|---|\n| 2026-10-08 | X | Y | Z | #1 |\n\n"
+            "## Experiments\n\n| ID | Since | Hypothesis | Change | Metric | Products | Result |\n|---|---|---|---|---|---|---|\n"
+            "| E-1 | 2026-10-01 | h | c | m | 1 | |\n| E-2 | 2026-09-01 | h | c | m | 3 | keep |\n",
+            encoding="utf-8",
+        )
+        (knowledge / "scoreboard.md").write_text("| Week | Products |\n|---|---|\n| 2026-W41 | 1 · 0 · 0 |\n", encoding="utf-8")
+        (knowledge / "patterns.md").write_text("### P-001 · Ship it\n- **What:** x\n", encoding="utf-8")
+        summary = factory._knowledge_summary(factory.Factory(self.root))
+        self.assertEqual(summary["learnings_by_phase"], {"Factory (every phase)": 2, "QA": 0})
+        self.assertEqual((summary["learnings"], summary["patterns"], summary["trends"]), (2, 1, 1))
+        self.assertEqual([r["due"] for r in summary["radar"]], [True, False])
+        self.assertEqual(summary["radar_last_sweep"], "2026-09-01")
+        self.assertEqual(summary["suggestions"][0]["idea"], "Uma app")
+        self.assertEqual((summary["improvements"], summary["experiments_open"]), (1, 1))
+        self.assertEqual(summary["scoreboard"], {"header": ["Week", "Products"], "rows": [["2026-W41", "1 · 0 · 0"]]})
+
+    def test_documents_cover_every_branch_without_lesson_texts(self) -> None:
+        self.init_repo()
+        self.git("checkout", "-qb", "produto/alpha")
+        self.new(name="Alpha", idea="ideia alfa")
+        run(self.root, "set-phase", "alpha", "intake", "done", "--summary", "brief pronto")
+        run(self.root, "set-phase", "alpha", "research", "in_progress")
+        run(self.root, "lesson", "alpha", "--phase", "qa", "--kind", "mistake", "--text", "Secret lesson text stays out")
+        run(self.root, "set", "alpha", "links.pr", "https://github.com/o/r/pull/7")
+        run(self.root, "set", "alpha", "links.domain", "alpha.pt")
+        run(self.root, "set", "alpha", "stack.hosting", "vercel")
+        self.touch("alpha", "HUMAN_TASKS.md", self.TASKS)
+        self.touch("alpha", "docs/00-brief.md", "# Brief")
+        self.commit_all("alpha")
+        self.git("push", "-q", "origin", "produto/alpha")
+        self.git("checkout", "-q", "main")
+        self.git("checkout", "-qb", "produto/beta")
+        self.new(name="Beta", idea="ideia beta")
+        self.commit_all("beta")
+        self.git("push", "-q", "origin", "produto/beta")
+        self.git("checkout", "-q", "main")
+        self.git("fetch", "-q", "origin")
+        (self.root / "ideas").mkdir()
+        (self.root / "ideas" / "INBOX.md").write_text("## Por processar\n- ideia beta\n- uma ideia nova\n", encoding="utf-8")
+
+        out = self.root.parent / f"{self.root.name}-painel"
+        self.addCleanup(shutil.rmtree, out, True)
+        code, stdout, err = run(self.root, "dashboard", "--out", str(out))
+        self.assertEqual(code, 0, err)
+        batches = json.loads((out / "batches.json").read_text(encoding="utf-8"))
+        self.assertEqual([(w["op"], w["collection"], w["doc_id"], "if_version" in w) for w in batches[0]],
+                         [("set", "state", "summary", False), ("set", "products", "alpha", False), ("set", "products", "beta", False)])
+        everything = "".join(Path(w["file_path"]).read_text(encoding="utf-8") for w in batches[0])
+        self.assertNotIn("Secret lesson text", everything, "lesson texts never reach the dashboard")
+        # writes to existing documents carry their version; stale products are deleted only with --prune
+        versions = json.dumps({"state/summary": 4, "products/alpha": 2, "products/gone": 7})
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", versions)[0], 0)
+        kept = json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]
+        self.assertEqual([w.get("if_version") for w in kept], [4, 2, None])
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", versions, "--prune")[0], 0)
+        pruned = json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]
+        self.assertEqual(pruned[-1], {"op": "delete", "collection": "products", "doc_id": "gone", "if_version": 7})
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", '{"other/x": 1}')[0], 1)
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", '{"products/a": true}')[0], 1)
+        # ideas queued as issues come from the session's GitHub tools, checked before they are shown
+        queued = '[{"number": 12, "title": "💡 Uma app de rendas", "url": "https://github.com/o/r/issues/12"}]'
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", queued)[0], 0)
+        self.assertEqual(json.loads((out / "state" / "summary.json").read_text(encoding="utf-8"))["queued"][0]["number"], 12)
+        bad = '[{"number": 12, "title": "x", "url": "javascript:alert(1)//github.com/o/r/issues/12"}]'
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", bad)[0], 1)
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", '[{"number": 3, "title": "x", "url": "https://github.com/o/r/issues/4"}]')[0], 1)
+        alpha = json.loads((out / "products" / "alpha.json").read_text(encoding="utf-8"))
+        self.assertEqual(alpha["branch"], "produto/alpha")
+        self.assertEqual(alpha["remote_branch"], "produto/alpha")
+        self.assertEqual(alpha["progress"], {"done": 1, "total": 11})
+        self.assertEqual([p["status"] for p in alpha["phases"][:3]], ["done", "in_progress", "pending"])
+        self.assertEqual(alpha["phases"][0]["summary"], "brief pronto")
+        self.assertEqual(alpha["founder_tasks"]["open"], 2)
+        self.assertEqual(alpha["founder_tasks"]["minutes_open"], 9)
+        self.assertEqual(alpha["lessons"], {"total": 1, "by_kind": {"mistake": 1}})
+        self.assertEqual(alpha["links"], {"pr": "https://github.com/o/r/pull/7", "domain": "https://alpha.pt"})
+        self.assertEqual(alpha["stack"], {"hosting": "vercel"})
+        self.assertEqual(
+            alpha["docs"],
+            ["products/alpha/HUMAN_TASKS.md", "products/alpha/README.md", "products/alpha/docs/00-brief.md"],
+            "lessons.md stays out",
+        )
+        summary = json.loads((out / "state" / "summary.json").read_text(encoding="utf-8"))
+        self.assertEqual(summary["totals"]["products"], 2)
+        self.assertEqual(summary["totals"]["by_phase"], {"research": 1, "intake": 1})
+        self.assertEqual(summary["totals"]["founder_tasks_open"], 2)
+        self.assertEqual(summary["inbox"], ["uma ideia nova"], "ideas already taken are not listed")
+        self.assertEqual([p["id"] for p in summary["pipeline"]][:2], ["intake", "research"])
+        self.assertEqual(len(json.loads(run(self.root, "dashboard")[1])["products"]), 2)
+        # many products split into batches of at most 50 writes
+        entries = [{"product": {"slug": f"p{i:03d}", "name": "P"}, "branch": "main", "key": (0, False), "tasks": (0, 0), "tasks_text": ""}
+                   for i in range(60)]
+        with unittest.mock.patch.object(factory, "scan_branches", return_value=entries):
+            self.assertEqual(run(self.root, "dashboard", "--out", str(out))[0], 0)
+        self.assertEqual([len(b) for b in json.loads((out / "batches.json").read_text(encoding="utf-8"))], [50, 11])
 
 
 class TestScope(GitRepoTestCase):

@@ -200,6 +200,7 @@ const CHECKPOINT = {
 // Only the clerk touches git, one call at a time. A failed phase checkpoint aborts the run:
 // continuing for hours on unsaved work is how sessions lose a day of output.
 const FX = 'python3 factory/scripts/factory.py'
+const DASHBOARD = '.claude/skills/painel/SKILL.md'
 function sq(text, max = 140) {
   // safe inside a double-quoted shell argument
   return String(text || '').replace(/["`$\\]/g, "'").replace(/\s+/g, ' ').slice(0, max)
@@ -242,7 +243,11 @@ async function clerk(stage, label, commands, message, strict) {
       `- \`${FX} render-status ${slug} --write\`\n` +
       `- \`git add ${P}\` then \`git commit -m "${slug}: ${sq(message)}"\` (skip the commit if nothing is staged)\n` +
       '- `git push -u origin HEAD`; if it is rejected as non-fast-forward, `git pull --no-rebase --no-edit origin HEAD`, keep both sides of any trivial conflict, and push again; retry network errors as your instructions say\n' +
-      (pr ? `- replace the status block in PR #${pr}'s description with the output of \`${FX} render-status ${slug} --pr\`\n` : ''),
+      (pr ? `- replace the status block in PR #${pr}'s description with the output of \`${FX} render-status ${slug} --pr\`\n` : '') +
+      // phase checkpoints keep the founder's dashboard current; mid-phase saves do not
+      (label.startsWith('checkpoint:')
+        ? `- last, only after the push succeeded and if \`${DASHBOARD}\` exists: refresh the founder's dashboard as its steps 1–4 say. Best effort: a refresh failure never changes ok, pushed or problems\n`
+        : ''),
     { label, phase: stage, agentType: 'factory-clerk', schema: CHECKPOINT })
   const ok = !!(r && r.ok && r.pushed)
   if (!ok) {

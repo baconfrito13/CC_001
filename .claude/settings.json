@@ -9,6 +9,7 @@
       "WebSearch",
       "WebFetch",
       "PushNotification",
+      "ArtifactData",
       "Bash(python3 factory/scripts/factory.py *)",
       "Bash(python3 -m unittest *)",
       "Bash(python3 *)",

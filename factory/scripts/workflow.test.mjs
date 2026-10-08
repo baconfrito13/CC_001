@@ -215,6 +215,18 @@ test('progress is saved inside long phases (research tracks, deep proposals, bui
   assert.ok(!rt.calls.some((c) => c.agentType === 'factory-clerk' && c.prompt.includes('git add products/demo ideas')), 'never commits ideas/')
 })
 
+test('phase checkpoints refresh the founder dashboard after the push; mid-phase saves do not', async () => {
+  const { rt } = await run({ slug: 'demo' }, { 'research:synthesis': go(3.8) })
+  const clerks = rt.calls.filter((c) => c.agentType === 'factory-clerk')
+  const refreshes = (c) => c.prompt.includes('.claude/skills/painel/SKILL.md')
+  const checkpoints = clerks.filter((c) => c.label.startsWith('checkpoint:'))
+  assert.ok(checkpoints.length >= 5 && checkpoints.every(refreshes))
+  assert.ok(clerks.filter((c) => c.label.startsWith('save:')).every((c) => !refreshes(c)))
+  const prompt = checkpoints[0].prompt
+  assert.ok(prompt.indexOf('git push') < prompt.indexOf('painel/SKILL.md'), 'refresh only after the push')
+  assert.ok(prompt.includes('never changes ok, pushed or problems'), 'a refresh failure cannot fail a checkpoint')
+})
+
 test('launch never starts with a missing phase', async () => {
   const { rt, result } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture'] }, { legal: null })
   assert.equal(result.stopped, 'incomplete')

@@ -85,8 +85,9 @@ phase. Act on `result.stopped` with the table in `.claude/skills/ideia/SKILL.md`
 
 ## 5. Close the loop
 
-Same as `/ideia` step 6: refresh the PR status block, add lessons to `docs/lessons.md`, reply
-in pt-PT (≤ 12 lines: what advanced, verdicts, links, founder tasks with minutes, next
-automatic step), push notification when founder action is needed or the product went live.
+Same as `/ideia` step 6: refresh the PR status block, add lessons to `docs/lessons.md`, refresh
+the founder's dashboard (`.claude/skills/painel/SKILL.md`), reply in pt-PT (≤ 12 lines: what
+advanced, verdicts, links, founder tasks with minutes, next automatic step), push notification
+when founder action is needed or the product went live.
 For a launched product with `merges: claude`, finished follow-up work is merged as `/lancar`
 step 4 describes; a product that is not launched keeps its PR open.
