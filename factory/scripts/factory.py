@@ -14,6 +14,10 @@ The single way to create products and change their state. Agents and humans both
     python3 factory/scripts/factory.py scaffold <slug> [--starter web] [--dir app]
     python3 factory/scripts/factory.py next
     python3 factory/scripts/factory.py changed --base origin/main
+    python3 factory/scripts/factory.py lesson <slug> --phase qa --kind win --text "..."
+    python3 factory/scripts/factory.py metric <slug> qa_rounds=2 g2_passed=true
+    python3 factory/scripts/factory.py retro [--fetch] [--json] [--new] [--since D] [--mark-seen ID ...]
+    python3 factory/scripts/factory.py scope --base origin/main --head origin/<branch> --require product
     python3 factory/scripts/factory.py doctor
 
 Set FACTORY_ROOT to operate on another checkout and FACTORY_TODAY (YYYY-MM-DD) to pin dates.
@@ -25,6 +29,7 @@ import argparse
 import contextlib
 import datetime as dt
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -68,7 +73,25 @@ TYPES = (
     "desktop",
     "other",
 )
-SOURCE_CHANNELS = ("claude", "issue", "inbox", "action", "other")
+SOURCE_CHANNELS = ("claude", "issue", "inbox", "action", "radar", "other")
+
+# Lessons: products/<slug>/docs/lessons.md, one line each, folded into the factory weekly.
+LESSON_KINDS = ("mistake", "win", "method", "trend", "preference")
+LESSON_LINE = re.compile(
+    r"^- (?P<date>\d{4}-\d{2}-\d{2}) · (?P<phase>[a-z0-9_-]+) · "
+    r"(?:(?P<kind>mistake|win|method|trend|preference) · )?(?P<text>.+?)\s*$"
+)
+LESSONS_HEADER = """# Lessons — {name}
+
+Written with `python3 factory/scripts/factory.py lesson` (keep the format): one line per lesson,
+`- YYYY-MM-DD · <phase> · <kind> · <lesson>`. Kinds: mistake (what went wrong, and the fix), win
+(what worked and should be repeated), method (a reusable technique), trend (a market, tech or
+legal change, with its source), preference (what the founder wants). The weekly improvement cycle
+(`/melhorar`) folds them into `factory/LEARNINGS.md` and `factory/knowledge/`.
+
+"""
+LESSONS_SEEN = Path("factory") / "knowledge" / "lessons-seen.txt"
+METRIC_KEY = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
 
 # Environment variables that unlock autonomous work, and what each one unlocks.
 DOCTOR_ENV = [
@@ -114,6 +137,18 @@ def today() -> str:
     return dt.date.today().isoformat()
 
 
+def now() -> str:
+    """UTC timestamp for phase timing (FACTORY_NOW, else midnight of a pinned FACTORY_TODAY)."""
+    pinned = os.environ.get("FACTORY_NOW")
+    if pinned:
+        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", pinned):
+            raise FactoryError(f"FACTORY_NOW must be YYYY-MM-DDTHH:MM:SSZ, got {pinned!r}")
+        return pinned
+    if os.environ.get("FACTORY_TODAY"):
+        return f"{today()}T00:00:00Z"
+    return dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def read_json(path: Path) -> Any:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -123,12 +158,16 @@ def read_json(path: Path) -> Any:
         raise FactoryError(f"invalid JSON in {path}: {exc}") from exc
 
 
-def write_json(path: Path, data: Any) -> None:
+def write_text(path: Path, text: str) -> None:
     """Atomic write: readers never see a half-written file, a crash never truncates it."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp.write_text(text, encoding="utf-8")
     os.replace(tmp, path)
+
+
+def write_json(path: Path, data: Any) -> None:
+    write_text(path, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 @contextlib.contextmanager
@@ -202,10 +241,13 @@ def validate_schema(instance: Any, schema: dict, root_schema: dict | None = None
             if key not in instance:
                 errors.append(f"{path}: missing required '{key}'")
         for key, value in instance.items():
+            extra = schema.get("additionalProperties")
             if key in props:
                 errors.extend(validate_schema(value, props[key], root_schema, f"{path}.{key}"))
-            elif schema.get("additionalProperties") is False:
+            elif extra is False:
                 errors.append(f"{path}: unexpected property '{key}'")
+            elif isinstance(extra, dict):
+                errors.extend(validate_schema(value, extra, root_schema, f"{path}.{key}"))
 
     if isinstance(instance, list) and "items" in schema:
         for i, item in enumerate(instance):
@@ -334,7 +376,7 @@ def cmd_new(fx: Factory, args: argparse.Namespace) -> int:
 
     date = today()
     phases = {pid: {"status": "pending"} for pid in fx.phase_ids}
-    phases["intake"] = {"status": "in_progress", "started": date}
+    phases["intake"] = {"status": "in_progress", "started": date, "started_at": now()}
     product = {
         "schema_version": 1,
         "slug": slug,
@@ -477,14 +519,17 @@ def cmd_set_phase(fx: Factory, args: argparse.Namespace) -> int:
                 + " (use --force only for phases that genuinely do not apply)"
             )
     entry["status"] = args.status
-    date = today()
+    date, stamp = today(), now()
+    if args.status in ("in_progress", "done", "skipped"):
+        entry.setdefault("started", date)
     if args.status == "in_progress":
-        entry.setdefault("started", date)
+        entry.setdefault("started_at", stamp)
     if args.status in ("done", "skipped"):
-        entry.setdefault("started", date)
         entry["completed"] = date
+        entry["completed_at"] = stamp
     else:
         entry.pop("completed", None)
+        entry.pop("completed_at", None)
     if args.summary:
         entry["summary"] = args.summary
     product["phase"] = fx.current_phase(product)
@@ -922,6 +967,422 @@ def cmd_portfolio(fx: Factory, args: argparse.Namespace) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- learning
+
+
+def lesson_id(slug: str, text: str) -> str:
+    """Stable id of a product lesson (the improvement cycle marks ids it has processed)."""
+    return hashlib.sha1(f"{slug}|{_normalize_idea(text)}".encode("utf-8")).hexdigest()[:10]
+
+
+def parse_lessons(text: str) -> list[dict]:
+    """Lesson lines of a lessons file; lines written before kinds existed read as kind "note"."""
+    lessons = []
+    for line in text.splitlines():
+        match = LESSON_LINE.match(line.strip())
+        if match:
+            lessons.append(
+                {"date": match["date"], "phase": match["phase"], "kind": match["kind"] or "note", "text": match["text"]}
+            )
+    return lessons
+
+
+def unparsed_lessons(text: str) -> int:
+    """List items in a lessons file that are not in the lesson format (they would be ignored)."""
+    return sum(
+        1
+        for line in text.splitlines()
+        if re.match(r"^\s*[-*] \S", line) and not LESSON_LINE.match(line.strip())
+    )
+
+
+def cmd_lesson(fx: Factory, args: argparse.Namespace) -> int:
+    """Append one lesson to products/<slug>/docs/lessons.md. Never fails a checkpoint over its text."""
+    product = fx.load(args.slug)
+    if args.phase not in (*fx.phase_ids, "general"):
+        raise FactoryError(f"unknown phase '{args.phase}' (valid: {', '.join(fx.phase_ids)}, general)")
+    text = re.sub(r"\s+", " ", args.text).strip().lstrip("-").strip()
+    text = text.replace("<!--", "<!-").replace("-->", "->")
+    if len(text) < 10:
+        print(f"{args.slug}: lesson skipped (too short to be useful)")
+        return 0
+    text = text[:400]
+    if args.source:
+        text = f"{text} (source: {args.source.strip()[:200]})"
+    elif args.kind == "trend" and not re.search(r"https?://", text):
+        text = f"{text} (unsourced)"
+    path = fx.product_dir(args.slug) / "docs" / "lessons.md"
+    existing = path.read_text(encoding="utf-8") if path.is_file() else ""
+    if any(_normalize_idea(item["text"]) == _normalize_idea(text) for item in parse_lessons(existing)):
+        print(f"{args.slug}: lesson already recorded")
+        return 0
+    if not existing.strip():
+        existing = LESSONS_HEADER.format(name=product.get("name", args.slug))
+    elif not existing.endswith("\n"):
+        existing += "\n"
+    line = f"- {today()} · {args.phase} · {args.kind} · {text}"
+    write_text(path, existing + line + "\n")
+    print(line)
+    return 0
+
+
+def factory_revision(fx: Factory) -> str:
+    """Short hash of the last commit that changed the factory itself (rules, skills, pipeline)."""
+    return _git(fx.root, "log", "-1", "--format=%h", "--", "factory", ".claude", "CLAUDE.md") or "unknown"
+
+
+def cmd_metric(fx: Factory, args: argparse.Namespace) -> int:
+    """Merge run/outcome metrics into product.json `metrics`: key=value sets, key+=N adds."""
+    product = fx.load(args.slug)
+    applied = [t for t in product.get("metrics_applied") or [] if isinstance(t, str)]
+    if args.once and args.once in applied:
+        print(f"{args.slug}: metrics '{args.once}' already recorded")
+        return 0
+    metrics = product.get("metrics") if isinstance(product.get("metrics"), dict) else {}
+    metrics = dict(metrics)
+    changed = []
+    for pair in args.pairs or []:
+        add = "+=" in pair
+        key, sep, raw = pair.partition("+=" if add else "=")
+        key = key.strip()
+        if not sep or not METRIC_KEY.match(key):
+            raise FactoryError(f"expected key=value or key+=N with a snake_case key, got {pair!r}")
+        value = _parse_value(raw.strip())
+        if isinstance(value, (dict, list)):
+            raise FactoryError(f"metric '{key}' must be a number, text or true/false")
+        if add:
+            old = metrics.get(key, 0)
+            if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (value, old)):
+                raise FactoryError(f"'{key}+=' needs numbers")
+            value = round(old + value, 4) if isinstance(old + value, float) else old + value
+        metrics[key] = value
+        changed.append(key)
+    if args.factory_rev:
+        metrics["factory_rev"] = factory_revision(fx)
+        changed.append("factory_rev")
+    if not changed:
+        raise FactoryError("nothing to record: give key=value pairs and/or --factory-rev")
+    if args.once:
+        product["metrics_applied"] = (applied + [args.once])[-100:]
+    product["metrics"] = metrics
+    fx.save(product)
+    print(f"{args.slug}: " + ", ".join(f"{k}={json.dumps(metrics[k], ensure_ascii=False)}" for k in changed))
+    return 0
+
+
+def _lesson_files(fx: Factory) -> list[tuple[str, str, str]]:
+    """(slug, source, text) for every products/<slug>/docs/lessons.md on every remote branch and
+    in the working tree: lessons can sit on a branch that is not the product's newest copy."""
+    files: list[tuple[str, str, str]] = []
+    refs = _git(fx.root, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin") or ""
+    for ref in refs.splitlines():
+        if ref in ("origin", "origin/HEAD"):
+            continue
+        listing = _git(fx.root, "ls-tree", "-r", "--name-only", ref, "products/") or ""
+        for path in listing.splitlines():
+            parts = path.split("/")
+            if len(parts) == 4 and parts[2:] == ["docs", "lessons.md"]:
+                files.append((parts[1], ref.removeprefix("origin/"), _git(fx.root, "show", f"{ref}:{path}") or ""))
+    for path in sorted(fx.products_dir.glob("*/docs/lessons.md")) if fx.products_dir.is_dir() else []:
+        files.append((path.parents[1].name, "(local)", path.read_text(encoding="utf-8")))
+    return files
+
+
+def _seen_lessons(fx: Factory) -> set[str]:
+    path = fx.root / LESSONS_SEEN
+    if not path.is_file():
+        return set()
+    return {
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.startswith("#")
+    }
+
+
+def _stamp(value: Any) -> dt.datetime | None:
+    try:
+        return dt.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except (TypeError, ValueError):
+        return None
+
+
+def phase_hours_of(phases: dict) -> dict[str, float]:
+    """Wall-clock hours each finished phase took: from the previous finished phase (or the start
+    of intake) to its own completion. Phases finished together share that stage's duration."""
+    finished = sorted(
+        (stamp, pid)
+        for pid, entry in phases.items()
+        if isinstance(entry, dict) and (stamp := _stamp(entry.get("completed_at"))) is not None
+    )
+    start = _stamp((phases.get("intake") or {}).get("started_at")) if isinstance(phases.get("intake"), dict) else None
+    hours: dict[str, float] = {}
+    for stamp, pid in finished:
+        before = [t for t, _ in finished if t < stamp]
+        begin = max(before) if before else start
+        if begin is not None:
+            hours[pid] = max(0.0, round((stamp - begin).total_seconds() / 3600, 1))
+    return hours
+
+
+def _median(values: list[Any]) -> float | int | None:
+    nums = sorted(v for v in values if isinstance(v, (int, float)) and not isinstance(v, bool))
+    if not nums:
+        return None
+    mid = len(nums) // 2
+    return nums[mid] if len(nums) % 2 else round((nums[mid - 1] + nums[mid]) / 2, 2)
+
+
+def cmd_retro(fx: Factory, args: argparse.Namespace) -> int:
+    """Evidence for the improvement cycle: every product's metrics and lessons, on every branch."""
+    if args.mark_seen:
+        bad = [i for i in args.mark_seen if not re.fullmatch(r"[0-9a-f]{10}", i)]
+        if bad:
+            raise FactoryError(f"lesson ids are 10 hex characters (from retro --json): {', '.join(bad)}")
+        seen = _seen_lessons(fx)
+        new = list(dict.fromkeys(i for i in args.mark_seen if i not in seen))
+        path = fx.root / LESSONS_SEEN
+        text = path.read_text(encoding="utf-8") if path.is_file() else (
+            "# Product lesson ids already processed by the improvement cycle (factory.py retro --mark-seen).\n"
+        )
+        if not text.endswith("\n"):
+            text += "\n"
+        write_text(path, text + "".join(f"{i}\n" for i in new))
+        print(f"{len(new)} lesson(s) marked as processed")
+        return 0
+
+    if args.since and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", args.since):
+        raise FactoryError("--since must be YYYY-MM-DD")
+    if args.fetch:
+        _git(fx.root, "fetch", "--quiet", "--prune", "origin")
+    seen = _seen_lessons(fx)
+    products: list[dict] = []
+    for entry in scan_branches(fx):
+        p = entry["product"]
+        slug = p["slug"]
+        phases = p.get("phases") if isinstance(p.get("phases"), dict) else {}
+        decision = p.get("decision") if isinstance(p.get("decision"), dict) else {}
+        metrics = p.get("metrics") if isinstance(p.get("metrics"), dict) else {}
+        phase_hours = {pid: h for pid, h in phase_hours_of(phases).items() if pid in fx.phase_ids}
+        products.append(
+            {
+                "slug": slug,
+                "name": p.get("name", slug),
+                "type": p.get("type"),
+                "status": str(p.get("status") or "unknown"),
+                "phase": p.get("phase"),
+                "depth": p.get("depth"),
+                "branch": entry["branch"],
+                "verdict": decision.get("verdict"),
+                "score": decision.get("score"),
+                "forced": bool(decision.get("forced")),
+                "blocked": [pid for pid in fx.phase_ids if (phases.get(pid) or {}).get("status") == "blocked"],
+                "phase_hours": phase_hours,
+                "metrics": metrics,
+                "founder_tasks_open": entry["tasks"][0],
+                "founder_tasks_done": entry["tasks"][1],
+                "created": p.get("created"),
+                "updated": p.get("updated"),
+            }
+        )
+    lessons: dict[str, dict] = {}
+    unparsed: dict[str, int] = {}
+    for slug, source, text in _lesson_files(fx):
+        unparsed[slug] = max(unparsed.get(slug, 0), unparsed_lessons(text))
+        for item in parse_lessons(text):
+            lid = lesson_id(slug, item["text"])
+            if lid not in lessons:
+                lessons[lid] = {"id": lid, "slug": slug, **item, "branch": source, "seen": lid in seen}
+    all_lessons = sorted(lessons.values(), key=lambda item: (item["date"], item["slug"], item["id"]))
+    by_status: dict[str, int] = {}
+    for p in products:
+        by_status[p["status"]] = by_status.get(p["status"], 0) + 1
+    kinds: dict[str, int] = {}
+    for item in all_lessons:
+        kinds[item["kind"]] = kinds.get(item["kind"], 0) + 1
+
+    def is_num(v: Any) -> bool:
+        return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+    numeric = sorted({k for p in products for k, v in p["metrics"].items() if is_num(v)})
+    flags = sorted({k for p in products for k, v in p["metrics"].items() if isinstance(v, bool)})
+    totals = {
+        "products": len(products),
+        "by_status": by_status,
+        "median_phase_hours": {
+            pid: m for pid in fx.phase_ids if (m := _median([p["phase_hours"].get(pid) for p in products])) is not None
+        },
+        "median_metrics": {k: _median([p["metrics"].get(k) for p in products]) for k in numeric},
+        "rates": {
+            k: round(
+                sum(1 for p in products if p["metrics"].get(k) is True)
+                / max(1, sum(1 for p in products if isinstance(p["metrics"].get(k), bool))),
+                2,
+            )
+            for k in flags
+        },
+        "lessons_by_kind": kinds,
+        "lessons_new": sum(1 for item in all_lessons if not item["seen"]),
+        "lessons_unparsed": sum(unparsed.values()),
+    }
+    shown = all_lessons
+    if args.new:
+        shown = [item for item in shown if not item["seen"]]
+    if args.since:
+        shown = [item for item in shown if item["date"] >= args.since]
+    report = {"generated": today(), "products": products, "lessons": shown, "totals": totals}
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    print(f"# Retro da fábrica — {report['generated']}\n")
+    status_line = " · ".join(f"{PRODUCT_STATUS_LABELS.get(s, s)} {n}" for s, n in sorted(by_status.items())) or "nenhum"
+    print(f"Produtos: {len(products)} ({status_line})")
+    if totals["median_phase_hours"]:
+        print("Horas por fase (mediana): " + " · ".join(f"{k} {v}" for k, v in totals["median_phase_hours"].items()))
+    if totals["median_metrics"]:
+        print("Métricas (mediana): " + " · ".join(f"{k} {v}" for k, v in totals["median_metrics"].items()))
+    if totals["rates"]:
+        print("Taxas: " + " · ".join(f"{k} {round(v * 100)}%" for k, v in totals["rates"].items()))
+    print(
+        f"Lições: {sum(kinds.values())} ("
+        + (" · ".join(f"{k} {v}" for k, v in sorted(kinds.items())) or "nenhuma")
+        + f") · por processar: {totals['lessons_new']}"
+        + (f" · fora do formato: {totals['lessons_unparsed']}" if totals["lessons_unparsed"] else "")
+    )
+    if products:
+        print("\n| Produto | Estado | G1 | Fase | Bloqueado |\n|---|---|---|---|---|")
+        for p in products:
+            g1 = f"{p['score']} {str(p['verdict']).upper()}{' (forçado)' if p['forced'] else ''}" if p["score"] is not None else "—"
+            status = PRODUCT_STATUS_LABELS.get(p["status"], p["status"])
+            print(f"| {p['name']} (`{p['slug']}`) | {status} | {g1} | {p['phase']} | {', '.join(p['blocked']) or '—'} |")
+    pending = [item for item in shown if not item["seen"]]
+    if pending:
+        print("\n## Lições por processar\n")
+        for item in pending:
+            print(f"- `{item['id']}` {item['slug']} · {item['phase']} · {item['kind']} · {item['text']}")
+    return 0
+
+
+# Merge scope: what a pull request touches decides who may merge it (CLAUDE.md, Merges).
+SCOPE_ORDER = ("product", "data", "method", "sensitive", "control")
+SENSITIVE_PATHS = (
+    "factory/knowledge/README.md",
+    "factory/playbooks/04-architecture.md",
+    "factory/playbooks/06-qa.md",
+    "factory/playbooks/07-legal.md",
+    "factory/playbooks/08-gtm.md",
+    "factory/playbooks/09-launch.md",
+    "factory/playbooks/10-growth.md",
+    "factory/playbooks/monetization.md",
+    "factory/templates/HUMAN_TASKS.md",
+    "factory/templates/compliance.md",
+    "factory/templates/launch.md",
+    "factory/templates/legal/",
+    "factory/checklists/",
+    "factory/stacks/",
+    "factory/starters/",
+)
+# Files Claude Code or git act on wherever they sit (nested rules load on demand): always control.
+CONTROL_NAMES = {"claude.md", "claude.local.md", "agents.md", ".mcp.json", ".gitmodules", ".gitattributes"}
+CONTROL_DIRS = {".claude", ".github", ".husky", ".git"}
+DEPS_NAMES = {"package.json", "package-lock.json", "npm-shrinkwrap.json"}
+
+
+def scope_of(path: str) -> str:
+    """product (products/<slug>/…) · data (lessons, knowledge) · method (playbooks and templates
+    that hold no gate) · sensitive (gates, legal, launch, payments, growth, stacks, starters,
+    knowledge rules) · control (everything else, and rule or tool files anywhere)."""
+    parts = path.split("/")
+    if (
+        any(part in CONTROL_DIRS or part in ("", ".", "..") for part in parts)
+        or parts[-1].lower() in CONTROL_NAMES
+    ):
+        return "control"
+    if re.match(r"^products/[a-z0-9]+(-[a-z0-9]+)*/.", path):
+        return "product"
+    if any(path == s or (s.endswith("/") and path.startswith(s)) for s in SENSITIVE_PATHS):
+        return "sensitive"
+    if not path.endswith((".md", ".txt")):
+        return "control"
+    if path == "factory/LEARNINGS.md" or path.startswith("factory/knowledge/"):
+        return "data"
+    if path.startswith(("factory/playbooks/", "factory/templates/")):
+        return "method"
+    return "control"
+
+
+def _diff_entries(fx: Factory, base: str, head: str) -> list[tuple[str, str]] | None:
+    """(path, scope) for every path a change touches — both sides of renames and copies;
+    symlinks and submodules count as control. NUL-separated, so any file name parses."""
+    raw = _git(fx.root, "-c", "core.quotePath=false", "diff", "--raw", "-z", "-M", "-C", f"{base}...{head}")
+    if raw is None:
+        return None
+    fields = raw.split("\0")
+    entries: list[tuple[str, str]] = []
+    i = 0
+    while i < len(fields):
+        header = fields[i]
+        if not header.startswith(":"):
+            i += 1
+            continue
+        meta = header[1:].split()
+        modes, status = meta[:2], meta[-1]
+        count = 2 if status[:1] in ("R", "C") else 1
+        special = any(mode in ("120000", "160000") for mode in modes)
+        for path in fields[i + 1 : i + 1 + count]:
+            entries.append((path, "control" if special else scope_of(path)))
+        i += 1 + count
+    return entries
+
+
+def cmd_scope(fx: Factory, args: argparse.Namespace) -> int:
+    """Classify every path a change touches and check a merge requirement (exit 1 if unmet)."""
+    entries = _diff_entries(fx, args.base, args.head)
+    if entries is None:
+        raise FactoryError(f"cannot diff {args.base}...{args.head} (fetch both refs first)")
+    classes: dict[str, str] = {}
+    for path, scope in entries:
+        if SCOPE_ORDER.index(scope) >= SCOPE_ORDER.index(classes.get(path, "product")):
+            classes[path] = scope
+    classes = dict(sorted(classes.items()))
+    slugs = sorted({path.split("/")[1] for path, c in classes.items() if c == "product"})
+    worst = max((SCOPE_ORDER.index(c) for c in classes.values()), default=-1)
+    verdict = SCOPE_ORDER[worst] if worst >= 0 else "empty"
+    problems: list[str] = []
+    if args.require == "product":
+        if set(classes.values()) != {"product"} or len(slugs) != 1 or (args.slug and slugs != [args.slug]):
+            problems.append(f"a product change may only touch products/{args.slug or '<one slug>'}/")
+    elif args.require in ("data", "method"):
+        allowed = SCOPE_ORDER[1 : SCOPE_ORDER.index(args.require) + 1]
+        outside = [p for p, c in classes.items() if c not in allowed]
+        if outside:
+            problems.append(f"outside the {args.require} scope: {', '.join(outside)}")
+    elif args.require == "deps":
+        outside = [p for p in classes if p.split("/")[-1] not in DEPS_NAMES or classes[p] == "control"]
+        if outside:
+            problems.append(f"not a dependency manifest or lockfile: {', '.join(outside)}")
+    if args.require and not classes:
+        problems.append("the change is empty")
+    report = {
+        "base": args.base,
+        "head": args.head,
+        "verdict": verdict,
+        "product_slugs": slugs,
+        "paths": [{"path": p, "scope": c} for p, c in classes.items()],
+        "ok": not problems,
+        "problems": problems,
+    }
+    if args.json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+    else:
+        print(f"scope {verdict}: {len(classes)} path(s)" + (f", products: {', '.join(slugs)}" if slugs else ""))
+        for path, c in classes.items():
+            if c != "product":
+                print(f"  {c:<9} {path}")
+        for problem in problems:
+            print(f"✗ {problem}")
+    return 0 if not problems else 1
+
+
 SCAFFOLD_IGNORE = (
     "node_modules",
     ".next",
@@ -1084,6 +1545,37 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--head", default="HEAD")
     p.add_argument("--all", action="store_true", help="every product app dir and starter")
     p.set_defaults(func=cmd_changed)
+
+    p = sub.add_parser("lesson", help="record a lesson in products/<slug>/docs/lessons.md")
+    p.add_argument("slug")
+    p.add_argument("--phase", required=True, help="phase id, or 'general'")
+    p.add_argument("--kind", required=True, choices=LESSON_KINDS)
+    p.add_argument("--text", required=True, help="one factual, reusable sentence")
+    p.add_argument("--source", help="URL backing a trend (with the access date in the text if useful)")
+    p.set_defaults(func=cmd_lesson)
+
+    p = sub.add_parser("metric", help="record run/outcome metrics in product.json: key=value sets, key+=N adds")
+    p.add_argument("slug")
+    p.add_argument("pairs", nargs="*", metavar="key=value")
+    p.add_argument("--factory-rev", action="store_true", help="also record the factory revision this branch carries")
+    p.add_argument("--once", help="token: apply this command only once (a replayed checkpoint does not count twice)")
+    p.set_defaults(func=cmd_metric)
+
+    p = sub.add_parser("retro", help="lessons and metrics of every product on every branch (improvement cycle)")
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--fetch", action="store_true", help="git fetch --prune origin first")
+    p.add_argument("--new", action="store_true", help="list only lessons not processed yet")
+    p.add_argument("--mark-seen", nargs="+", metavar="ID", help="record lesson ids as processed")
+    p.add_argument("--since", help="list only lessons dated on or after YYYY-MM-DD")
+    p.set_defaults(func=cmd_retro)
+
+    p = sub.add_parser("scope", help="classify the paths a change touches; --require checks who may merge it")
+    p.add_argument("--base", default="origin/main")
+    p.add_argument("--head", default="HEAD")
+    p.add_argument("--require", choices=("product", "data", "method", "deps"))
+    p.add_argument("--slug", help="with --require product: the product the change must stay inside")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_scope)
 
     p = sub.add_parser("doctor", help="which credentials/tools are available for autonomous work")
     p.set_defaults(func=cmd_doctor)

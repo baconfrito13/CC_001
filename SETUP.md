@@ -53,10 +53,11 @@ as regras do Claude continuam a proteger o `main`.
 O PR da fábrica já está no `main`, e cada produto novo nasce num branch limpo a partir dele.
 A partir daqui **a fábrica faz os merges por ti** (`merges: claude` em `FOUNDER.md`), sempre
 com *merge commit* e só com os testes a passar e sem conflitos: cada produto entra no `main`
-quando é lançado (e cada ciclo de crescimento quando termina), as melhorias da fábrica quando
-ficam completas, e as atualizações de dependências do Dependabot quando passam nos testes.
-Mudanças às regras da própria fábrica (`CLAUDE.md`, `.claude/`, `.github/`) esperam por ti.
-Se preferires aprovar cada merge, muda para `merges: fundador`.
+quando é lançado (e cada ciclo de crescimento quando termina), as lições e melhorias de métodos
+que a fábrica aprende (depois de uma revisão adversarial independente), e as atualizações de
+dependências npm do Dependabot quando passam nos testes. O que toca em gates de qualidade,
+legal, marketing, lançamento, pagamentos, starters, nas ações do GitHub ou nas regras e
+permissões da própria fábrica espera por ti. Se preferires aprovar cada merge, muda para `merges: fundador`.
 
 ## 3. `FOUNDER.md`
 

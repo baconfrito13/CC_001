@@ -27,3 +27,19 @@ jobs:
         run: node --test factory/scripts/workflow.test.mjs
       - name: Validate products
         run: python3 factory/scripts/factory.py validate
+      - name: Pull request scope
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          # Advisory (a PR can edit this file): the real gate is the foreman running scope from
+          # origin/main before any merge. Product branches may only touch their product;
+          # improvement branches only lessons, knowledge and methods. Others: report only.
+          set -o pipefail
+          case "$HEAD_REF" in
+            produto/*) require=(--require product) ;;
+            fabrica/melhoria-*|fabrica/radar-*) require=(--require method) ;;
+            *) require=() ;;
+          esac
+          python3 factory/scripts/factory.py scope --base "origin/$BASE_REF" --head HEAD "${require[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

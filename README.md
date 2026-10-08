@@ -77,6 +77,35 @@ Commits, pull requests e merges não são contigo: a fábrica trata deles (`merg
 | `/fabrica` | capataz: processa as ideias novas e põe tudo a avançar |
 | `/autopiloto ligar · desligar · estado · agora` | rotina diária automática (escreve-o na sessão "🏭 Fábrica · Capataz") |
 | `/spinout <produto>` | mover um produto para um repositório próprio (para vender, por exemplo) |
+| `/melhorar` | a fábrica aprende: junta as lições de todos os produtos e melhora-se (corre sozinho todas as semanas) |
+| `/radar` | o que mudou lá fora: versões, preços, leis, tendências e ideias sugeridas (corre sozinho todos os meses) |
+| `/ideia sugestão <n>` | começar uma das ideias sugeridas pelo radar |
+
+## Aprende sozinha
+
+A fábrica fica melhor a cada produto, sem precisares de fazer nada:
+
+- **Em cada fase**, os agentes registam o que correu mal (e como se corrige), o que correu bem
+  e deve repetir-se, métodos que funcionam e tendências que encontraram; o pipeline grava também
+  métricas (rondas de QA, defeitos, fatias de código, dias por fase, pontuações de qualidade).
+  Cada correção tua num PR também fica registada como lição, e as tuas preferências passam a
+  ser seguidas.
+- **Todas as semanas — `/melhorar`:** junta as lições e métricas de todos os produtos, corrige a
+  causa dos erros que se repetem (playbooks, modelos, checklists, starter), transforma o que
+  resultou em padrão por defeito, testa mudanças como experiências medidas e atualiza um placar
+  que mostra se a fábrica está mesmo a melhorar.
+- **Todos os meses — `/radar`:** volta a verificar versões, preços, regras das plataformas e
+  leis de que a fábrica depende; regista tendências de mercado, canais e tecnologia com fontes;
+  e sugere até 3 ideias novas (nunca começam sem ti).
+- **Com limites, verificados por código:** aplica sozinha o que aprende em lições,
+  conhecimento e métodos de pesquisa, estratégia, marca e construção, com testes e uma revisão
+  adversarial independente do commit exato; o que toca em gates de qualidade, arquitetura,
+  legal, marketing, lançamento, pagamentos, starters, regras, permissões ou automação fica num
+  PR à tua espera (no máximo 3 de cada vez). Controlas tudo em [`FOUNDER.md`](FOUNDER.md)
+  (`self_improvement`, `radar`, `radar_ideas_per_month`).
+
+O que a fábrica sabe está em [`factory/knowledge/`](factory/knowledge) e
+[`factory/LEARNINGS.md`](factory/LEARNINGS.md).
 
 ## Como funciona por dentro
 
@@ -101,8 +130,9 @@ Commits, pull requests e merges não são contigo: a fábrica trata deles (`merg
   cada produto, validação e portfólio em todos os branches.
 - **CI/CD**: testes da fábrica e de cada produto em cada PR; pré-visualização na Vercel ao
   fazer merge (opcional); produção só com `/lancar`.
-- **Melhoria contínua**: [`factory/LEARNINGS.md`](factory/LEARNINGS.md) junta as lições de
-  cada produto, e os playbooks são corrigidos com elas.
+- **Melhoria contínua** ([`factory/knowledge/`](factory/knowledge)): lições por fase,
+  padrões comprovados, radar de factos com data de revalidação, tendências, experiências e
+  placar — ver "Aprende sozinha" acima.
 
 ## Custos
 

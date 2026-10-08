@@ -126,7 +126,7 @@ python3 factory/scripts/factory.py validate <slug> && python3 factory/scripts/fa
 3. Add to `HUMAN_TASKS.md` a 🔴 task "Decidir o destino de <Nome>" (≤ 1 min; one `- [ ] **HT-xx …**` line as the template requires): reply `arquivar` (status → `killed`), `ângulo 1|2|3`, or `/continuar <slug> --forcar`.
 4. Stop this product; other products continue.
 
-Then: README decision-log row, `factory/LEARNINGS.md` line if something slowed you or a source type failed, commit `<slug>: research — <GO|PIVOT|KILL> <score> (<depth>)`, push, and send the founder a pt-PT message: verdict, score, wedge, top risk (KILL: add the 3 angles and the task).
+Then: README decision-log row, a `factory.py lesson` (`--phase research`) if something slowed you, a source type failed or a method worked unusually well, commit `<slug>: research — <GO|PIVOT|KILL> <score> (<depth>)`, push, and send the founder a pt-PT message: verdict, score, wedge, top risk (KILL: add the 3 angles and the task).
 
 ## Depth: lean / standard / deep
 

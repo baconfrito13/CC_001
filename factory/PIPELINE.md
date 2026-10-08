@@ -227,6 +227,31 @@ that is `paused`, has a `blocked` phase, or has an unforced KILL.
 | A phase before launch did not finish | the phase stays `pending`/`in_progress` | `/continuar <slug>` once; if it fails again, report to the founder |
 | Session lost mid-phase | phase `in_progress`, partial outputs pushed | any session: `/continuar <slug>` continues it |
 
+## Continuous improvement
+
+Every product makes the factory better (`factory/knowledge/README.md`):
+
+- **During a run:** every agent records its lessons (`mistake`, `win`, `method`, `trend`) in
+  `docs/lessons.md` with `factory.py lesson`, and every checkpoint records the run's metrics in
+  `product.json` `metrics` with `factory.py metric`: research tracks and critic objections, G1
+  score, slices and retries, QA rounds, unique P0/P1 and security findings, fix rounds,
+  Lighthouse scores, G2, output tokens and the factory revision. Phases record start and end
+  timestamps. Founder corrections become `preference`/`mistake` lessons (`/continuar`); growth
+  cycles add outcomes (visitors, signups, revenue, bugs and incidents after launch) and
+  experiment results.
+- **Weekly — `/melhorar`:** `factory.py retro` gathers every product's lessons and metrics on
+  every branch; recurring mistakes are fixed at their cause (playbook, template, checklist, stack
+  recipe, starter), wins become proven patterns and defaults, uncertain changes run as measured
+  experiments, and the scoreboard tracks whether the factory is getting better.
+- **Monthly — `/radar`:** facts past their recheck date are verified again (versions, prices,
+  platform rules, laws), trends are recorded with sources, and idea suggestions are offered to the
+  founder (never started without them).
+- **Limits** (`CLAUDE.md`, "Self-modification limits", enforced with `factory.py scope` on the
+  exact commit being merged): the factory merges its own lessons, knowledge and method changes
+  after checks and an independent review; gates, architecture, legal, GTM, launch, growth and
+  payments playbooks and templates, stack recipes, starters, rules, permissions, skills, agents,
+  pipeline code and workflows wait for the founder.
+
 ## Launch-ready means
 
 A stranger can visit the product, understand it in 5 seconds, sign up or join the waitlist,
