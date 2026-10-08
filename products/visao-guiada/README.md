@@ -8,7 +8,7 @@
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
 | 00 | Receção | ✅ | other (hardware+IA offline), kit óculos+auriculares, venda única, depth standard |
-| 01 | Pesquisa | ⬜ |  |
+| 01 | Pesquisa | 🔄 |  |
 | 02 | Estratégia | ⬜ |  |
 | 03 | Marca | ⬜ |  |
 | 04 | Arquitetura | ⬜ |  |
