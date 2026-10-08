@@ -479,12 +479,15 @@ class TestRepoStructure(unittest.TestCase):
             and p.suffix in {".md", ".js", ".mjs", ".py", ".yml", ".json", ".sh"}
             and not any(part in {"node_modules", ".git", "products", ".next"} for part in p.parts)
         ]
+        generated = {"node_modules", ".next", "out", "dist", "test-results", "playwright-report", "coverage"}
         missing = []
         for src in sources:
             for ref in pattern.findall(src.read_text(encoding="utf-8", errors="ignore")):
                 ref = ref.rstrip(".")
                 if any(token in ref for token in ("NN", "<", "*", "{", "$")):
                     continue
+                if generated & set(ref.split("/")):
+                    continue  # runtime paths (installed deps, build output) are not repository files
                 if not (REPO / ref).exists():
                     missing.append(f"{src.relative_to(REPO)} → {ref}")
         self.assertEqual(missing, [], "broken references:\n" + "\n".join(missing))
