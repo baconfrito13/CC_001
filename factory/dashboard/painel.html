@@ -37,6 +37,7 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;min-height:100vh;background-color:var(--bg);color:var(--ink);font:400 14px/1.5 var(--font-body);
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
@@ -49,7 +50,7 @@ button{font:inherit;color:inherit}
 .muted{color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-.wrap{max-width:1440px;margin:0 auto;padding:20px 28px 56px}
+.wrap{max-width:1440px;margin:0 auto;padding:20px 28px 56px;overflow-x:clip;overflow-wrap:break-word}
 @media (max-width:720px){.wrap{padding:14px 16px 48px}}
 
 /* top bar */
@@ -241,10 +242,10 @@ button{font:inherit;color:inherit}
 .bar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar .track{height:10px;border-radius:3px;background:var(--surface-3);overflow:hidden}
 .bar .fill{height:100%;border-radius:3px;background:var(--accent)}
-.bar .val{font:500 12px var(--font-mono);color:var(--ink-2);text-align:right}
+.bar .val{font:500 12px var(--font-mono);color:var(--ink-2);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;margin:0}
-.kv dt{color:var(--ink-2);font-size:13px}
-.kv dd{margin:0;font:600 13px var(--font-mono);text-align:right}
+.kv dt{color:var(--ink-2);font-size:13px;overflow-wrap:anywhere}
+.kv dd{margin:0;font:600 13px var(--font-mono);text-align:right;overflow-wrap:anywhere}
 .chart-note{margin:12px 0 0;font:500 11.5px/1.4 var(--font-mono);color:var(--muted)}
 
 /* learning */
@@ -259,7 +260,7 @@ button{font:inherit;color:inherit}
 .learn-grid .wide{grid-column:1/-1}
 .radar-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:9px 16px;border-top:1px solid var(--line);font-size:13px}
 .radar-item:first-child{border-top:0}
-.area{font:600 10.5px/1.2 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-2);margin-top:1px;white-space:nowrap}
+.area{font:600 10.5px/1.2 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:5px;background:var(--surface-3);color:var(--ink-2);margin-top:1px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis}
 .due{font:600 11px var(--font-mono);color:var(--bad);white-space:nowrap}
 .okdate{font:500 11px var(--font-mono);color:var(--muted);white-space:nowrap}
 .tbl-wrap{overflow-x:auto}
@@ -355,7 +356,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     <div class="top-actions">
       <span class="chip" id="liveChip"><span class="led idle"></span>Sessões…</span>
       <span class="chip" id="freshChip"><span class="led idle"></span>A carregar dados…</span>
-      <a class="btn primary" id="newIdea" href="#" target="_blank" rel="noopener noreferrer" hidden></a>
+      <a class="btn primary" id="newIdea" target="_blank" rel="noopener noreferrer" hidden></a>
     </div>
   </header>
 
@@ -419,6 +420,8 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   'use strict';
 
   // ───────────────────────── vocabulary ─────────────────────────
+  // lookup tables have no prototype: a stored "constructor" or "__proto__" is not a key
+  const dict = (o) => Object.freeze(Object.assign(Object.create(null), o));
   const PIPELINE = [
     { id: 'intake', n: '00', name: 'Receção', stage: 'Validar' },
     { id: 'research', n: '01', name: 'Pesquisa', stage: 'Validar' },
@@ -432,30 +435,30 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     { id: 'launch', n: '09', name: 'Lançamento', stage: 'Lançar' },
     { id: 'growth', n: '10', name: 'Crescimento', stage: 'Crescer' },
   ];
-  const STATUS = {
+  const STATUS = dict({
     active: { label: 'Em curso', led: 'accent' },
     'needs-founder': { label: 'Precisa de ti', led: 'warn' },
     launched: { label: 'Lançado', led: 'ok' },
     paused: { label: 'Em pausa', led: 'idle' },
     killed: { label: 'Descartado', led: 'bad' },
-  };
+  });
   const STATUS_ORDER = ['active', 'needs-founder', 'launched', 'paused', 'killed'];
-  const STATUS_COLOR = { active: 'var(--accent)', 'needs-founder': 'var(--warn)', launched: 'var(--ok)', paused: 'var(--idle)', killed: 'var(--bad)' };
-  const PHASE_STATUS = { done: 'concluída', in_progress: 'em curso', blocked: 'bloqueada', skipped: 'saltada', pending: 'por começar' };
-  const TYPES = { 'web-static': 'Site', 'web-saas': 'SaaS web', 'ai-app': 'App de IA', api: 'API', mobile: 'App móvel', extension: 'Extensão', ecommerce: 'Loja online', content: 'Conteúdo', bot: 'Bot', desktop: 'Desktop', other: 'Outro' };
-  const DEPTHS = { lean: 'rápida', standard: 'normal', deep: 'a fundo' };
-  const VERDICT = { go: 'GO', pivot: 'PIVOT', kill: 'KILL' };
-  const KINDS = {
+  const STATUS_COLOR = dict({ active: 'var(--accent)', 'needs-founder': 'var(--warn)', launched: 'var(--ok)', paused: 'var(--idle)', killed: 'var(--bad)' });
+  const PHASE_STATUS = dict({ done: 'concluída', in_progress: 'em curso', blocked: 'bloqueada', skipped: 'saltada', pending: 'por começar' });
+  const TYPES = dict({ 'web-static': 'Site', 'web-saas': 'SaaS web', 'ai-app': 'App de IA', api: 'API', mobile: 'App móvel', extension: 'Extensão', ecommerce: 'Loja online', content: 'Conteúdo', bot: 'Bot', desktop: 'Desktop', other: 'Outro' });
+  const DEPTHS = dict({ lean: 'rápida', standard: 'normal', deep: 'a fundo' });
+  const VERDICT = dict({ go: 'GO', pivot: 'PIVOT', kill: 'KILL' });
+  const KINDS = dict({
     mistake: { label: 'Erros corrigidos', color: 'var(--bad)' },
     win: { label: 'Vitórias', color: 'var(--ok)' },
     method: { label: 'Métodos', color: 'var(--accent)' },
     trend: { label: 'Tendências', color: 'var(--violet)' },
     preference: { label: 'Preferências tuas', color: 'var(--warn)' },
     note: { label: 'Notas', color: 'var(--idle)' },
-  };
-  const PRIORITY = { red: { label: 'bloqueia o lançamento', led: 'bad', rank: 0 }, amber: { label: 'antes do lançamento', led: 'warn', rank: 1 }, green: { label: 'depois / opcional', led: 'ok', rank: 2 } };
+  });
+  const PRIORITY = dict({ red: { label: 'bloqueia o lançamento', led: 'bad', rank: 0 }, amber: { label: 'antes do lançamento', led: 'warn', rank: 1 }, green: { label: 'depois / opcional', led: 'ok', rank: 2 } });
   const LINKS = [['pr', 'Pull request'], ['session', 'Sessão'], ['preview', 'Pré-visualização'], ['production', 'Produção'], ['domain', 'Domínio'], ['repo', 'Repositório'], ['issue', 'Issue']];
-  const METRICS = {
+  const METRICS = dict({
     g1_score: 'Score G1', research_tracks: 'Pistas de pesquisa', research_tracks_failed: 'Pistas falhadas',
     critic_fatal: 'Objeções fatais do crítico', critic_major: 'Objeções graves do crítico', rebuttal: 'Resposta ao crítico',
     strategy_revised: 'Estratégia revista', integration_green: 'Integração verde', qa_rounds: 'Rondas de QA',
@@ -463,19 +466,19 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     g2_passed: 'G2 aprovado', lighthouse_performance: 'Lighthouse · desempenho', lighthouse_accessibility: 'Lighthouse · acessibilidade',
     lighthouse_seo: 'Lighthouse · SEO', preview_deployed: 'Pré-visualização publicada', production_live: 'Em produção',
     turn_output_tokens_k: 'Texto gerado (milhares de tokens)', factory_rev: 'Revisão da fábrica', mrr_band: 'MRR (intervalo)',
-  };
-  const LEARN_SECTIONS = { 'Factory (every phase)': 'Fábrica (geral)', Research: 'Pesquisa', Strategy: 'Estratégia', Brand: 'Marca', Architecture: 'Arquitetura', Build: 'Construção', QA: 'Qualidade', Legal: 'Legal', GTM: 'Go-to-market', Launch: 'Lançamento', Growth: 'Crescimento' };
-  const BUCKET = {
+  });
+  const LEARN_SECTIONS = dict({ 'Factory (every phase)': 'Fábrica (geral)', Research: 'Pesquisa', Strategy: 'Estratégia', Brand: 'Marca', Architecture: 'Arquitetura', Build: 'Construção', QA: 'Qualidade', Legal: 'Legal', GTM: 'Go-to-market', Launch: 'Lançamento', Growth: 'Crescimento' });
+  const BUCKET = dict({
     working: { label: 'A trabalhar', led: 'accent', pulse: true, rank: 0 },
     blocked: { label: 'À tua espera', led: 'warn', rank: 1 },
     review_ready: { label: 'Pronta para rever', led: 'info', rank: 2 },
     failed: { label: 'Falhou', led: 'bad', rank: 3 },
     completed: { label: 'Concluída', led: 'idle', rank: 4 },
     idle: { label: 'Parada', led: 'idle', rank: 5 },
-  };
+  });
   const SESSIONS_SERVER = 'Claude Code Remote';
   const SESSIONS_TOOL = 'list_sessions';
-  const SESSIONS_INPUT = { mine: true, limit: 50 };
+  const SESSIONS_INPUT = { limit: 50 };
   const STALE_HOURS = 26;
 
   // ───────────────────────── helpers ─────────────────────────
@@ -526,6 +529,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   const nf = new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 1 });
   const nf2 = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
   const pct = new Intl.NumberFormat('pt-PT', { style: 'percent', maximumFractionDigits: 0 });
+  const fmt = (v) => (Math.abs(v) >= 1e9 ? v.toExponential(2) : nf.format(v));
   const rtf = new Intl.RelativeTimeFormat('pt-PT', { numeric: 'auto' });
   const dShort = new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'short' });
   const dLong = new Intl.DateTimeFormat('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -564,16 +568,16 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     get(k, d) { try { const v = localStorage.getItem('painel:' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem('painel:' + k, JSON.stringify(v)); } catch { /* per-viewer convenience only */ } },
   };
-  function extLink(href, label, cls = 'btn small') {
+  function extLink(href, label, cls = 'btn small', fid) {
     const url = safeUrl(href);
     if (!url) return null;
-    return h('a', { class: cls, href: url, target: '_blank', rel: 'noopener noreferrer' }, label, icon('ext', 13));
+    return h('a', { class: cls, href: url, target: '_blank', rel: 'noopener noreferrer', 'data-fid': fid }, label, icon('ext', 13));
   }
 
   // ───────────────────────── state ─────────────────────────
   const state = {
     db: 'loading', dbError: null,
-    summary: undefined, products: undefined,
+    summary: undefined, products: undefined, queue: null,
     sessions: 'loading', sessionList: [], sessionsAt: 0, sessionsError: null,
     filter: store.get('filter', 'all'), sort: store.get('sort', 'updated'), query: '',
     open: null, lastFocus: null,
@@ -584,11 +588,12 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const r = state.summary && state.summary.repo;
     return typeof r === 'string' && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(r) ? r : null;
   }
-  const enc = (p) => String(p).split('/').map(encodeURIComponent).join('/');
   function gh(kind, branch, path) {
     const r = repo();
     if (!r || !branch) return null;
-    return `https://github.com/${r}/${kind}/${enc(branch)}${path ? '/' + enc(path) : ''}`;
+    const parts = [...String(branch).split('/'), ...(path ? String(path).split('/') : [])];
+    if (parts.some((x) => x === '' || x === '.' || x === '..')) return null;
+    return `https://github.com/${r}/${kind}/${parts.map(encodeURIComponent).join('/')}`;
   }
   function pipeline() {
     const p = state.summary && Array.isArray(state.summary.pipeline) ? state.summary.pipeline.filter((x) => x && typeof x.id === 'string') : [];
@@ -625,7 +630,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
       branch: str(d.remote_branch, 200) || null,
       progress: { done: num(obj(d.progress).done) || 0, total: num(obj(d.progress).total) || phases.length || 11 },
       phases,
-      decision: dec ? { verdict: VERDICT[dec.verdict] ? dec.verdict : null, score: num(dec.score), rationale: str(dec.rationale, 600), forced: dec.forced === true } : null,
+      decision: dec ? { verdict: VERDICT[dec.verdict] ? dec.verdict : null, score: num(dec.score) == null ? null : Math.min(5, Math.max(1, dec.score)), rationale: str(dec.rationale, 600), forced: dec.forced === true } : null,
       metrics, hours,
       tasks: { open: num(tasks.open) || 0, done: num(tasks.done) || 0, minutes: num(tasks.minutes_open) || 0, items },
       lessons: { total: num(obj(d.lessons).total) || 0, kinds },
@@ -686,10 +691,18 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     queued = true;
     requestAnimationFrame(() => {
       queued = false;
+      const active = document.activeElement;
+      const fid = active && active !== document.body ? active.getAttribute('data-fid') : null;
       renderTop(); renderNotice(); renderKpis(); renderLine(); renderFilters(); renderProducts();
       renderActions(); renderSessions(); renderCharts(); renderLearning(); renderInbox(); renderFoot();
       if (state.open) renderDrawer();
+      if (fid && !document.contains(active)) refocus(fid);
     });
+  }
+  function refocus(fid) {
+    const el = fid && document.querySelector(`[data-fid="${CSS.escape(fid)}"]`);
+    if (el) el.focus({ preventScroll: true });
+    return !!el;
   }
 
   function renderTop() {
@@ -745,7 +758,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   }
 
   function kpi({ label, value, unit, sub, tone, pressed, attn, onclick, title }) {
-    return h('button', { class: `kpi${attn ? ' attn' : ''}`, type: 'button', 'aria-pressed': pressed == null ? null : String(pressed), onclick, title },
+    return h('button', { class: `kpi${attn ? ' attn' : ''}`, type: 'button', 'aria-pressed': pressed == null ? null : String(pressed), onclick, title, 'data-fid': `kpi:${label}` },
       led(tone), h('span', { class: 'k-label' }, label),
       h('span', { class: 'k-value' }, value, unit ? h('small', null, unit) : null),
       h('span', { class: 'k-sub' }, sub));
@@ -824,7 +837,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
         h('span', { class: 'node', title: `${c.ph.n} ${c.ph.name}` }, c.ph.n, list.length ? h('b', null, String(list.length)) : null),
         h('span', { class: 'name' }, c.ph.name),
         list.length ? h('div', { class: 'pucks' },
-          shown.map((p) => h('button', { class: 'puck', type: 'button', title: `${p.name} — ${STATUS[p.status].label}`, onclick: (e) => openDrawer(p.slug, e.currentTarget) }, led(STATUS[p.status].led), h('span', null, p.name))),
+          shown.map((p) => h('button', { class: 'puck', type: 'button', 'data-fid': `puck:${p.slug}`, title: `${p.name} — ${STATUS[p.status].label}`, onclick: (e) => openDrawer(p.slug, e.currentTarget) }, led(STATUS[p.status].led), h('span', null, p.name))),
           list.length > shown.length ? h('button', { class: 'more', type: 'button', onclick: () => { setFilter('all'); $('q').value = c.ph.name; state.query = c.ph.name; renderProducts(); $('plist').scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, `+${list.length - shown.length} mais`) : null) : null));
     });
     fill(box, kids);
@@ -846,7 +859,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   }
   function renderFilters() {
     const P = products();
-    fill($('filters'), FILTERS.map(([id, label, test]) => h('button', { type: 'button', 'aria-pressed': String(state.filter === id), onclick: () => setFilter(id) }, label, h('span', { class: 'mono' }, String(P.filter(test).length)))));
+    fill($('filters'), FILTERS.map(([id, label, test]) => h('button', { type: 'button', 'data-fid': `filter:${id}`, 'aria-pressed': String(state.filter === id), onclick: () => setFilter(id) }, label, h('span', { class: 'mono' }, String(P.filter(test).length)))));
     $('sort').value = state.sort;
   }
 
@@ -899,7 +912,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
       const ses = sessionFor(p);
       const b = ses ? BUCKET[ses.bucket] : null;
       const open = (e) => openDrawer(p.slug, e.currentTarget);
-      return h('li', { class: 'prow', tabindex: '0', role: 'button', 'aria-label': `${p.name} — ${STATUS[p.status].label}, fase ${ph.name}`, onclick: open, onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); } } },
+      return h('li', { class: 'prow', tabindex: '0', role: 'button', 'data-fid': `row:${p.slug}`, 'aria-label': `${p.name} — ${STATUS[p.status].label}, fase ${ph.name}`, onclick: open, onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(e); } } },
         h('div', { class: 'c-name' },
           ses ? h('span', { class: `led ${b.led}${b.pulse ? ' pulse' : ''}`, title: `Sessão: ${b.label}` }) : led('idle'),
           h('div', { style: 'min-width:0' }, h('div', { class: 'pname' }, p.name, h('span', { class: 'ptype' }, TYPES[p.type] || p.type)), h('div', { class: 'pone' }, p.oneLiner || p.idea.slice(0, 140)))),
@@ -936,7 +949,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
       return h('li', { class: 'uitem' }, led(pr ? pr.led : 'idle'),
         h('div', { style: 'min-width:0' },
           h('div', { class: 'u-title' }, t.id ? `${t.id} · ` : '', t.title),
-          h('div', { class: 'u-meta' }, h('button', { class: 'prodlink', type: 'button', onclick: (e) => openDrawer(p.slug, e.currentTarget) }, p.name),
+          h('div', { class: 'u-meta' }, h('button', { class: 'prodlink', type: 'button', 'data-fid': `task:${p.slug}:${t.id || t.title}`, onclick: (e) => openDrawer(p.slug, e.currentTarget) }, p.name),
             pr ? ` · ${pr.label}` : '', t.minutes ? ` · ⏱ ${t.minutes} min` : '', t.cost ? ` · 💶 ${t.cost}` : '')),
         tasksUrl ? extLink(tasksUrl, 'Abrir', 'linkbtn') : null);
     })), items.length > shown.length ? h('div', { class: 'note' }, `+${items.length - shown.length} tarefas — vê cada produto`) : null);
@@ -979,13 +992,13 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
           return h('li', { class: 'uitem' }, led(b.led, b.pulse ? 'pulse' : ''),
             h('div', { style: 'min-width:0' },
               h('div', { class: 'u-title' }, prod ? prod.name : x.title.replace(/^🏭\s*([a-z0-9-]+\s*·\s*)?/u, '')),
-              h('div', { class: 'u-meta' }, b.label, ' · ', timeAgo(x.updated), prod ? [' · ', h('button', { class: 'prodlink', type: 'button', onclick: (e) => openDrawer(prod.slug, e.currentTarget) }, 'ver produto')] : null),
+              h('div', { class: 'u-meta' }, b.label, ' · ', timeAgo(x.updated), prod ? [' · ', h('button', { class: 'prodlink', type: 'button', 'data-fid': `session:${x.id}`, onclick: (e) => openDrawer(prod.slug, e.currentTarget) }, 'ver produto')] : null),
               x.needs ? h('div', { class: 'u-detail', style: 'color:var(--warn)' }, x.needs) : null,
               x.detail ? h('div', { class: 'u-detail' }, x.detail) : null),
             extLink(x.url, 'Abrir', 'linkbtn'));
         })));
       }
-      kids.push(h('div', { class: 'note' }, h('span', null, 'Atualiza a cada minuto'), h('button', { class: 'linkbtn', type: 'button', onclick: refreshSessions }, icon('refresh', 13), 'Atualizar')));
+      kids.push(h('div', { class: 'note' }, h('span', null, 'Atualiza a cada minuto'), h('button', { class: 'linkbtn', type: 'button', 'data-fid': 'sessions:refresh', onclick: refreshSessions }, icon('refresh', 13), 'Atualizar')));
     } else tag.textContent = '';
     fill(box, kids);
   }
@@ -996,10 +1009,10 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   }
   function bars(rows, opts = {}) {
     const max = Math.max(1, ...rows.map((r) => r.value));
-    return h('div', { class: 'bars' }, rows.map((r) => h('div', { class: 'bar', title: `${r.label}: ${r.text ?? nf.format(r.value)}` },
+    return h('div', { class: 'bars' }, rows.map((r) => h('div', { class: 'bar', title: `${r.label}: ${r.text ?? fmt(r.value)}` },
       h('span', { class: 'lbl' }, r.label),
       h('span', { class: 'track' }, h('span', { class: 'fill', style: `display:block;width:${Math.max(r.value ? 3 : 0, (r.value / max) * 100)}%;background:${r.color || 'var(--accent)'}` })),
-      h('span', { class: 'val' }, r.text ?? nf.format(r.value) + (opts.unit || '')))));
+      h('span', { class: 'val' }, r.text ?? fmt(r.value) + (opts.unit || '')))));
   }
   const emptyNote = (text) => h('p', { class: 'chart-note', style: 'margin:6px 0' }, text);
   function donut(P) {
@@ -1020,7 +1033,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const legend = h('ul', { class: 'legend' }, STATUS_ORDER.map((st) => {
       const n = P.filter((p) => p.status === st).length;
       const f = { active: 'active', 'needs-founder': 'needs', launched: 'launched', paused: 'stopped', killed: 'stopped' }[st];
-      return h('li', null, h('button', { type: 'button', onclick: () => { setFilter(f); $('plist').scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+      return h('li', null, h('button', { type: 'button', 'data-fid': `legend:${st}`, onclick: () => { setFilter(f); $('plist').scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
         h('span', { class: 'led', style: `background:${STATUS_COLOR[st]};box-shadow:none` }), STATUS[st].label, h('span', { class: 'mono' }, total ? `${n} · ${pct.format(n / total)}` : '0')));
     }));
     return h('div', { class: 'donut-wrap' }, svg, legend);
@@ -1048,7 +1061,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
       }));
     if (!scored.length) return h('div', null, svg, emptyNote('Nenhum produto chegou ao G1 ainda: o veredicto aparece no fim da pesquisa.'));
     return h('div', null, svg, h('p', { class: 'chart-note' }, 'GO ≥ 3,5 · PIVOT 2,8–3,5 · KILL < 2,8'),
-      h('ul', { class: 'g1list' }, scored.slice().reverse().slice(0, 6).map((p) => h('li', null, h('button', { type: 'button', onclick: (e) => openDrawer(p.slug, e.currentTarget) },
+      h('ul', { class: 'g1list' }, scored.slice().reverse().slice(0, 6).map((p) => h('li', null, h('button', { type: 'button', 'data-fid': `g1:${p.slug}`, onclick: (e) => openDrawer(p.slug, e.currentTarget) },
         h('span', null, p.name), h('b', null, nf2.format(p.decision.score)), p.decision.verdict ? h('span', { class: `pill v-${p.decision.verdict}` }, VERDICT[p.decision.verdict]) : h('span'))))));
   }
   function renderCharts() {
@@ -1056,7 +1069,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const P = products();
     const t = obj(state.summary && state.summary.totals);
     const hours = obj(t.median_phase_hours);
-    const hourRows = pipeline().filter((ph) => num(hours[ph.id]) != null).map((ph) => ({ label: `${ph.n} ${ph.name}`, value: hours[ph.id], text: `${nf.format(hours[ph.id])} h` }));
+    const hourRows = pipeline().filter((ph) => num(hours[ph.id]) != null).map((ph) => ({ label: `${ph.n} ${ph.name}`, value: hours[ph.id], text: `${fmt(hours[ph.id])} h` }));
     const types = {};
     for (const p of P) types[p.type] = (types[p.type] || 0) + 1;
     const typeRows = Object.entries(types).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: TYPES[k] || k || 'Outro', value: v }));
@@ -1064,7 +1077,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const kindRows = Object.entries(kinds).filter(([, v]) => num(v)).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ label: (KINDS[k] || { label: k }).label, value: v, color: (KINDS[k] || {}).color }));
     const med = obj(t.median_metrics), rates = obj(t.rates);
     const kv = [
-      ...Object.entries(med).filter(([, v]) => num(v) != null).map(([k, v]) => [`${METRICS[k] || k.replace(/_/g, ' ')} (mediana)`, nf.format(v)]),
+      ...Object.entries(med).filter(([, v]) => num(v) != null).map(([k, v]) => [`${METRICS[k] || k.replace(/_/g, ' ')} (mediana)`, fmt(v)]),
       ...Object.entries(rates).filter(([, v]) => num(v) != null).map(([k, v]) => [METRICS[k] || k.replace(/_/g, ' '), pct.format(v)]),
     ];
     fill(box,
@@ -1119,7 +1132,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   function waitingIdeas() {
     const sm = state.summary || {};
     const inbox = (Array.isArray(sm.inbox) ? sm.inbox : []).filter((x) => typeof x === 'string').map((t) => ({ text: t.slice(0, 400), where: 'ideas/INBOX.md' }));
-    const queued = (Array.isArray(sm.queued) ? sm.queued : []).filter((x) => x && Number.isInteger(x.number) && typeof x.title === 'string')
+    const queued = (Array.isArray(obj(state.queue).items) ? state.queue.items : []).filter((x) => x && Number.isInteger(x.number) && typeof x.title === 'string')
       .map((x) => ({ text: x.title.replace(/^💡\s*/u, '').slice(0, 200), where: `issue #${x.number}`, url: safeUrl(x.url) }));
     return [...inbox, ...queued];
   }
@@ -1150,7 +1163,8 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
   function openDrawer(slug, from) {
     if (!bySlug(slug)) return;
     state.open = slug;
-    state.lastFocus = from || document.activeElement;
+    const origin = from || document.activeElement;
+    state.lastFocus = origin && origin.getAttribute ? { el: origin, fid: origin.getAttribute('data-fid') } : null;
     const scrim = $('scrim'), drawer = $('drawer');
     scrim.hidden = false; drawer.hidden = false;
     $('app').inert = true;
@@ -1165,12 +1179,13 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     $('app').inert = false;
     setTimeout(() => { if (!state.open) { scrim.hidden = true; drawer.hidden = true; drawer.replaceChildren(); } }, 280);
     const back = state.lastFocus;
-    if (back && document.contains(back)) back.focus({ preventScroll: true });
+    if (back && document.contains(back.el)) back.el.focus({ preventScroll: true });
+    else if (back) refocus(back.fid);
   }
   function dsec(title, ...body) { return h('section', { class: 'd-sec' }, h('h3', null, title), body); }
   function fmtMetric(k, v) {
     if (typeof v === 'boolean') return v ? 'sim' : 'não';
-    if (typeof v === 'number') return k === 'g1_score' ? nf2.format(v) : nf.format(v);
+    if (typeof v === 'number') return k === 'g1_score' ? nf2.format(v) : fmt(v);
     return v;
   }
   function renderDrawer(fresh) {
@@ -1181,9 +1196,9 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const scroll = !fresh && prevBody ? prevBody.scrollTop : 0;
     const ph = phaseOf(p);
     const ses = sessionFor(p);
-    const linkBtns = LINKS.map(([k, label]) => extLink(p.links[k], label)).filter(Boolean);
+    const linkBtns = LINKS.map(([k, label]) => extLink(p.links[k], label, 'btn small', `drawer:${k}`)).filter(Boolean);
     const branchUrl = gh('tree', p.branch, `products/${p.slug}`);
-    if (branchUrl) linkBtns.push(h('a', { class: 'btn small', href: branchUrl, target: '_blank', rel: 'noopener noreferrer' }, icon('branch', 13), 'Pasta no GitHub'));
+    if (branchUrl) linkBtns.push(h('a', { class: 'btn small', href: branchUrl, target: '_blank', rel: 'noopener noreferrer', 'data-fid': 'drawer:folder' }, icon('branch', 13), 'Pasta no GitHub'));
     const d = p.decision;
     const docs = p.docs.map((path) => ({ path, label: path.replace(`products/${p.slug}/`, ''), url: gh('blob', p.branch, path) })).filter((x) => x.url);
     const metrics = Object.entries(p.metrics).filter(([k]) => k !== 'g1_score' || !d);
@@ -1193,7 +1208,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
     const head = h('header', { class: 'd-head' },
       h('div', { class: 'd-kicker' }, [TYPES[p.type] || p.type, p.depth ? `profundidade ${DEPTHS[p.depth] || p.depth}` : '', p.created ? `desde ${dayAgo(p.created)}` : ''].filter(Boolean).join(' · ')),
       h('h2', { id: 'dName' }, p.name),
-      h('button', { class: 'd-close', type: 'button', 'aria-label': 'Fechar', onclick: closeDrawer }, icon('x', 18)),
+      h('button', { class: 'd-close', type: 'button', 'data-fid': 'drawer:close', 'aria-label': 'Fechar', onclick: closeDrawer }, icon('x', 18)),
       p.oneLiner ? h('p', null, p.oneLiner) : null,
       h('div', { class: 'row' }, h('span', { class: `badge s-${p.status}` }, STATUS[p.status].label), h('span', { class: 'chip' }, `${ph.n} ${ph.name} · ${PHASE_STATUS[ph.status] || ''}`), h('span', { class: 'chip' }, `${p.progress.done}/${p.progress.total} fases`), h('span', { class: 'chip', title: p.updated }, `atualizado ${dayAgo(p.updated)}`)));
     const body = h('div', { class: 'd-body' },
@@ -1217,7 +1232,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
         return h('li', { class: x.status },
           h('span', { class: 'dot' }, x.status === 'done' ? icon('check', 14) : x.n),
           h('div', { style: 'min-width:0' },
-            h('div', { class: 'tl-top' }, h('b', null, x.name), h('span', null, [PHASE_STATUS[x.status], when, hrs != null ? `${nf.format(hrs)} h` : ''].filter(Boolean).join(' · '))),
+            h('div', { class: 'tl-top' }, h('b', null, x.name), h('span', null, [PHASE_STATUS[x.status], when, hrs != null ? `${fmt(hrs)} h` : ''].filter(Boolean).join(' · '))),
             x.summary ? h('p', { class: 'tl-sum' }, x.summary) : null));
       }))),
       dsec(`Tarefas para ti${p.tasks.open ? ` · ${p.tasks.open} · ≈ ${p.tasks.minutes} min` : ''}`,
@@ -1225,7 +1240,7 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
           h('div', null, h('div', { class: 'u-title' }, t.id ? `${t.id} · ` : '', t.title), h('div', { class: 'u-meta' }, [t.priority ? PRIORITY[t.priority].label : '', t.minutes ? `⏱ ${t.minutes} min` : '', t.cost ? `💶 ${t.cost}` : ''].filter(Boolean).join(' · '))), null))) :
           h('p', { class: 'muted', style: 'margin:0' }, p.tasks.done ? `Nada em aberto — ${p.tasks.done} feita${p.tasks.done === 1 ? '' : 's'}.` : 'Nada à tua espera neste produto.'),
         gh('blob', p.branch, `products/${p.slug}/HUMAN_TASKS.md`) ? h('div', { style: 'margin-top:10px' }, extLink(gh('blob', p.branch, `products/${p.slug}/HUMAN_TASKS.md`), 'Abrir HUMAN_TASKS.md')) : null),
-      docs.length ? dsec(`Documentos · ${docs.length}`, h('ul', { class: 'doclist' }, docs.map((x) => h('li', null, h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer' }, icon('doc', 15), x.label))))) : null,
+      docs.length ? dsec(`Documentos · ${docs.length}`, h('ul', { class: 'doclist' }, docs.map((x) => h('li', null, h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer', 'data-fid': `drawer:doc:${x.path}` }, icon('doc', 15), x.label))))) : null,
       metrics.length ? dsec('Métricas', h('dl', { class: 'kv' }, metrics.map(([k, v]) => [h('dt', null, METRICS[k] || k.replace(/_/g, ' ')), h('dd', null, fmtMetric(k, v))]))) : null,
       Object.keys(p.stack).length ? dsec('Stack', h('div', { class: 'stack' }, Object.entries(p.stack).map(([k, v]) => h('span', null, h('b', null, k), v)))) : null,
       dsec(`Lições registadas · ${p.lessons.total}`, kinds.length ? h('div', { class: 'stack' }, kinds.map(([k, v]) => h('span', null, h('b', null, (KINDS[k] || { label: k }).label), String(v)))) : h('p', { class: 'muted', style: 'margin:0' }, 'Ainda nenhuma.')),
@@ -1263,6 +1278,10 @@ code{font-family:var(--font-mono);font-size:.92em;background:var(--surface-3);pa
       state.summary = snap.exists ? obj(snap.data()) : null;
       render();
     }, fail);
+    db.doc('state/queue').onSnapshot((snap) => {
+      state.queue = snap.exists ? obj(snap.data()) : null;
+      render();
+    }, () => { state.queue = null; render(); });
     db.collection('products').onSnapshot((qs) => {
       state.products = qs.docs.filter((d) => d.exists).map((d) => normProduct(d.data())).filter(Boolean);
       if (state.open && !bySlug(state.open)) closeDrawer();

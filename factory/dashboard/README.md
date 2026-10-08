@@ -15,22 +15,27 @@ page could not show live session status. `painel.html` in this folder is the pag
 
 | Source | What | Freshness |
 |---|---|---|
-| Artifact store, `state/summary` | factory totals, pipeline, inbox and queued ideas, knowledge base (learnings, patterns, radar, suggestions, scoreboard) | every refresh |
+| Artifact store, `state/summary` | factory totals, pipeline, the `ideas/INBOX.md` ideas not yet taken, knowledge base (learnings, patterns, radar, suggestions, scoreboard) | every refresh |
+| Artifact store, `state/queue` | the owner's open issues labeled `ideia`/`na-fila` without `em-curso` | the foreman and `/painel` |
 | Artifact store, `products/<slug>` | one document per product: status, phases with dates and summaries, G1 decision, metrics, phase hours, open founder tasks, lesson counts by kind, links, document paths, stack | every refresh |
 | `Claude Code Remote` connector (`list_sessions`), called by the page as the viewer | live state of the factory's sessions | every minute while open |
 
 `python3 factory/scripts/factory.py dashboard` builds the documents from every branch (the same
 scan as `portfolio`) and from `origin/main` for the inbox and the knowledge base; it never copies
-lesson texts, personal or customer data (CLAUDE.md, Confidentiality) — only counts. A session
-writes them with the `ArtifactData` tool, as the founder's account, following
+lesson texts, personal or customer data (CLAUDE.md, Confidentiality) — only counts. It deletes the
+document of a product no branch has any more only after a fetch that worked and found products.
+A session writes the documents with the `ArtifactData` tool, as the founder's account, following
 `.claude/skills/painel/SKILL.md`. Who refreshes:
 
-- every phase checkpoint of the idea-to-product workflow (the clerk, best effort);
+- after every saved phase checkpoint of the idea-to-product workflow, a separate best-effort clerk
+  call (it never fails the checkpoint and leaves the queue alone);
 - `/ideia` and `/continuar` when they finish, the foreman (`/fabrica`) on every run;
 - `/painel` on demand.
 
-A refresh failure never stops the factory: the page shows how old its data is and turns amber
-after 26 hours.
+`ArtifactData` is in the allow list so unattended refreshes never stall; the `artifact-guard`
+hook (`.claude/settings.json` → `factory.py artifact-guard`) limits that to reads and batches on
+this URL, and any other use of the tool asks the founder. A refresh failure never stops the
+factory: the page shows how old its data is and turns amber after 26 hours.
 
 ## Changing the page
 
@@ -46,3 +51,5 @@ after 26 hours.
    `mcp` `{"servers": [{"server": "Claude Code Remote", "tools": ["list_sessions"]}]}`.
 4. Changing the document shape: change `dashboard_data` in `factory.py`, its test, and the
    page's `normProduct` together; old documents are replaced on the next refresh.
+5. Moving the dashboard to a new artifact: change the `URL:` line above in the same pull
+   request (the skill, the guard and the README links read it).

@@ -55,6 +55,7 @@
       "Bash(tar *)",
       "Bash(ls *)",
       "Bash(mkdir *)",
+      "Bash(mktemp *)",
       "Bash(cp *)",
       "Bash(mv *)",
       "Bash(rm *)",
@@ -149,6 +150,18 @@
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "ArtifactData",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/factory/scripts/factory.py artifact-guard || exit 2",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "startup|resume",

@@ -560,6 +560,11 @@ class TestDashboard(GitRepoTestCase):
         self.assertEqual(tasks[0], {"id": "HT-01", "title": "Comprar o domínio alpha.pt", "done": False,
                                     "priority": "red", "minutes": 4, "cost": "≈ 12 €/ano"})
         self.assertEqual((tasks[1]["priority"], tasks[2]["priority"], tasks[2]["done"]), ("amber", "done", True))
+        odd = factory.parse_founder_tasks(
+            "## 🟡 Antes\n- [ ] **HT-04 · Rever contrato** — ⏱ 10-15 min\n- [ ] **HT-05 · Assinar** — ⏱ 1 h · 💶 0 €\n"
+            "## ✅ Concluídas\n- [ ] **HT-06 · Esquecida na secção errada** — ⏱ 2 min\n"
+        )
+        self.assertEqual([(t["minutes"], t["done"]) for t in odd], [(15, False), (60, False), (2, True)])
 
         knowledge = self.root / "factory" / "knowledge"
         knowledge.mkdir(parents=True)
@@ -632,15 +637,29 @@ class TestDashboard(GitRepoTestCase):
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", versions)[0], 0)
         kept = json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]
         self.assertEqual([w.get("if_version") for w in kept], [4, 2, None])
-        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", versions, "--prune")[0], 0)
+        code, _, err = run(self.root, "dashboard", "--out", str(out), "--versions", versions, "--prune")
+        self.assertEqual(code, 0)
+        self.assertIn("pruning needs a successful --fetch", err, "no fetch, no deletes")
+        self.assertEqual([w["op"] for w in json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]], ["set"] * 3)
+        self.assertEqual(run(self.root, "dashboard", "--fetch", "--out", str(out), "--versions", versions, "--prune")[0], 0)
         pruned = json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]
         self.assertEqual(pruned[-1], {"op": "delete", "collection": "products", "doc_id": "gone", "if_version": 7})
+        self.git("remote", "set-url", "origin", str(self.root / "missing-remote"))
+        code, _, err = run(self.root, "dashboard", "--fetch", "--out", str(out), "--versions", versions, "--prune")
+        self.assertEqual(code, 0)
+        self.assertIn("pruning needs a successful --fetch", err, "a failed fetch never deletes live documents")
+        self.assertNotIn("delete", [w["op"] for w in json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]])
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", '{"other/x": 1}')[0], 1)
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--versions", '{"products/a": true}')[0], 1)
         # ideas queued as issues come from the session's GitHub tools, checked before they are shown
         queued = '[{"number": 12, "title": "💡 Uma app de rendas", "url": "https://github.com/o/r/issues/12"}]'
-        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", queued)[0], 0)
-        self.assertEqual(json.loads((out / "state" / "summary.json").read_text(encoding="utf-8"))["queued"][0]["number"], 12)
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", queued, "--versions", '{"state/queue": 3}')[0], 0)
+        self.assertEqual(json.loads((out / "state" / "queue.json").read_text(encoding="utf-8"))["items"][0]["number"], 12)
+        written = json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]
+        self.assertIn(("state", "queue", 3), [(w["collection"], w["doc_id"], w.get("if_version")) for w in written])
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out))[0], 0)
+        self.assertNotIn("queue", [w["doc_id"] for w in json.loads((out / "batches.json").read_text(encoding="utf-8"))[0]], "a checkpoint refresh leaves the queue alone")
+        self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", '["not an object"]')[0], 1)
         bad = '[{"number": 12, "title": "x", "url": "javascript:alert(1)//github.com/o/r/issues/12"}]'
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", bad)[0], 1)
         self.assertEqual(run(self.root, "dashboard", "--out", str(out), "--queued", '[{"number": 3, "title": "x", "url": "https://github.com/o/r/issues/4"}]')[0], 1)
@@ -666,13 +685,45 @@ class TestDashboard(GitRepoTestCase):
         self.assertEqual(summary["totals"]["founder_tasks_open"], 2)
         self.assertEqual(summary["inbox"], ["uma ideia nova"], "ideas already taken are not listed")
         self.assertEqual([p["id"] for p in summary["pipeline"]][:2], ["intake", "research"])
-        self.assertEqual(len(json.loads(run(self.root, "dashboard")[1])["products"]), 2)
+        printed = json.loads(run(self.root, "dashboard")[1])
+        self.assertEqual(sorted(k for k in printed if k.startswith("products/")), ["products/alpha", "products/beta"])
         # many products split into batches of at most 50 writes
         entries = [{"product": {"slug": f"p{i:03d}", "name": "P"}, "branch": "main", "key": (0, False), "tasks": (0, 0), "tasks_text": ""}
                    for i in range(60)]
+        entries.append({"product": {"slug": "../../escape", "name": "X"}, "branch": "main", "key": (0, False), "tasks": (0, 0), "tasks_text": ""})
         with unittest.mock.patch.object(factory, "scan_branches", return_value=entries):
             self.assertEqual(run(self.root, "dashboard", "--out", str(out))[0], 0)
         self.assertEqual([len(b) for b in json.loads((out / "batches.json").read_text(encoding="utf-8"))], [50, 11])
+        self.assertFalse((out.parent / "escape.json").exists())
+        self.assertNotIn("../../escape", (out / "batches.json").read_text(encoding="utf-8"))
+
+
+class TestArtifactGuard(FactoryTestCase):
+    """The allow list pre-approves ArtifactData; the hook keeps that to the dashboard's store."""
+
+    URL = "https://claude.ai/artifact/AbC123"
+
+    def guard(self, event: object) -> str:
+        stdin = io.StringIO(event if isinstance(event, str) else json.dumps(event))
+        with unittest.mock.patch("sys.stdin", stdin):
+            code, out, err = run(self.root, "artifact-guard")
+        self.assertEqual(code, 0, err)
+        return out.strip()
+
+    def test_only_dashboard_reads_and_batches_run_unasked(self) -> None:
+        asks = lambda out: json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "ask"  # noqa: E731
+        call = {"tool_name": "ArtifactData", "tool_input": {"action": "batch", "url": self.URL, "writes": []}}
+        self.assertTrue(asks(self.guard(call)), "no dashboard configured: ask")
+        (self.root / "factory" / "dashboard").mkdir(parents=True)
+        (self.root / "factory" / "dashboard" / "README.md").write_text(f"# D\n\nURL: {self.URL}\n", encoding="utf-8")
+        for action in ("batch", "list", "get", "query"):
+            self.assertEqual(self.guard({**call, "tool_input": {**call["tool_input"], "action": action}}), "", action)
+        self.assertEqual(self.guard({**call, "tool_input": {**call["tool_input"], "url": self.URL + "/"}}), "")
+        self.assertTrue(asks(self.guard({**call, "tool_input": {**call["tool_input"], "action": "delete"}})))
+        self.assertTrue(asks(self.guard({**call, "tool_input": {**call["tool_input"], "url": "https://claude.ai/artifact/Other1"}})))
+        self.assertTrue(asks(self.guard({**call, "tool_input": {**call["tool_input"], "url": self.URL + "x"}})))
+        self.assertTrue(asks(self.guard("not json")))
+        self.assertTrue(asks(self.guard(["a", "list"])))
 
 
 class TestScope(GitRepoTestCase):
