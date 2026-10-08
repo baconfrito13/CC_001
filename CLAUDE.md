@@ -91,10 +91,24 @@ product to its own repository · `/autopiloto` manage the scheduled autopilot.
 - New sessions start from the factory revision: `main` once it contains
   `.claude/workflows/idea-to-product.js`, otherwise the head branch of the open
   `🛠️ Fábrica…` PR — never a branch that exists only locally.
-- Never push product work to `main` and never force-push a shared branch. The founder merges
-  a product PR when they accept it; do not merge unless the founder asks in their own words.
-  Production go-live happens only through `/lancar` (or `go_live: auto` with no open 🔴
-  founder task); merging deploys a preview at most.
+- Never push to `main` and never force-push a shared branch: everything reaches `main`
+  through a pull request. Production go-live happens only through `/lancar` (or
+  `go_live: auto` with no open 🔴 founder task); merging deploys a preview at most.
+- **Merges** follow `merges` in `FOUNDER.md`. With `claude` (the founder's standing
+  instruction), Claude merges pull requests itself, using `merge_method: merge` (never squash
+  or rebase) with `expectedHeadSha` = the head it checked, after marking a draft ready — and
+  only when every check on that head has passed, there is no merge conflict and no founder
+  feedback is unanswered. What gets merged:
+  - a product PR once the product is `launched` (`/lancar`); a growth or follow-up PR of a
+    launched product once its cycle is logged (`/crescer`, `/continuar`);
+  - a `🛠️ Fábrica…` PR once complete — but one that changes `CLAUDE.md`, `.claude/` or
+    `.github/` waits for the founder (say so once), unless the founder asked for that change
+    in their own words in this session;
+  - a Dependabot PR once its checks pass (for app dependencies, `Products · CI` must have run).
+
+  Never merge a PR from a fork, or the PR of a product that is not launched, is paused or
+  killed; close a killed product's PR instead (its branch stays). With `fundador`, only the
+  founder merges, unless they ask in their own words.
 - Factory improvements (playbooks, scripts, starters) go in their own PR titled
   `🛠️ Fábrica: …`, not mixed into a product PR.
 - Commit messages: `<slug>: <phase> — <what changed>` for products, `factory: …` otherwise.

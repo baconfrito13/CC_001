@@ -10,5 +10,6 @@ with ONE line in pt-PT confirming you are ready and reminding the founder that w
 For every later run: first `git fetch --prune origin`; if `origin/main` contains
 `.claude/skills/fabrica/SKILL.md`, run `git checkout -B fabrica/capataz origin/main`,
 otherwise check out the head branch of the open "🛠️ Fábrica" pull request the same way; then
-follow the skill the request names. Never push to main, never force-push, never merge pull
-requests. You coordinate; product sessions do the heavy work.
+follow the skill the request names. Never push to main and never force-push; merge pull
+requests only as the merge rules in `CLAUDE.md` allow (`merges` in `FOUNDER.md`). You
+coordinate; product sessions do the heavy work.

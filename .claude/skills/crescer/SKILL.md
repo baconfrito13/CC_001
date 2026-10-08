@@ -30,5 +30,6 @@ Arguments: `$ARGUMENTS`
 5. Append the cycle to `docs/10-growth.md` (metrics table, what shipped, results of last
    week's experiments, next bets), set the growth phase `in_progress`
    (`factory.py set-phase <slug> growth in_progress --summary "<week>: <headline>"`), commit,
-   push, refresh the PR/portfolio status.
+   push, refresh the PR/portfolio status. With `merges: claude` in `FOUNDER.md`, the cycle's
+   PR is done: mark it ready and merge it as `/lancar` step 4 describes.
 6. Reply in pt-PT: 3 numbers that matter, what shipped, what's next, any founder action.

@@ -4,8 +4,9 @@ Envias uma ideia — uma frase chega. A fábrica valida-a, define o produto, cri
 escreve e testa o código, prepara a parte legal e o marketing, e deixa-o **pronto a publicar
 e a faturar**, com o mínimo de intervenção tua.
 
-> **Começa aqui:** [configuração única](SETUP.md) — primeiro decides se o repositório fica
-> privado e fazes merge do PR da fábrica (passos 1 e 2). Depois disso, basta enviar ideias.
+> **Começa aqui:** [configuração única](SETUP.md) — o primeiro passo é decidir se o
+> repositório fica privado. Depois disso, basta enviar ideias: commits, pull requests e merges
+> ficam com a fábrica.
 
 ## Enviar ideias
 
@@ -53,6 +54,8 @@ Só o que **apenas tu** podes fazer: pagar (domínios, contas), criar contas ou 
 fiscal, aprovar publicações em teu nome e fornecer credenciais. Fica tudo junto em
 `products/<produto>/HUMAN_TASKS.md`, preparado para minutos — ligações diretas, valores para
 copiar, o que cada tarefa desbloqueia. Enquanto não as fazes, a fábrica continua com o resto.
+Commits, pull requests e merges não são contigo: a fábrica trata deles (`merges` em
+[`FOUNDER.md`](FOUNDER.md)).
 
 ## Acompanhar e dar feedback
 

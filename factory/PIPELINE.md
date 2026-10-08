@@ -59,9 +59,11 @@ in `factory/templates/`; its quality gate in the Definition of Done below and in
 6. `qa` + security audit → fix loop until the gate passes (max rounds by depth) → **G2**.
 7. `launch`: preview deploy, production runbook, founder tasks batched. Production go-live
    happens only through `/lancar` once the founder approves — or automatically when
-   `FOUNDER.md` sets `go_live: auto` and no 🔴 founder task is open. Merging a product PR into
-   `main` deploys a preview at most.
-8. `growth`: recurring cycles (`/crescer`, weekly via the autopilot).
+   `FOUNDER.md` sets `go_live: auto` and no 🔴 founder task is open. Once launched, the
+   product PR is merged into `main` (by Claude with `merges: claude`, rules in `CLAUDE.md`),
+   which deploys a preview at most.
+8. `growth`: recurring cycles (`/crescer`, weekly via the autopilot), each on its own branch
+   and PR, merged when the cycle is done.
 
 Only the orchestrator (or a dedicated checkpoint step) commits; parallel agents never run
 `git commit` at the same time.

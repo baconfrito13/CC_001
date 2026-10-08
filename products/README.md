@@ -5,9 +5,11 @@ no **seu próprio branch** (`produto/<slug>` ou o branch da sessão que o criou)
 rascunho** que funciona como a "casa" do produto: estado atualizado, ligações e o sítio onde
 dás feedback com comentários.
 
-Quando fazes merge do PR de um produto para `main`, estás a dizer "aceito este produto": o
-código passa a viver aqui (e, se o deploy automático estiver ativo, gera uma pré-visualização).
-Pôr em produção é sempre um passo explícito: `/lancar <produto>`.
+Quando o produto é lançado, a fábrica faz merge do PR para `main` (com `merges: claude` em
+`FOUNDER.md`; com `merges: fundador`, fazes tu): o código passa a viver aqui e, se o deploy
+automático estiver ativo, gera uma pré-visualização. Pôr em produção é sempre um passo
+explícito: `/lancar <produto>`. Os ciclos de crescimento seguintes usam um branch e um PR
+novos, que entram no `main` quando cada ciclo termina.
 
 Ver todos os produtos, em todos os branches:
 
