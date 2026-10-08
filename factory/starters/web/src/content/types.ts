@@ -112,6 +112,47 @@ export interface Dictionary {
     companyDetails: string;
     vatLabel: string;
     followTitle: string;
+    /** Footer link to the online withdrawal function (consumer sales only). */
+    withdraw: string;
+  };
+  withdrawal: {
+    metaDescription: string;
+    title: string;
+    intro: string;
+    policyPrefix: string;
+    policyLinkText: string;
+    policySuffix: string;
+    nameLabel: string;
+    emailLabel: string;
+    referenceLabel: string;
+    referenceHint: string;
+    messageLabel: string;
+    messageHint: string;
+    submit: string;
+    submitting: string;
+    errors: {
+      nameRequired: string;
+      emailRequired: string;
+      emailInvalid: string;
+      referenceRequired: string;
+      tooLong: string;
+      generic: string;
+      rateLimited: string;
+      unavailable: string;
+      delivery: string;
+      summary: string;
+    };
+    successTitle: string;
+    successBody: string;
+    successReference: string;
+    successAck: string;
+    /** E-mails: acknowledgement to the consumer, notification to the company. */
+    email: {
+      ackSubject: string;
+      ackBody: string;
+      notifySubject: string;
+      notifyBody: string;
+    };
   };
   legal: {
     docs: Record<

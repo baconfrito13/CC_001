@@ -4,9 +4,10 @@ import type { Dictionary } from "@/content";
 import { fill } from "@/lib/format";
 import { getPublishedLegalDocs } from "@/lib/legal";
 import { localizedPath } from "@/lib/locale-path";
+import { withdrawalEnabled } from "@/lib/withdrawal/enabled";
 import { CookieSettingsButton } from "./CookieConsent";
 import { Logo } from "./Logo";
-import { container } from "./ui";
+import { button, container } from "./ui";
 
 const socialLabels: Record<keyof typeof social, string> = {
   x: "X",
@@ -58,18 +59,13 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
                 </Link>
               </li>
             ))}
-            <li>
-              <a
-                href={legal.complaintsBookUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={dict.footer.complaintsBookHint}
-                className={footerLink}
-              >
-                {dict.footer.complaintsBook}
-                <span className="sr-only"> {dict.a11y.externalLink}</span>
-              </a>
-            </li>
+            {withdrawalEnabled() ? (
+              <li>
+                <Link href={localizedPath(locale, "/withdraw")} className={footerLink}>
+                  {dict.footer.withdraw}
+                </Link>
+              </li>
+            ) : null}
             <li>
               <CookieSettingsButton
                 label={dict.consent.settings}
@@ -121,9 +117,45 @@ export function Footer({ locale, dict }: { locale: Locale; dict: Dictionary }) {
       </div>
 
       <div className="border-t border-border">
-        <p className={`${container} py-5 text-sm text-muted-foreground`}>
-          {fill(dict.footer.copyright, { year, company: company.legalName })}
-        </p>
+        <div
+          className={`${container} flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between`}
+        >
+          <p className="text-sm text-muted-foreground">
+            {fill(dict.footer.copyright, { year, company: company.legalName })}
+          </p>
+          {/*
+            Livro de Reclamações (DL 156/2005, art. 5.º-B): a visible, prominent link on every
+            page, in every language, to the official electronic complaints book. The name stays
+            in Portuguese; the hint explains it to other readers.
+          */}
+          <a
+            href={legal.complaintsBookUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`${button.equal} self-start sm:self-auto`}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M4 4.5A1.5 1.5 0 0 1 5.5 3H16v12H5.5A1.5 1.5 0 0 0 4 16.5v-12ZM4 16.5A1.5 1.5 0 0 0 5.5 18H16"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {dict.footer.complaintsBook}
+            <span className="sr-only">
+              {" "}
+              ({dict.footer.complaintsBookHint}) {dict.a11y.externalLink}
+            </span>
+          </a>
+        </div>
       </div>
     </footer>
   );

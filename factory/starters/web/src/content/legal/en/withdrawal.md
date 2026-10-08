@@ -12,7 +12,9 @@ You have the right to withdraw from this contract within **14 days** without giv
 
 ## 2. How to exercise the right
 
-To exercise the right of withdrawal, tell us clearly that you decide to withdraw, by email to [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) or by post to {{company.legalName}}, {{company.address}}, {{company.country}}. You can use the model form below, but you do not have to. It is enough to send your communication before the period expires.
+**Online:** use the [withdrawal form](/en/withdraw) (the "Withdraw from contract" link in the footer of every page). It records the time of your statement and we send you an acknowledgement of receipt by email (Article 11a of Directive 2011/83/EU, introduced by Directive (EU) 2023/2673).
+
+**Or by other means:** tell us clearly that you decide to withdraw, by email to [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) or by post to {{company.legalName}}, {{company.address}}, {{company.country}}. You can use the model form below, but you do not have to. It is enough to send your communication before the period expires.
 
 ## 3. Effects of withdrawal
 

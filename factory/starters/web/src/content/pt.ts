@@ -206,6 +206,52 @@ export const pt: Dictionary = {
     companyDetails: "Dados da empresa",
     vatLabel: "IVA",
     followTitle: "Siga-nos",
+    withdraw: "Cancelar contrato (livre resolução)",
+  },
+  withdrawal: {
+    metaDescription:
+      "Exerça em linha o direito de livre resolução de um contrato celebrado como consumidor, no prazo de 14 dias e sem indicar o motivo.",
+    title: "Cancelar contrato (livre resolução)",
+    intro:
+      "Se comprou o {name} como consumidor, pode resolver o contrato no prazo de 14 dias, sem indicar o motivo. Preencha este formulário para nos comunicar a sua decisão: não precisa de escrever um e-mail.",
+    policyPrefix: "As condições e as exceções estão explicadas na nossa ",
+    policyLinkText: "política de livre resolução",
+    policySuffix: ".",
+    nameLabel: "O seu nome",
+    emailLabel: "Endereço de e-mail para o aviso de receção",
+    referenceLabel: "Referência da encomenda ou do contrato",
+    referenceHint:
+      "Por exemplo, o número da encomenda ou da fatura que consta do e-mail de confirmação.",
+    messageLabel: "Mensagem (opcional)",
+    messageHint: "Não tem de indicar o motivo.",
+    submit: "Confirmar livre resolução",
+    submitting: "A enviar...",
+    errors: {
+      nameRequired: "Indique o seu nome.",
+      emailRequired: "Indique o seu endereço de e-mail.",
+      emailInvalid: "Indique um endereço de e-mail válido, por exemplo nome@exemplo.pt.",
+      referenceRequired: "Indique a referência da encomenda ou do contrato.",
+      tooLong: "Este texto é demasiado longo. Reduza-o, por favor.",
+      generic: "Ocorreu um erro. Tente novamente.",
+      rateLimited: "Demasiadas tentativas. Aguarde alguns minutos e tente novamente.",
+      unavailable: "O formulário de livre resolução está temporariamente indisponível.",
+      delivery:
+        "Não foi possível registar a sua declaração. Envie-a, por favor, por e-mail para {email}. O seu direito de livre resolução não é afetado.",
+      summary: "Corrija o seguinte:",
+    },
+    successTitle: "A sua livre resolução foi recebida",
+    successBody: "Recebemos a sua declaração de livre resolução em {timestamp}.",
+    successReference: "Referência do contrato: {reference}",
+    successAck:
+      "Será enviado um aviso de receção por e-mail para {email}. Guarde-o como prova.",
+    email: {
+      ackSubject: "{company}: recebemos a sua livre resolução ({reference})",
+      ackBody:
+        "Olá {name},\n\nConfirmamos que recebemos, em {timestamp}, a sua declaração de livre resolução do contrato.\n\nReferência do contrato: {reference}\n\nVamos tratar da sua livre resolução e reembolsar os pagamentos que efetuou sem demora injustificada e, o mais tardar, 14 dias após a receção da sua declaração, conforme descrito na nossa política de livre resolução: {policyUrl}\n\nSe não foi o próprio a fazer esta declaração, responda a este e-mail.\n\n{company}",
+      notifySubject: "Livre resolução recebida: {reference} ({name})",
+      notifyBody:
+        "Um consumidor exerceu a livre resolução de um contrato através do sítio.\n\nRecebida em: {timestamp}\nNome: {name}\nE-mail: {email}\nReferência do contrato: {reference}\nMensagem: {message}\n\nVerifique que o aviso de receção foi enviado ao consumidor e reembolse no prazo de 14 dias a contar da data acima.",
+    },
   },
   legal: {
     docs: {

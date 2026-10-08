@@ -12,7 +12,9 @@ Tem o direito de resolver este contrato no prazo de **14 dias**, sem necessidade
 
 ## 2. Como exercer o direito
 
-Para exercer o direito de livre resolução, comunique-nos de forma inequívoca a sua decisão, por e-mail para [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) ou por carta para {{company.legalName}}, {{company.address}}, {{company.country}}. Pode usar o modelo de formulário abaixo, mas não é obrigatório. Basta enviar a comunicação antes de o prazo terminar.
+**Em linha:** utilize o [formulário de livre resolução](/pt/withdraw) (ligação «Cancelar contrato (livre resolução)» no rodapé de todas as páginas). Fica registada a hora da sua declaração e enviamos-lhe por e-mail um aviso de receção (artigo 11.º-A da Diretiva 2011/83/UE, introduzido pela Diretiva (UE) 2023/2673).
+
+**Ou por outro meio:** comunique-nos de forma inequívoca a sua decisão, por e-mail para [{{contact.supportEmail}}](mailto:{{contact.supportEmail}}) ou por carta para {{company.legalName}}, {{company.address}}, {{company.country}}. Pode usar o modelo de formulário abaixo, mas não é obrigatório. Basta enviar a comunicação antes de o prazo terminar.
 
 ## 3. Efeitos da resolução
 

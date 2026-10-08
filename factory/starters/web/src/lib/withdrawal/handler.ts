@@ -1,15 +1,11 @@
-import { config, contact, site } from "@/config/site";
+import { contact, site } from "@/config/site";
 import { getEnv } from "@/lib/env";
 import { getClientIp, isSameOrigin, json, readJsonBody } from "@/lib/http";
 import { createRateLimiter, type RateLimiter } from "@/lib/waitlist/rate-limit";
-import { type WithdrawalAdapterSelection, selectWithdrawalAdapter } from "./adapters";
+import { selectWithdrawalAdapter, type WithdrawalAdapterSelection } from "./adapters";
+import { withdrawalEnabled } from "./enabled";
 import { renderWithdrawalMessages } from "./messages";
 import { parseWithdrawalRequest } from "./schema";
-
-/** The withdrawal function exists only for businesses that sell to consumers. */
-export function withdrawalEnabled(siteConfig = config): boolean {
-  return siteConfig.legal.sellsToConsumers;
-}
 
 export interface WithdrawalDeps {
   enabled: boolean;
@@ -22,11 +18,13 @@ export interface WithdrawalDeps {
 /** Same mechanism as the waitlist limiter, with its own bucket per IP: 5 per 10 minutes. */
 const defaultLimiter = createRateLimiter({ limit: 5, windowMs: 10 * 60_000 });
 
-const logError: WithdrawalDeps["logError"] = (message, error) => console.error(message, error ?? "");
+const logError: WithdrawalDeps["logError"] = (message, error) =>
+  console.error(message, error ?? "");
 
 const defaultDeps: WithdrawalDeps = {
   enabled: withdrawalEnabled(),
-  select: () => selectWithdrawalAdapter(getEnv(), { notifyTo: contact.supportEmail, logError }),
+  select: () =>
+    selectWithdrawalAdapter(getEnv(), { notifyTo: contact.supportEmail, logError }),
   limiter: defaultLimiter,
   now: () => new Date(),
   logError,
@@ -50,7 +48,8 @@ export async function handleWithdrawal(
   const deps = { ...defaultDeps, ...overrides };
 
   if (!deps.enabled) return json({ error: "withdrawal_disabled" }, { status: 404 });
-  if (!isSameOrigin(request.headers)) return json({ error: "forbidden" }, { status: 403 });
+  if (!isSameOrigin(request.headers))
+    return json({ error: "forbidden" }, { status: 403 });
 
   const limit = deps.limiter.check(getClientIp(request.headers));
   if (!limit.allowed) {
@@ -68,7 +67,10 @@ export async function handleWithdrawal(
     if (parsed.reason === "honeypot") {
       return json({ ok: true, submittedAt: deps.now().toISOString() });
     }
-    return json({ error: "validation", fieldErrors: parsed.fieldErrors }, { status: 400 });
+    return json(
+      { error: "validation", fieldErrors: parsed.fieldErrors },
+      { status: 400 },
+    );
   }
 
   const selection = deps.select();
@@ -77,7 +79,11 @@ export async function handleWithdrawal(
     return json({ error: "not_configured" }, { status: 503 });
   }
 
-  const entry = { ...parsed.data, submittedAt: deps.now().toISOString(), source: site.domain };
+  const entry = {
+    ...parsed.data,
+    submittedAt: deps.now().toISOString(),
+    source: site.domain,
+  };
   try {
     await selection.adapter.submit(entry, renderWithdrawalMessages(entry));
   } catch (error) {

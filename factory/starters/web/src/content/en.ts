@@ -196,11 +196,58 @@ export const en: Dictionary = {
     legalTitle: "Legal",
     contactTitle: "Contact",
     copyright: "© {year} {company}. All rights reserved.",
-    complaintsBook: "Complaints Book (Livro de Reclamações)",
-    complaintsBookHint: "Official electronic complaints book (Portugal)",
+    complaintsBook: "Livro de Reclamações",
+    complaintsBookHint:
+      "Complaints book: the official electronic complaints book of Portugal",
     companyDetails: "Company details",
     vatLabel: "VAT",
     followTitle: "Follow",
+    withdraw: "Withdraw from contract",
+  },
+  withdrawal: {
+    metaDescription:
+      "Withdraw online from a contract you made as a consumer, within 14 days and without giving a reason.",
+    title: "Withdraw from a contract",
+    intro:
+      "If you bought {name} as a consumer, you can withdraw from the contract within 14 days without giving a reason. Fill in this form to tell us: you do not need to write an email.",
+    policyPrefix: "The conditions and the exceptions are explained in our ",
+    policyLinkText: "withdrawal policy",
+    policySuffix: ".",
+    nameLabel: "Your name",
+    emailLabel: "Email address for the acknowledgement",
+    referenceLabel: "Order or contract reference",
+    referenceHint:
+      "For example the order number or the invoice number from your confirmation email.",
+    messageLabel: "Message (optional)",
+    messageHint: "You do not have to give a reason.",
+    submit: "Confirm withdrawal",
+    submitting: "Sending...",
+    errors: {
+      nameRequired: "Enter your name.",
+      emailRequired: "Enter your email address.",
+      emailInvalid: "Enter a valid email address, for example name@example.com.",
+      referenceRequired: "Enter the order or contract reference.",
+      tooLong: "This text is too long. Please shorten it.",
+      generic: "Something went wrong. Please try again.",
+      rateLimited: "Too many attempts. Please wait a few minutes and try again.",
+      unavailable: "The withdrawal form is temporarily unavailable.",
+      delivery:
+        "We could not record your statement. Please send it by email to {email} instead. Your right of withdrawal is not affected.",
+      summary: "Please fix the following:",
+    },
+    successTitle: "Your withdrawal was received",
+    successBody: "We received your statement of withdrawal on {timestamp}.",
+    successReference: "Contract reference: {reference}",
+    successAck:
+      "An acknowledgement of receipt will be sent by email to {email}. Keep it as proof.",
+    email: {
+      ackSubject: "{company}: we received your withdrawal ({reference})",
+      ackBody:
+        "Hello {name},\n\nWe confirm that we received your statement of withdrawal from the contract on {timestamp}.\n\nContract reference: {reference}\n\nWe will process your withdrawal and refund any payments you made without undue delay, and at the latest within 14 days of receiving your statement, as described in our withdrawal policy: {policyUrl}\n\nIf you did not make this statement, please reply to this email.\n\n{company}",
+      notifySubject: "Withdrawal received: {reference} ({name})",
+      notifyBody:
+        "A consumer withdrew from a contract through the website.\n\nReceived: {timestamp}\nName: {name}\nEmail: {email}\nContract reference: {reference}\nMessage: {message}\n\nCheck that the acknowledgement was sent to the consumer, and refund within 14 days of the date above.",
+    },
   },
   legal: {
     docs: {

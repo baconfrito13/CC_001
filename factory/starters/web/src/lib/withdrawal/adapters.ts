@@ -25,7 +25,9 @@ export function createWithdrawalConsoleAdapter(
   return {
     name: "console",
     async submit(entry, messages) {
-      log(`[withdrawal:console] ${JSON.stringify({ ...entry, acknowledgement: messages.ackSubject })}`);
+      log(
+        `[withdrawal:console] ${JSON.stringify({ ...entry, acknowledgement: messages.ackSubject })}`,
+      );
     },
   };
 }
@@ -52,7 +54,10 @@ export function createWithdrawalWebhookAdapter(
         signal: AbortSignal.timeout(8_000),
       });
       if (!response.ok) {
-        throw new WaitlistAdapterError("webhook", `endpoint answered HTTP ${response.status}`);
+        throw new WaitlistAdapterError(
+          "webhook",
+          `endpoint answered HTTP ${response.status}`,
+        );
       }
     },
   };
@@ -180,10 +185,14 @@ export function selectWithdrawalAdapter(
         return {
           ok: false,
           reason: "misconfigured",
-          message: "Withdrawals via webhook need WITHDRAWAL_WEBHOOK_URL or WAITLIST_WEBHOOK_URL",
+          message:
+            "Withdrawals via webhook need WITHDRAWAL_WEBHOOK_URL or WAITLIST_WEBHOOK_URL",
         };
       }
-      return { ok: true, adapter: createWithdrawalWebhookAdapter(webhookUrl, deps.fetch) };
+      return {
+        ok: true,
+        adapter: createWithdrawalWebhookAdapter(webhookUrl, deps.fetch),
+      };
     case "console":
       return { ok: true, adapter: createWithdrawalConsoleAdapter(deps.log) };
     default:

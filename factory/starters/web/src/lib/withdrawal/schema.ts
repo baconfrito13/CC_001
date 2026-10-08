@@ -17,7 +17,10 @@ export const withdrawalSchema = z.object({
   [HONEYPOT_FIELD]: z.string().optional(),
 });
 
-export type WithdrawalInput = Omit<z.output<typeof withdrawalSchema>, typeof HONEYPOT_FIELD>;
+export type WithdrawalInput = Omit<
+  z.output<typeof withdrawalSchema>,
+  typeof HONEYPOT_FIELD
+>;
 
 export type WithdrawalField = "name" | "email" | "reference" | "message" | "locale";
 export type WithdrawalFieldErrors = Partial<
@@ -36,7 +39,8 @@ export function parseWithdrawalRequest(body: unknown): WithdrawalParseResult {
   const record =
     typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
   const trap = record[HONEYPOT_FIELD];
-  if (typeof trap === "string" && trap.trim() !== "") return { ok: false, reason: "honeypot" };
+  if (typeof trap === "string" && trap.trim() !== "")
+    return { ok: false, reason: "honeypot" };
 
   const result = withdrawalSchema.safeParse(body);
   if (result.success) {
