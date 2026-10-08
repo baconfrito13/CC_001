@@ -293,13 +293,13 @@ class TestChanged(FactoryTestCase):
         self.assertEqual(json.loads(out), ["factory/starters/web", f"products/{slug}/app"])
 
 
-class TestPortfolio(FactoryTestCase):
-    """Products live on their own branches; the portfolio must see all of them."""
+class GitRepoTestCase(FactoryTestCase):
+    """A real git repository with an origin, for commands that read every branch."""
 
     clock = 1_790_000_000
 
     def git(self, *argv: str) -> str:
-        TestPortfolio.clock += 60  # strictly increasing commit times
+        GitRepoTestCase.clock += 60  # strictly increasing commit times
         stamp = f"{TestPortfolio.clock} +0000"
         env = {
             **os.environ,
@@ -317,7 +317,7 @@ class TestPortfolio(FactoryTestCase):
         self.git("add", "-A")
         self.git("commit", "-qm", message)
 
-    def test_scans_branches_dedupes_and_filters_inbox(self) -> None:
+    def init_repo(self) -> None:
         origin = tempfile.TemporaryDirectory()
         self.addCleanup(origin.cleanup)
         subprocess.run(["git", "init", "-q", "--bare", origin.name], check=True)
@@ -325,6 +325,13 @@ class TestPortfolio(FactoryTestCase):
         self.git("remote", "add", "origin", origin.name)
         self.commit_all("factory")
         self.git("push", "-q", "origin", "main")
+
+
+class TestPortfolio(GitRepoTestCase):
+    """Products live on their own branches; the portfolio must see all of them."""
+
+    def test_scans_branches_dedupes_and_filters_inbox(self) -> None:
+        self.init_repo()
 
         self.git("checkout", "-qb", "produto/alpha")
         self.new(name="Alpha", idea="ideia alfa")
@@ -383,6 +390,88 @@ class TestPortfolio(FactoryTestCase):
         # slugs taken on other branches are not reused
         self.assertEqual(run(self.root, "slugify", "Alpha")[1].strip(), "alpha-2")
         self.assertEqual(run(self.root, "slugify", "Gamma Ray")[1].strip(), "gamma-ray")
+
+
+class TestLearning(FactoryTestCase):
+    """The factory learns from every product: lessons and metrics are recorded by checkpoints."""
+
+    def test_lesson_appends_formatted_lines_and_dedupes(self) -> None:
+        slug = self.new()
+        code, _, err = run(self.root, "lesson", slug, "--phase", "qa", "--kind", "win", "--text", "  E2E per story first   made QA pass in round 1 ")
+        self.assertEqual(code, 0, err)
+        path = self.root / "products" / slug / "docs" / "lessons.md"
+        text = path.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("# Lessons — Recibos Fáceis"))
+        self.assertIn("- 2026-10-08 · qa · win · E2E per story first made QA pass in round 1\n", text)
+        # the same lesson again (other case and spacing) is not duplicated
+        self.assertEqual(run(self.root, "lesson", slug, "--phase", "qa", "--kind", "win", "--text", "e2e per story first made qa pass in round 1")[0], 0)
+        self.assertEqual(path.read_text(encoding="utf-8").count("E2E per story"), 1)
+        # trends carry their source; text too short to help is skipped without failing a checkpoint
+        source = ("--source", "https://example.com/r")
+        self.assertEqual(run(self.root, "lesson", slug, "--phase", "research", "--kind", "trend", "--text", "AI answers send referral traffic", *source)[0], 0)
+        self.assertEqual(run(self.root, "lesson", slug, "--phase", "build", "--kind", "mistake", "--text", "- oops")[0], 0)
+        lessons = factory.parse_lessons(path.read_text(encoding="utf-8"))
+        self.assertEqual([(item["phase"], item["kind"]) for item in lessons], [("qa", "win"), ("research", "trend")])
+        self.assertTrue(lessons[1]["text"].endswith("(source: https://example.com/r)"))
+        self.assertEqual(run(self.root, "lesson", slug, "--phase", "nope", "--kind", "win", "--text", "long enough text")[0], 1)
+        self.assertEqual(run(self.root, "lesson", slug, "--phase", "general", "--kind", "preference", "--text", "Founder prefers one-time prices")[0], 0)
+        # lines written before kinds existed still count
+        self.assertEqual(factory.parse_lessons("- 2026-01-01 · build · an old style lesson")[0]["kind"], "note")
+
+    def test_metric_merges_typed_values(self) -> None:
+        slug = self.new()
+        self.assertEqual(run(self.root, "metric", slug, "qa_rounds=2", "g2_passed=true", "mrr_eur=12.5")[0], 0)
+        self.assertEqual(run(self.root, "metric", slug, "qa_rounds=3", "channel=reddit")[0], 0)
+        self.assertEqual(self.product(slug)["metrics"], {"qa_rounds": 3, "g2_passed": True, "mrr_eur": 12.5, "channel": "reddit"})
+        self.assertEqual(run(self.root, "metric", slug, "Bad-Key=1")[0], 1)
+        self.assertEqual(run(self.root, "metric", slug, "list=[1,2]")[0], 1)
+        self.assertEqual(run(self.root, "set", slug, "metrics.nested", '{"a": 1}')[0], 1, "metrics hold scalars only")
+        self.assertEqual(run(self.root, "validate", slug)[0], 0)
+
+
+class TestRetro(GitRepoTestCase):
+    def test_retro_reads_lessons_and_metrics_on_every_branch(self) -> None:
+        self.init_repo()
+        self.git("checkout", "-qb", "produto/alpha")
+        self.new(name="Alpha", idea="ideia alfa")
+        os.environ["FACTORY_TODAY"] = "2026-10-10"
+        run(self.root, "set-phase", "alpha", "intake", "done")
+        run(self.root, "lesson", "alpha", "--phase", "qa", "--kind", "mistake", "--text", "Stripe webhooks need the forwarder before e2e")
+        run(self.root, "metric", "alpha", "qa_rounds=3")
+        self.commit_all("alpha")
+        self.git("push", "-q", "origin", "produto/alpha")
+        self.git("checkout", "-q", "main")
+        self.git("checkout", "-qb", "produto/beta")
+        self.new(name="Beta", idea="ideia beta")
+        run(self.root, "lesson", "beta", "--phase", "gtm", "--kind", "win", "--text", "A niche subreddit launch beat Product Hunt")
+        run(self.root, "metric", "beta", "qa_rounds=1")
+        self.commit_all("beta")
+        self.git("push", "-q", "origin", "produto/beta")
+        self.git("checkout", "-q", "main")
+        self.git("fetch", "-q", "origin")
+
+        code, out, err = run(self.root, "retro", "--json")
+        self.assertEqual(code, 0, err)
+        report = json.loads(out)
+        products = {p["slug"]: p for p in report["products"]}
+        self.assertEqual(sorted(products), ["alpha", "beta"])
+        self.assertEqual(products["alpha"]["phase_days"], {"intake": 2})
+        self.assertEqual(report["totals"]["median_metrics"]["qa_rounds"], 2)
+        self.assertEqual(report["totals"]["lessons_by_kind"], {"mistake": 1, "win": 1})
+        self.assertEqual(report["totals"]["lessons_new"], 2)
+        ids = {item["slug"]: item["id"] for item in report["lessons"]}
+        # the improvement cycle marks what it processed; --new then hides it
+        self.assertEqual(run(self.root, "retro", "--mark-seen", ids["alpha"])[0], 0)
+        self.assertEqual(run(self.root, "retro", "--mark-seen", ids["alpha"])[0], 0)
+        self.assertEqual((self.root / "factory" / "knowledge" / "lessons-seen.txt").read_text(encoding="utf-8").count(ids["alpha"]), 1)
+        fresh = json.loads(run(self.root, "retro", "--json", "--new")[1])
+        self.assertEqual([item["slug"] for item in fresh["lessons"]], ["beta"])
+        self.assertEqual(fresh["totals"]["lessons_new"], 1)
+        self.assertEqual(run(self.root, "retro", "--mark-seen", "nothex")[0], 1)
+        code, out, _ = run(self.root, "retro")
+        self.assertEqual(code, 0)
+        self.assertIn("A niche subreddit launch beat Product Hunt", out)
+        self.assertNotIn("Stripe webhooks", out.split("## Lições por processar")[-1])
 
 
 class TestRobustness(FactoryTestCase):

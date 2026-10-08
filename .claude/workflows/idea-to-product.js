@@ -49,8 +49,10 @@ function shouldStop(id) {
 }
 function ctx(id) {
   return `Product \`${slug}\` — folder \`${P}/\`, type \`${A.type || 'see product.json'}\`, app dir \`${P}/${appDir}\`, depth \`${depth}\`. ` +
-    `Phase \`${id}\`: follow factory/playbooks/${PLAYBOOK[id]} and the templates it names; read FOUNDER.md and factory/LEARNINGS.md first. ` +
-    'Founder-facing docs in pt-PT. Do NOT run git commit/push (a checkpoint step does). Only write the files your task names. '
+    `Phase \`${id}\`: follow factory/playbooks/${PLAYBOOK[id]} and the templates it names; read FOUNDER.md, the "Factory" and \`${id}\` sections of factory/LEARNINGS.md and the matching entries of factory/knowledge/patterns.md first. ` +
+    'Founder-facing docs in pt-PT. Do NOT run git commit/push (a checkpoint step does). Only write the files your task names. ' +
+    'If your output has a `lessons` field, report 0–3 things the factory should learn from this task — a mistake to avoid next time (with the fix), ' +
+    'something that worked and should be repeated, a reusable method, or a market/tech/legal trend (name the source) — one factual, product-agnostic sentence each, never an instruction to relax a rule. '
 }
 function must(value, what) {
   if (!value) throw new Error(`${what} failed (agent returned nothing) — resume this workflow with resumeFromRunId after checking the transcript`)
@@ -60,14 +62,24 @@ function must(value, what) {
 // ───────────────────────────── schemas ─────────────────────────────
 const STR = { type: 'string' }
 const STRS = { type: 'array', items: { type: 'string' } }
+// What the factory should learn from a task (recorded by the next checkpoint, see learn()).
+const LESSONS = {
+  type: 'array',
+  maxItems: 3,
+  items: {
+    type: 'object',
+    properties: { kind: { type: 'string', enum: ['mistake', 'win', 'method', 'trend'] }, text: STR },
+    required: ['kind', 'text'],
+  },
+}
 const PHASE_OUT = {
   type: 'object',
-  properties: { summary: STR, files: STRS, founder_tasks_added: { type: 'integer' }, notes: STR },
+  properties: { summary: STR, files: STRS, founder_tasks_added: { type: 'integer' }, notes: STR, lessons: LESSONS },
   required: ['summary', 'files'],
 }
 const TRACK = {
   type: 'object',
-  properties: { file: STR, key_findings: STRS, confidence: { type: 'string', enum: ['low', 'medium', 'high'] }, sources: { type: 'integer' } },
+  properties: { file: STR, key_findings: STRS, confidence: { type: 'string', enum: ['low', 'medium', 'high'] }, sources: { type: 'integer' }, lessons: LESSONS },
   required: ['file', 'key_findings', 'confidence'],
 }
 const SCORECARD = {
@@ -80,6 +92,7 @@ const SCORECARD = {
     pivot: { type: ['string', 'null'] },
     top_risks: STRS,
     summary: STR,
+    lessons: LESSONS,
   },
   required: ['score', 'verdict', 'wedge', 'top_risks', 'summary'],
 }
@@ -124,6 +137,7 @@ const ARCH = {
     summary: STR, recipe: STR, app_dir: STR, components: STRS,
     builder: { type: 'string', enum: ['fullstack-engineer', 'mobile-engineer'] },
     files: STRS,
+    lessons: LESSONS,
   },
   required: ['summary', 'recipe', 'app_dir', 'builder'],
 }
@@ -138,7 +152,7 @@ const BUILD_PLAN = {
 }
 const SLICE = {
   type: 'object',
-  properties: { checks_green: { type: 'boolean' }, stories_done: STRS, stories_blocked: STRS, summary: STR },
+  properties: { checks_green: { type: 'boolean' }, stories_done: STRS, stories_blocked: STRS, summary: STR, lessons: LESSONS },
   required: ['checks_green', 'stories_done', 'summary'],
 }
 const QA = {
@@ -155,6 +169,7 @@ const QA = {
     },
     scores: { type: 'object', properties: { performance: { type: ['number', 'null'] }, accessibility: { type: ['number', 'null'] }, best_practices: { type: ['number', 'null'] }, seo: { type: ['number', 'null'] } } },
     summary: STR,
+    lessons: LESSONS,
   },
   required: ['checks', 'defects', 'summary'],
 }
@@ -166,12 +181,13 @@ const SECURITY = {
       items: { type: 'object', properties: { severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] }, title: STR, location: STR, fix: STR }, required: ['severity', 'title', 'fix'] },
     },
     summary: STR,
+    lessons: LESSONS,
   },
   required: ['findings', 'summary'],
 }
 const FIX = {
   type: 'object',
-  properties: { fixed: STRS, remaining: STRS, checks_green: { type: 'boolean' }, summary: STR },
+  properties: { fixed: STRS, remaining: STRS, checks_green: { type: 'boolean' }, summary: STR, lessons: LESSONS },
   required: ['fixed', 'remaining', 'checks_green', 'summary'],
 }
 const LAUNCH = {
@@ -182,6 +198,7 @@ const LAUNCH = {
     founder_tasks_open: { type: 'integer' },
     blocking_tasks: STRS,
     summary: STR,
+    lessons: LESSONS,
   },
   required: ['production_live', 'founder_tasks_open', 'blocking_tasks', 'summary'],
 }
@@ -195,9 +212,40 @@ const CHECKPOINT = {
 // Only the clerk touches git, one call at a time. A failed phase checkpoint aborts the run:
 // continuing for hours on unsaved work is how sessions lose a day of output.
 const FX = 'python3 factory/scripts/factory.py'
-function sq(text) {
+function sq(text, max = 140) {
   // safe inside a double-quoted shell argument
-  return String(text || '').replace(/["`$\\]/g, "'").replace(/\s+/g, ' ').slice(0, 140)
+  return String(text || '').replace(/["`$\\]/g, "'").replace(/\s+/g, ' ').slice(0, max)
+}
+// The factory learns from every run: agents' lessons and the run's metrics wait here until the
+// next checkpoint writes them (factory.py lesson / metric) into the product, for /melhorar.
+const learned = {}
+const metrics = {}
+function learn(id, r) {
+  if (r && Array.isArray(r.lessons)) {
+    const list = learned[id] || (learned[id] = [])
+    for (const l of r.lessons.slice(0, 3)) {
+      if (l && l.text && !list.some((x) => x.text === l.text)) list.push({ kind: l.kind, text: l.text })
+    }
+  }
+  return r
+}
+function measure(values) {
+  for (const [k, v] of Object.entries(values)) {
+    if (typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v))) metrics[k] = v
+  }
+}
+function learningCmds(ids) {
+  const cmds = []
+  for (const id of ids) {
+    for (const l of (learned[id] || []).slice(0, 6)) {
+      cmds.push(`${FX} lesson ${slug} --phase ${id} --kind ${l.kind} --text "${sq(l.text, 300).replace(/^[-\s]+/, '')}"`)
+    }
+    delete learned[id]
+  }
+  const pairs = Object.entries(metrics).map(([k, v]) => `${k}=${v}`)
+  if (pairs.length) cmds.push(`${FX} metric ${slug} ${pairs.join(' ')}`)
+  for (const k of Object.keys(metrics)) delete metrics[k]
+  return cmds
 }
 function jsonArg(obj) {
   // JSON as a single-quoted shell argument (single quotes become typographic apostrophes)
@@ -225,7 +273,7 @@ async function clerk(stage, label, commands, message, strict) {
 async function checkpoint(stage, phases, summaries, pre) {
   const marks = phases.map((p) => `${FX} set-phase ${slug} ${p} done --summary "${sq(summaries[p])}"`)
   const message = `${phases.join(' + ')} — ${phases.map((p) => summaries[p]).filter(Boolean).join('; ') || 'done'}`
-  await clerk(stage, `checkpoint:${phases.join('+')}`, [...(pre || []), ...marks], message, true)
+  await clerk(stage, `checkpoint:${phases.join('+')}`, [...(pre || []), ...learningCmds(phases), ...marks], message, true)
   phases.forEach((p) => done.add(p))
   result.ran.push(...phases)
 }
@@ -250,6 +298,8 @@ if (need('research')) {
     agent(`${ctx('research')}Your task: research track "${t.id}". ${t.focus} Write ${P}/docs/research/${t.file} from factory/templates/research-track.md.`,
       { label: `research:${t.id}`, phase: 'Validar', agentType: 'market-researcher', schema: TRACK })))
   const tracksOk = notes.filter(Boolean)
+  tracksOk.forEach((n) => learn('research', n))
+  measure({ research_tracks: tracks.length, research_tracks_failed: tracks.length - tracksOk.length })
   if (!tracksOk.length) throw new Error('all research tracks failed')
   if (tracksOk.length < tracks.length) log(`⚠️ ${tracks.length - tracksOk.length} track(s) de pesquisa falharam; a síntese preenche as lacunas`)
   await save('Validar', 'research — track notes', [`${FX} set-phase ${slug} research in_progress`])
@@ -259,17 +309,21 @@ if (need('research')) {
       'If the verdict is PIVOT, define the strongest pivot that keeps the founder\'s intent and re-score it (report the re-scored verdict and score). ' +
       'If it is KILL, include the 3 alternative angles and the founder task the playbook prescribes. Report any knockout. Do not edit product.json (a checkpoint records the decision).',
     { label: 'research:synthesis', phase: 'Validar', agentType: 'market-researcher', schema: SCORECARD }), 'research synthesis')
+  learn('research', verdict)
 
   if (depth !== 'lean') {
     const critic = await agent(
       `${ctx('research')}Your task: attack the research verdict in ${P}/docs/01-research.md (verdict ${verdict.verdict}, score ${verdict.score}). Append your objections section (pt-PT) to that file.`,
       { label: 'research:critic', phase: 'Validar', agentType: 'devils-advocate', schema: CRITIC })
+    if (critic) measure({ critic_fatal: critic.fatal.length, critic_major: critic.major.length })
     if (critic && (critic.survives === 'no' || critic.fatal.length || critic.major.length > 2)) {
       log('😈 O advogado do diabo levantou objeções sérias — a responder com evidência')
       verdict = must(await agent(
         `${ctx('research')}Your task: REBUTTAL. Answer every objection appended to ${P}/docs/01-research.md (fatal: ${critic.fatal.join(' | ') || 'none'}; major: ${critic.major.join(' | ') || 'none'}) with evidence (WebSearch/WebFetch). ` +
           'Update the scorecard and verdict honestly — an objection you cannot refute lowers the score — and write the answer under each objection. Do not edit product.json.',
         { label: 'research:rebuttal', phase: 'Validar', agentType: 'market-researcher', schema: SCORECARD }), 'research rebuttal')
+      learn('research', verdict)
+      measure({ rebuttal: true })
     }
   }
   // G1 is enforced here, not trusted to the agent: continue only with score ≥ 3.5 and no
@@ -279,6 +333,7 @@ if (need('research')) {
     verdict = { ...verdict, verdict: 'kill' }
   }
   result.gate1 = verdict
+  measure({ g1_score: verdict.score })
   log(`🚦 G1: ${verdict.verdict.toUpperCase()} · score ${verdict.score} — ${verdict.summary}`)
   const decision = { verdict: verdict.verdict, score: verdict.score, rationale: String(verdict.summary || '').slice(0, 300) }
 
@@ -345,6 +400,7 @@ if (need('strategy')) {
     strategy = must(await agent(`${ctx('strategy')}Your task: write ${P}/docs/02-product.md (PRD) and ${P}/docs/02-business.md.`,
       { label: 'strategy', phase: 'Definir', agentType: 'product-strategist', schema: PHASE_OUT }), 'strategy')
   }
+  learn('strategy', strategy)
   if (depth !== 'lean') {
     const critique = await agent(
       `${ctx('strategy')}Your task: attack ${P}/docs/02-product.md and ${P}/docs/02-business.md (MVP scope vs build capacity, pricing, positioning, unit economics). Append your objections (pt-PT) to ${P}/docs/02-product.md.`,
@@ -353,6 +409,8 @@ if (need('strategy')) {
       strategy = (await agent(
         `${ctx('strategy')}Your task: REVISE ${P}/docs/02-product.md and ${P}/docs/02-business.md to address the appended objections (changes requested: ${critique.changes.join(' | ')}). Record how each objection was handled under it.`,
         { label: 'strategy:revise', phase: 'Definir', agentType: 'product-strategist', schema: PHASE_OUT })) || strategy
+      learn('strategy', strategy)
+      measure({ strategy_revised: true })
     }
   }
   await checkpoint('Definir', ['strategy'], { strategy: strategy.summary },
@@ -379,6 +437,7 @@ if (defineJobs.length) {
   const defined = (await parallel(defineJobs)).filter((d) => d && d.r)
   const summaries = {}
   for (const d of defined) {
+    learn(d.id, d.r)
     summaries[d.id] = d.r.summary
     if (d.id === 'architecture') {
       appDir = d.r.app_dir || appDir
@@ -411,17 +470,19 @@ async function buildSequence() {
   const plan = await planBuild()
   if (!plan.skeleton_green) log('⚠️ esqueleto com checks vermelhos — a primeira fatia corrige')
   await save('Construir', 'build — skeleton and slice plan', [`${FX} set-phase ${slug} build in_progress`])
-  const report = { slices: [], blocked: [] }
+  const report = { slices: [], blocked: [], retries: 0 }
   for (let i = 0; i < plan.slices.length; i++) {
     const s = plan.slices[i]
     let r = await agent(
       `${ctx('build')}Your task: implement slice ${i + 1}/${plan.slices.length} "${s.title}" — stories: ${s.stories.join('; ')}. Earlier slices are done. Tests first for logic, e2e for user-facing stories, ${checks()} green, update the story table in ${P}/docs/05-build.md.`,
       { label: `build:${s.id}`, phase: 'Construir', agentType: builder, schema: SLICE })
     if (!r || !r.checks_green) {
+      report.retries++
       r = await agent(
         `${ctx('build')}Your task: slice "${s.title}" left checks red or unfinished${r ? ` (${r.summary})` : ''}. Diagnose and fix the root cause until ${checks()} pass; finish the slice stories.`,
         { label: `build:${s.id}:fix`, phase: 'Construir', agentType: builder, schema: SLICE })
     }
+    learn('build', r)
     report.slices.push({ slice: s.id, ok: !!(r && r.checks_green), summary: r ? r.summary : 'failed' })
     if (r && r.stories_blocked) report.blocked.push(...r.stories_blocked)
     await save('Construir', `build — slice ${i + 1}/${plan.slices.length} ${s.id}`)
@@ -449,6 +510,7 @@ if (buildJobs.length) {
   const outcomes = (await parallel(buildJobs)).filter(Boolean)
   const byId = {}
   outcomes.forEach((o) => { byId[o.id] = o.r })
+  for (const id of ['legal', 'gtm']) learn(id, byId[id])
   for (const id of ['legal', 'gtm']) if (need(id) && !byId[id]) result.notes.push(`${id} failed — rerun /continuar ${slug}`)
   const docsDone = ['legal', 'gtm'].filter((id) => byId[id])
   if (docsDone.length) {
@@ -465,6 +527,15 @@ if (buildJobs.length) {
         `Fill site config company/legal fields from FOUNDER.md (keep the placeholder [A PREENCHER PELO FUNDADOR] where the founder has not provided data and list it as a founder task). ${checks()} must still pass.`,
       { label: 'build:integration', phase: 'Construir', agentType: builder, schema: SLICE })
     const ok = !!(integration && integration.checks_green)
+    learn('build', integration)
+    measure({ integration_green: ok })
+    if (buildRan) {
+      measure({
+        build_slices: byId.build.slices.length,
+        build_slices_ok: byId.build.slices.filter((s) => s.ok).length,
+        build_slice_retries: byId.build.retries,
+      })
+    }
     if (buildRan && ok) {
       const okSlices = byId.build.slices.filter((s) => s.ok).length
       const blocked = byId.build.blocked
@@ -479,7 +550,7 @@ if (buildJobs.length) {
 // ───────────────────────────── 4 · Qualidade ─────────────────────────────
 if (need('qa') && !buildAvailable) {
   await clerk('Construir', 'checkpoint:build-blocked',
-    [`${FX} set-phase ${slug} build blocked --summary "build falhou; repetir com /continuar ${slug}"`], 'build — blocked', false)
+    [...learningCmds(['build']), `${FX} set-phase ${slug} build blocked --summary "build falhou; repetir com /continuar ${slug}"`], 'build — blocked', false)
   result.stopped = 'build-failed'
   log(`⛔ sem build utilizável — corre /continuar ${slug} para repetir a construção`)
   return result
@@ -491,7 +562,12 @@ if (need('qa')) {
   let clean = 0
   let blocking = []
   let lastQa = null
+  let rounds = 0
+  let found = 0
+  let foundSecurity = 0
+  let fixes = 0
   for (let round = 1; round <= maxRounds; round++) {
+    rounds = round
     log(`🧪 QA + segurança — ronda ${round}/${maxRounds}`)
     const [qa, sec] = await parallel([
       () => agent(`${ctx('qa')}Your task: QA round ${round}. Full checks from a clean install, e2e for every must-story, axe, Lighthouse, exploratory screenshots (keep bulky artifacts in $SCRATCH; commit only a few key screenshots). Write/update ${P}/docs/06-qa-report.md (link the security report ${P}/docs/06-security.md).`,
@@ -500,6 +576,10 @@ if (need('qa')) {
         { label: `security:round-${round}`, phase: 'Qualidade', agentType: 'security-auditor', schema: SECURITY }),
     ])
     lastQa = qa
+    learn('qa', qa)
+    learn('qa', sec)
+    if (qa) found += qa.defects.filter((d) => d.severity === 'P0' || d.severity === 'P1').length
+    if (sec) foundSecurity += sec.findings.filter((f) => f.severity === 'critical' || f.severity === 'high').length
     const checksGreen = !!(qa && Object.values(qa.checks).every(Boolean))
     blocking = [
       ...(qa ? qa.defects.filter((d) => d.severity === 'P0' || d.severity === 'P1').map((d) => `${d.id} [${d.severity}] ${d.title}`) : ['QA agent failed']),
@@ -514,16 +594,22 @@ if (need('qa')) {
     clean = 0
     if (round === maxRounds) break
     const cheap = qa ? qa.defects.filter((d) => d.severity === 'P2').slice(0, 5).map((d) => `${d.id} ${d.title}`) : []
-    await agent(
+    fixes++
+    learn('qa', await agent(
       `${ctx('qa')}Your task: FIX round ${round}. Fix the root cause of each blocking item, add a regression test for each, keep all checks green: ${blocking.join(' || ')}${cheap.length ? `. If cheap, also: ${cheap.join(' || ')}` : ''}. Details are in ${P}/docs/06-qa-report.md and ${P}/docs/06-security.md.`,
-      { label: `fix:round-${round}`, phase: 'Qualidade', agentType: builder, schema: FIX })
+      { label: `fix:round-${round}`, phase: 'Qualidade', agentType: builder, schema: FIX }))
     await save('Qualidade', `qa — fix round ${round}`, [`${FX} set-phase ${slug} qa in_progress`])
   }
   result.gate2 = { passed: !blocking.length, blocking, scores: lastQa ? lastQa.scores : null }
+  const sc = (lastQa && lastQa.scores) || {}
+  measure({
+    qa_rounds: rounds, qa_p0p1_found: found, security_high_found: foundSecurity, fix_rounds: fixes, g2_passed: !blocking.length,
+    lighthouse_performance: sc.performance, lighthouse_accessibility: sc.accessibility, lighthouse_seo: sc.seo,
+  })
   if (blocking.length) {
     log(`⛔ G2 falhou: ${blocking.length} bloqueio(s) após ${maxRounds} ronda(s)`)
     await clerk('Qualidade', 'checkpoint:qa-blocked',
-      [`${FX} set-phase ${slug} qa blocked --summary "${sq(blocking.length + ' bloqueios: ' + blocking.join('; '))}"`], 'qa — blocked', false)
+      [...learningCmds(['qa']), `${FX} set-phase ${slug} qa blocked --summary "${sq(blocking.length + ' bloqueios: ' + blocking.join('; '))}"`], 'qa — blocked', false)
     result.stopped = 'qa-blocked'
     return result
   }
@@ -554,12 +640,14 @@ if (need('launch')) {
       'Do NOT deploy to production in this phase — go-live is the /lancar command — unless FOUNDER.md sets go_live: auto AND HUMAN_TASKS.md has no open 🔴 task; only then deploy production, verify it and record links.production.',
     { label: 'launch', phase: 'Lançar', agentType: 'devops-engineer', schema: LAUNCH }), 'launch')
   result.preview = launch.preview_url || null
+  learn('launch', launch)
+  measure({ preview_deployed: !!launch.preview_url, production_live: !!launch.production_live })
   if (launch.production_live) {
     await checkpoint('Lançar', ['launch'], { launch: launch.summary }, [`${FX} set ${slug} status launched`])
   } else {
     const waiting = launch.blocking_tasks.length ? launch.blocking_tasks.join(', ') : `${launch.founder_tasks_open} tarefa(s)`
     await clerk('Lançar', 'checkpoint:launch-ready',
-      [`${FX} set-phase ${slug} launch in_progress --summary "${sq('pronto; à espera do fundador: ' + waiting)}"`, `${FX} set ${slug} status needs-founder`],
+      [...learningCmds(['launch']), `${FX} set-phase ${slug} launch in_progress --summary "${sq('pronto; à espera do fundador: ' + waiting)}"`, `${FX} set ${slug} status needs-founder`],
       'launch — ready, waiting for founder', true)
     result.stopped = 'waiting-founder'
     result.notes.push(`à espera do fundador: ${waiting}`)

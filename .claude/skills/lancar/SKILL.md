@@ -28,11 +28,13 @@ founder task). Merging a product PR deploys a preview at most.
    `docs/09-launch.md`.
 4. Record: `factory.py set <slug> links.production <url>` (and `links.domain`), then
    `factory.py set-phase <slug> launch done --summary "live em <url>"` and
-   `factory.py set <slug> status launched`; validate; commit; push; refresh the PR status
-   block. With `merges: claude` in `FOUNDER.md`, the product PR is now done: mark it ready for
-   review and merge it under the merge rules in `CLAUDE.md` once its checks pass on that head
-   — if they are still running, `subscribe_pr_activity` and merge on the green event when that
-   tool exists, otherwise leave it for the foreman's next run.
+   `factory.py set <slug> status launched`, `factory.py metric <slug> launched=<YYYY-MM-DD>`, and
+   a `factory.py lesson` for anything in the go-live that failed, was slow or worked unusually
+   well; validate; commit; push; refresh the PR status block. With `merges: claude` in
+   `FOUNDER.md`, the product PR is now done: mark it ready for review and merge it under the
+   merge rules in `CLAUDE.md` once its checks pass on that head — if they are still running,
+   `subscribe_pr_activity` and merge on the green event when that tool exists, otherwise leave
+   it for the foreman's next run.
 5. Hand the founder the launch kit: the exact posts/emails from `marketing/launch/` in the
    order and times of the launch plan (posting is theirs to do — Show HN text must be written
    in their own words), and the first-week checklist. Push-notify that the product is live, if

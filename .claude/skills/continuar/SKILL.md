@@ -43,8 +43,11 @@ Arguments: `$ARGUMENTS`
   footer, newer than this session's last reply. Apply it first with the right specialist; a
   change to prices, scope or copy cascades to every place it appears (PRD, business doc, site
   config, landing copy, legal pages, test-mode prices); any app change re-runs
-  `npm run check` and `npm run test:e2e` and adds a line to `docs/06-qa-report.md`. Reply on
-  the PR (starting with `<!-- factory:bot -->`), commit, push.
+  `npm run check` and `npm run test:e2e` and adds a line to `docs/06-qa-report.md`. Record what
+  the founder corrected so the factory learns it:
+  `python3 factory/scripts/factory.py lesson <slug> --phase <phase it concerns> --kind preference`
+  (what they want) or `--kind mistake` (what the factory got wrong, and the fix). Reply on the PR
+  (starting with `<!-- factory:bot -->`), commit, push.
 - Make sure `links.session` points to this session.
 
 ## 3. Founder tasks, status and overrides

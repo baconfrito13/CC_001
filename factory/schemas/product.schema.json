@@ -140,11 +140,16 @@
         "repo": { "type": ["string", "null"] }
       }
     },
+    "metrics": {
+      "type": "object",
+      "description": "Run and outcome metrics written with factory.py metric (qa_rounds, qa_p0p1_found, build_slices, g2_passed, visitors_28d, mrr_eur, …); read by factory.py retro",
+      "additionalProperties": { "type": ["number", "string", "boolean", "null"] }
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "channel": { "type": "string", "enum": ["claude", "issue", "inbox", "action", "other"] },
+        "channel": { "type": "string", "enum": ["claude", "issue", "inbox", "action", "radar", "other"] },
         "ref": { "type": ["string", "null"] }
       }
     },

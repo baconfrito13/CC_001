@@ -23,6 +23,9 @@ Never ask the founder clarifying questions here. Interpret, decide, record assum
   stop. Claim it at once: add the label `em-curso`. Source = `issue:#12`. Issues from the
   "💡 Nova ideia" form: the idea is "A ideia" plus "Notas"; "Profundidade" Rápida →
   `--rapido`, A fundo → `--fundo`; the "Só validar" checkbox → `--so-validar`.
+- `sugestão <n>` → the idea is suggestion n of the "Ideias sugeridas" table in
+  `factory/knowledge/trends.md` on `origin/main`, with source `radar` (the next `/radar` marks
+  suggestions that became products; product branches never edit `factory/`).
 - No idea text → `python3 factory/scripts/factory.py inbox --json --exclude-taken --fetch`,
   plus open owner issues labeled `na-fila` without `em-curso`. If both are empty, say in one
   line that there is nothing waiting and how to add ideas, and stop.
@@ -64,7 +67,7 @@ given:
    `git checkout -b <that branch>` — all product work goes there.
 1. Read `FOUNDER.md`, `factory/LEARNINGS.md` and the playbook.
 2. Decide working name, `type` (taxonomy in `factory/PIPELINE.md`), one-liner.
-3. `python3 factory/scripts/factory.py new <slug or auto> --name "<name>" --type <type> --idea "<verbatim idea>" --one-liner "<one-liner>" --source <claude|issue:#N|inbox> --branch "$(git branch --show-current)"`
+3. `python3 factory/scripts/factory.py new <slug or auto> --name "<name>" --type <type> --idea "<verbatim idea>" --one-liner "<one-liner>" --source <claude|issue:#N|inbox|radar> --branch "$(git branch --show-current)"`
    — add `--depth <d> --lock-depth` when the depth is locked (step 0). It prints the slug.
 4. Record this session: `python3 factory/scripts/factory.py set <slug> links.session https://claude.ai/code/<session id>`
    (the id comes from `mcp__claude-code-remote__get_session` called without arguments).
@@ -110,8 +113,10 @@ each phase. Then act on `result.stopped`:
 
 ## 6. Close the loop
 
-1. Refresh the PR description's status block; add dated one-line lessons for anything that
-   failed or was slow to `products/<slug>/docs/lessons.md`; commit and push.
+1. Refresh the PR description's status block. Record what this run taught the factory with
+   `python3 factory/scripts/factory.py lesson <slug> --phase <id> --kind mistake|win|method|trend --text "…"`
+   — what failed or was slow (and the fix), and what worked and should be repeated (checkpoints
+   already recorded the agents' own lessons); commit and push.
 2. Reply in pt-PT, at most ~12 lines: name + one-liner · G1 verdict and score · phases done ·
    preview link if any · founder tasks (top 3 with minutes, link to `HUMAN_TASKS.md`) · what
    happens next automatically. If the `PushNotification` tool exists and founder action is

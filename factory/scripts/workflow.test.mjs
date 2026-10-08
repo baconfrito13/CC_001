@@ -259,3 +259,47 @@ test('mobile products use the mobile engineer and non-npm checks', async () => {
   assert.equal(plan.agentType, 'mobile-engineer')
   assert.ok(!plan.prompt.includes('npm run check'))
 })
+
+test("agents' lessons are recorded once, shell-safe, by the phase checkpoint", async () => {
+  const { rt } = await run({ slug: 'demo' }, {
+    'research:synthesis': { ...go(3.9), lessons: [{ kind: 'win', text: 'Reddit threads gave the best "pain" quotes for $0' }] },
+    'research:market': {
+      file: 'market.md', key_findings: [], confidence: 'high',
+      lessons: [{ kind: 'trend', text: '- AI receipt apps doubled in 2026 (source: example.com)' }],
+    },
+  })
+  const cp = rt.calls.find((c) => c.label === 'checkpoint:research').prompt
+  assert.ok(cp.includes(`lesson demo --phase research --kind win --text "Reddit threads gave the best 'pain' quotes for '0"`), cp)
+  assert.ok(cp.includes('lesson demo --phase research --kind trend --text "AI receipt apps doubled in 2026 (source: example.com)"'), cp)
+  assert.ok(cp.indexOf('lesson demo') < cp.indexOf('set-phase demo research done'), 'recorded before the phase is closed')
+  assert.ok(!rt.calls.find((c) => c.label === 'checkpoint:strategy').prompt.includes('--kind win'), 'not repeated later')
+  assert.ok(rt.calls.find((c) => c.label === 'research:market').prompt.includes('report 0–3 things the factory should learn'))
+})
+
+test('run metrics are recorded with the checkpoints for the improvement cycle', async () => {
+  const { rt } = await run({ slug: 'demo', type: 'web-saas' }, { 'research:synthesis': go(3.8) })
+  const research = rt.calls.find((c) => c.label === 'checkpoint:research').prompt
+  assert.ok(research.includes('metric demo research_tracks=4 research_tracks_failed=0'), research)
+  assert.ok(research.includes('g1_score=3.8'), research)
+  const build = rt.calls.find((c) => c.label === 'checkpoint:build').prompt
+  assert.ok(build.includes('integration_green=true') && build.includes('build_slices=2') && build.includes('build_slice_retries=0'), build)
+  const qa = rt.calls.find((c) => c.label === 'checkpoint:qa').prompt
+  assert.ok(qa.includes('qa_rounds=1') && qa.includes('qa_p0p1_found=0') && qa.includes('g2_passed=true'), qa)
+  assert.ok(!qa.includes('lighthouse_performance'), 'no scores reported, none recorded')
+})
+
+test('a blocked QA still records what went wrong', async () => {
+  const p0 = qaWith([{ id: 'D1', severity: 'P0', title: 'checkout broken' }])
+  const { rt, result } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture', 'build', 'legal', 'gtm'] }, {
+    'qa:round-1': p0, 'qa:round-2': p0, 'qa:round-3': p0,
+    'fix:round-1': {
+      fixed: [], remaining: ['D1'], checks_green: false, summary: 'no',
+      lessons: [{ kind: 'mistake', text: 'Stripe test webhooks need the CLI forwarder running before e2e' }],
+    },
+  })
+  assert.equal(result.stopped, 'qa-blocked')
+  const cp = rt.calls.find((c) => c.label === 'checkpoint:qa-blocked').prompt
+  assert.ok(cp.includes('--phase qa --kind mistake --text "Stripe test webhooks need the CLI forwarder running before e2e"'), cp)
+  for (const m of ['qa_rounds=3', 'qa_p0p1_found=3', 'fix_rounds=2', 'g2_passed=false', 'lighthouse_performance=95']) assert.ok(cp.includes(m), m)
+  assert.ok(cp.indexOf('metric demo') < cp.indexOf('qa blocked'))
+})
