@@ -20,7 +20,7 @@
 | 10 | Crescimento | ⬜ |  |
 
 **Links:** [PR](https://github.com/baconfrito13/CC_001/pull/5) · [sessão Claude](https://claude.ai/code/session_01PHw6osQUbYMevv5yPhTMZM)
-**Tarefas do fundador:** 0 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
+**Tarefas do fundador:** 1 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
 _Atualizado: 2026-10-08_
 <!-- factory:status:end -->
 
