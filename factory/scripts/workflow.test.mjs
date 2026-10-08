@@ -174,6 +174,85 @@ test('production go-live marks the product launched', async () => {
   assert.ok(rt.calls.find((c) => c.label === 'checkpoint:launch').prompt.includes('status launched'))
 })
 
+test('G1 is enforced in code: a GO below 3.5 or any knockout becomes KILL', async () => {
+  const low = await run({ slug: 'demo' }, { 'research:synthesis': go(3.2) })
+  assert.equal(low.result.stopped, 'kill')
+  assert.equal(low.result.gate1.verdict, 'kill')
+  const ko = await run({ slug: 'demo' }, { 'research:synthesis': { ...go(4.3), knockout: 'needs a banking licence' } })
+  assert.equal(ko.result.stopped, 'kill')
+  const pivot = await run({ slug: 'demo' }, { 'research:synthesis': { ...go(3.6), verdict: 'pivot', pivot: 'B2B instead of B2C' } })
+  assert.notEqual(pivot.result.stopped, 'kill')
+  assert.ok(pivot.result.ran.includes('strategy'))
+})
+
+test('the decision is recorded by the checkpoint as quote-safe JSON, forced on override', async () => {
+  const { rt } = await run({ slug: 'demo' }, { 'research:synthesis': { ...go(3.9), summary: "founder's audience is strong" } })
+  const cp = rt.calls.find((c) => c.label === 'checkpoint:research').prompt
+  assert.ok(cp.includes(`set demo decision '{"verdict":"go","score":3.9,"rationale":"founder’s audience is strong"}'`), cp)
+  assert.ok(rt.calls.find((c) => c.label === 'research:synthesis').prompt.includes('Do not edit product.json'))
+  const forced = await run({ slug: 'demo', force: true }, { 'research:synthesis': { ...go(2.2), verdict: 'kill' } })
+  assert.ok(forced.rt.calls.find((c) => c.label === 'checkpoint:research').prompt.includes('"forced":true'))
+})
+
+test('a failed phase checkpoint aborts the run instead of continuing unsaved', async () => {
+  await assert.rejects(
+    () => run({ slug: 'demo' }, {
+      'research:synthesis': go(3.9),
+      'checkpoint:research': { ok: false, pushed: false, problems: ['push rejected'] },
+    }),
+    /checkpoint:research failed: push rejected/,
+  )
+})
+
+test('progress is saved inside long phases (research tracks, deep proposals, build skeleton)', async () => {
+  const { rt } = await run({ slug: 'demo' }, { 'research:synthesis': go(4.4) })
+  const labels = rt.labels()
+  const tracksSave = rt.calls.find((c) => c.label.startsWith('save:research'))
+  assert.ok(tracksSave && tracksSave.prompt.includes('set-phase demo research in_progress'))
+  assert.ok(labels.indexOf('save:research — track notes') < labels.indexOf('research:synthesis'))
+  assert.ok(labels.some((l) => l.startsWith('save:strategy')))
+  assert.ok(rt.calls.find((c) => c.label.startsWith('save:build — skeleton')).prompt.includes('set-phase demo build in_progress'))
+  assert.ok(!rt.calls.some((c) => c.agentType === 'factory-clerk' && c.prompt.includes('git add products/demo ideas')), 'never commits ideas/')
+})
+
+test('launch never starts with a missing phase', async () => {
+  const { rt, result } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture'] }, { legal: null })
+  assert.equal(result.stopped, 'incomplete')
+  assert.ok(result.notes.some((n) => n.includes('legal')))
+  assert.ok(!rt.labels().includes('launch'))
+})
+
+test('the launch phase deploys previews only; production belongs to /lancar', async () => {
+  const { rt } = await run({ slug: 'demo', done: ALL.filter((p) => p !== 'launch') })
+  const launch = rt.calls.find((c) => c.label === 'launch').prompt
+  assert.ok(launch.includes('Do NOT deploy to production in this phase'))
+  assert.ok(launch.includes('go_live: auto AND HUMAN_TASKS.md has no open 🔴 task'))
+})
+
+test('stop_after pauses the product so the foreman does not resume it', async () => {
+  const { rt, result } = await run({ slug: 'demo', stop_after: 'research' }, { 'research:synthesis': go(3.9) })
+  assert.equal(result.stopped, 'stop_after')
+  assert.ok(rt.calls.find((c) => c.label === 'checkpoint:research').prompt.includes('set demo status paused'))
+  assert.ok(!rt.labels().some((l) => l.startsWith('strategy')))
+})
+
+test('an empty slice plan is challenged once; a confirmed "all done" goes on to QA to be verified', async () => {
+  const empty = { skeleton_green: true, slices: [], summary: 'nothing' }
+  const { rt } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture'] }, {
+    'build:plan': empty, 'build:plan:retry': empty,
+  })
+  const labels = rt.labels()
+  assert.ok(labels.includes('build:plan:retry'))
+  assert.ok(rt.calls.find((c) => c.label === 'build:plan:retry').prompt.includes('every unfinished PRD must-story needs one'))
+  assert.ok(labels.indexOf('qa:round-1') > labels.indexOf('build:plan:retry'), 'QA verifies the claim with e2e tests')
+})
+
+test('a build that cannot even plan is marked blocked (not retried every night)', async () => {
+  const { rt, result } = await run({ slug: 'demo', done: ['research', 'strategy', 'brand', 'architecture'] }, { 'build:plan': null })
+  assert.equal(result.stopped, 'build-failed')
+  assert.ok(rt.calls.find((c) => c.label === 'checkpoint:build-blocked').prompt.includes('set-phase demo build blocked'))
+})
+
 test('mobile products use the mobile engineer and non-npm checks', async () => {
   const { rt } = await run({ slug: 'app', type: 'mobile', done: ['research', 'strategy', 'brand', 'architecture'] })
   const plan = rt.calls.find((c) => c.label === 'build:plan')

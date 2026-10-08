@@ -36,7 +36,7 @@ From research, write 10 lines at the top of your scratch notes: segment, wedge s
 3. Total = Σ(weight × mean judge score). **Synthesis rule:** base = highest total; import ≤ 2 elements from the others that raise the base's weakest criterion and still fit the budget; record a `taken / left` table. A tie within 0.15 → prefer the proposal with the earlier first revenue. The workflow stores the cards as `docs/strategy/proposal-<n>-<angle>.md` and may ask judges for a 1–10 scale on its own criteria: follow the task prompt's scale if it differs, but always record per-criterion scores, the winner and the graft list. Summarize cards, scores and the `taken / left` table in `docs/02-business.md` §Alternativas consideradas.
 
 ### Step 3 — Size the MVP and set the build budget
-Sizing units: **S = 1** (one screen or endpoint with tests, ≈ ≤ 1 agent-hour) · **M = 3** (feature with data model + UI + tests) · **L = 8** (multi-part feature or integration needing external approval/credentials). Split anything above L. Defaults — calibrate with `factory/LEARNINGS.md` (record actual vs. estimated after each build):
+Sizing units: **S = 1** (one screen or endpoint with tests, ≈ ≤ 1 agent-hour) · **M = 3** (feature with data model + UI + tests) · **L = 8** (multi-part feature or integration needing external approval/credentials). Split anything above L. Defaults — calibrate with `factory/LEARNINGS.md` (record actual vs. estimated after each build in `products/<slug>/docs/lessons.md`):
 
 | depth | Must ≤ | Must + Should ≤ | Could (polish, onboarding, admin) |
 |---|---|---|---|

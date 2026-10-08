@@ -57,8 +57,10 @@ in `factory/templates/`; its quality gate in the Definition of Done below and in
 5. **Integration** (`fullstack-engineer`): wire the legal pages and final landing copy
    into the app.
 6. `qa` + security audit → fix loop until the gate passes (max rounds by depth) → **G2**.
-7. `launch`: preview deploy, production runbook, founder tasks batched; production go-live
-   when the founder approves (or automatically if `FOUNDER.md` sets `go_live: auto`).
+7. `launch`: preview deploy, production runbook, founder tasks batched. Production go-live
+   happens only through `/lancar` once the founder approves — or automatically when
+   `FOUNDER.md` sets `go_live: auto` and no 🔴 founder task is open. Merging a product PR into
+   `main` deploys a preview at most.
 8. `growth`: recurring cycles (`/crescer`, weekly via the autopilot).
 
 Only the orchestrator (or a dedicated checkpoint step) commits; parallel agents never run
@@ -207,6 +209,21 @@ After every phase:
 To resume, read `product.json`, `HUMAN_TASKS.md`, the last commits and the PR comments, then
 run from `phase`. A phase marked `in_progress` with partial outputs is continued, not
 restarted.
+
+### Stop states
+
+When the pipeline stops early it leaves the state below in `product.json` (pushed), so any
+session — and the foreman — knows what is allowed next. The foreman never wakes a product
+that is `paused`, has a `blocked` phase, or has an unforced KILL.
+
+| Situation | State left behind | How it resumes |
+|---|---|---|
+| G1 KILL | `status: needs-founder`, `decision.verdict: kill` | founder decides: `/continuar <slug> --forcar` (records `decision.forced`), "arquivar" (→ `killed`) or "ângulo N" (a new product) |
+| `--so-validar` finished | `status: paused` | `/continuar <slug>` (→ `active`) |
+| Build failed, or QA still has P0/P1 after the last round | `phases.build` / `phases.qa`: `blocked` | `/continuar <slug> --fase <id>` or an explicit founder request; never relaunched automatically |
+| Ready, waiting on founder tasks | `status: needs-founder`, `phases.launch: in_progress` | founder completes the 🔴 tasks, then `/lancar <slug>` |
+| A phase before launch did not finish | the phase stays `pending`/`in_progress` | `/continuar <slug>` once; if it fails again, report to the founder |
+| Session lost mid-phase | phase `in_progress`, partial outputs pushed | any session: `/continuar <slug>` continues it |
 
 ## Launch-ready means
 

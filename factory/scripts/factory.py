@@ -22,13 +22,16 @@ Set FACTORY_ROOT to operate on another checkout and FACTORY_TODAY (YYYY-MM-DD) t
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
+import fcntl
 import json
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -121,8 +124,23 @@ def read_json(path: Path) -> Any:
 
 
 def write_json(path: Path, data: Any) -> None:
+    """Atomic write: readers never see a half-written file, a crash never truncates it."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
+@contextlib.contextmanager
+def repo_lock(root: Path):
+    """Serialize factory.py commands on one checkout (parallel agents call `set` concurrently)."""
+    lock_dir = root / ".git" if (root / ".git").is_dir() else Path(tempfile.gettempdir())
+    with open(lock_dir / "factory.lock", "w") as handle:
+        fcntl.flock(handle, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def slugify(text: str) -> str:
@@ -276,7 +294,9 @@ class Factory:
         for rel in self.required_outputs(product, phase_id):
             target = base / rel.rstrip("/")
             if rel.endswith("/"):
-                if not target.is_dir() or not any(target.iterdir()):
+                # A directory output needs at least one real file somewhere under it
+                # (`new` pre-creates empty folders such as legal/public/).
+                if not target.is_dir() or not any(p.is_file() for p in target.rglob("*")):
                     missing.append(rel)
             elif not target.is_file() or target.stat().st_size == 0:
                 missing.append(rel)
@@ -287,10 +307,7 @@ class Factory:
         path = self.product_dir(slug) / "HUMAN_TASKS.md"
         if not path.is_file():
             return (0, 0)
-        text = strip_html_comments(path.read_text(encoding="utf-8"))
-        open_count = len(re.findall(r"^\s*[-*] \[ \] ", text, flags=re.MULTILINE))
-        done_count = len(re.findall(r"^\s*[-*] \[[xX]\] ", text, flags=re.MULTILINE))
-        return (open_count, done_count)
+        return count_tasks(path.read_text(encoding="utf-8"))
 
 
 # --------------------------------------------------------------------------- commands
@@ -328,6 +345,7 @@ def cmd_new(fx: Factory, args: argparse.Namespace) -> int:
         "status": "active",
         "phase": "intake",
         "depth": args.depth,
+        "depth_locked": bool(args.lock_depth),
         "phases": phases,
         "decision": None,
         "stack": {
@@ -681,7 +699,7 @@ def cmd_inbox(fx: Factory, args: argparse.Namespace) -> int:
     if args.exclude_taken:
         taken = {_normalize_idea(e["product"].get("idea", "")) for e in scan_branches(fx, fetch=args.fetch)}
         items = [idea for idea in items if _normalize_idea(idea) not in taken]
-    if args.take is None:
+    if args.take is None and args.match is None:
         if args.json:
             print(json.dumps([{"index": i + 1, "idea": idea} for i, idea in enumerate(items)], ensure_ascii=False, indent=2))
         elif not items:
@@ -691,10 +709,17 @@ def cmd_inbox(fx: Factory, args: argparse.Namespace) -> int:
                 print(f"{i}. {idea}")
         return 0
     if not args.slug:
-        raise FactoryError("--take requires --slug (the product created from that idea)")
-    if not 1 <= args.take <= len(items):
-        raise FactoryError(f"--take must be between 1 and {len(items)}")
-    idea = items[args.take - 1]
+        raise FactoryError("--take/--match require --slug (the product created from that idea)")
+    if args.match is not None:
+        # Match by text, never by position: positions shift with --exclude-taken and other takes.
+        wanted = _normalize_idea(args.match)
+        idea = next((i for i in _inbox_items(text)[0] if _normalize_idea(i) == wanted), None)
+        if idea is None:
+            raise FactoryError("no idea in ideas/INBOX.md matches --match")
+    else:
+        if not 1 <= args.take <= len(items):
+            raise FactoryError(f"--take must be between 1 and {len(items)}")
+        idea = items[args.take - 1]
     raw = path.read_text(encoding="utf-8")
     lines = raw.splitlines()
     for i, line in enumerate(lines):
@@ -710,7 +735,7 @@ def cmd_inbox(fx: Factory, args: argparse.Namespace) -> int:
     else:
         lines += ["", INBOX_DONE, entry]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"moved idea {args.take} → products/{args.slug}")
+    print(f"moved idea → products/{args.slug}")
     return 0
 
 
@@ -787,26 +812,33 @@ def cmd_changed(fx: Factory, args: argparse.Namespace) -> int:
     return 0
 
 
+def count_tasks(text: str) -> tuple[int, int]:
+    """(open, done) founder tasks: checkbox lines outside HTML comments."""
+    text = strip_html_comments(text)
+    open_count = len(re.findall(r"^\s*[-*] \[ \] ", text, flags=re.MULTILINE))
+    done_count = len(re.findall(r"^\s*[-*] \[[xX]\] ", text, flags=re.MULTILINE))
+    return (open_count, done_count)
+
+
 def scan_branches(fx: Factory, fetch: bool = False) -> list[dict]:
     """Products across every remote branch (each product lives on its own branch until merged).
 
-    Returns one entry per slug — the most recently updated copy — with the branch it came from.
-    The current working tree is included as branch "(local)" so unpushed changes show up too.
+    Returns one entry per slug: the copy whose last commit touching products/<slug> is newest
+    (ties prefer a non-main branch), with the branch it came from and its founder-task counts.
+    The working tree is included as branch "(local)"; uncommitted changes there count as newest.
     """
     if fetch:
         _git(fx.root, "fetch", "--quiet", "--prune", "origin")
     found: dict[str, dict] = {}
 
-    def consider(product: dict, branch: str) -> None:
+    def consider(product: dict, branch: str, stamp: int, tasks_text: str) -> None:
         slug = product.get("slug")
         if not slug:
             return
+        key = (stamp, branch not in ("main", "master"))
         current = found.get(slug)
-        if current is None or (product.get("updated", ""), branch != "(local)") > (
-            current["product"].get("updated", ""),
-            current["branch"] != "(local)",
-        ):
-            found[slug] = {"product": product, "branch": branch}
+        if current is None or key > current["key"]:
+            found[slug] = {"product": product, "branch": branch, "key": key, "tasks": count_tasks(tasks_text)}
 
     refs = _git(fx.root, "for-each-ref", "--format=%(refname:short)", "refs/remotes/origin") or ""
     for ref in refs.splitlines():
@@ -821,12 +853,18 @@ def scan_branches(fx: Factory, fetch: bool = False) -> list[dict]:
                     product = json.loads(raw or "")
                 except json.JSONDecodeError:
                     continue
-                consider(product, ref.removeprefix("origin/"))
+                stamp = int(_git(fx.root, "log", "-1", "--format=%ct", ref, "--", f"products/{parts[1]}") or 0)
+                tasks = _git(fx.root, "show", f"{ref}:products/{parts[1]}/HUMAN_TASKS.md") or ""
+                consider(product, ref.removeprefix("origin/"), stamp, tasks)
     for slug in fx.slugs():
         try:
-            consider(fx.load(slug), "(local)")
+            product = fx.load(slug)
         except FactoryError:
             continue
+        dirty = _git(fx.root, "status", "--porcelain", "--", f"products/{slug}")
+        stamp = 2**62 if dirty else int(_git(fx.root, "log", "-1", "--format=%ct", "HEAD", "--", f"products/{slug}") or 0)
+        tasks_path = fx.product_dir(slug) / "HUMAN_TASKS.md"
+        consider(product, "(local)", stamp, tasks_path.read_text(encoding="utf-8") if tasks_path.is_file() else "")
     return [found[s] for s in sorted(found)]
 
 
@@ -836,7 +874,8 @@ def cmd_portfolio(fx: Factory, args: argparse.Namespace) -> int:
     for entry in entries:
         p = entry["product"]
         decision = p.get("decision") or {}
-        done = sum(1 for pid in fx.phase_ids if p.get("phases", {}).get(pid, {}).get("status") in ("done", "skipped"))
+        phases = p.get("phases", {})
+        done = sum(1 for pid in fx.phase_ids if phases.get(pid, {}).get("status") in ("done", "skipped"))
         rows.append(
             {
                 "slug": p["slug"],
@@ -844,8 +883,14 @@ def cmd_portfolio(fx: Factory, args: argparse.Namespace) -> int:
                 "status": p.get("status", "active"),
                 "phase": p.get("phase", "intake"),
                 "progress": f"{done}/{len(fx.phase_ids)}",
+                "blocked": [pid for pid in fx.phase_ids if phases.get(pid, {}).get("status") == "blocked"],
+                "depth": p.get("depth"),
+                "depth_locked": bool(p.get("depth_locked")),
                 "score": decision.get("score"),
                 "verdict": decision.get("verdict"),
+                "forced": bool(decision.get("forced")),
+                "founder_tasks_open": entry["tasks"][0],
+                "founder_tasks_done": entry["tasks"][1],
                 "branch": entry["branch"],
                 "idea": p.get("idea", ""),
                 "links": p.get("links", {}),
@@ -962,6 +1007,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--idea", required=True, help="the founder's raw idea, verbatim")
     p.add_argument("--one-liner", default="")
     p.add_argument("--depth", default="standard", choices=DEPTHS)
+    p.add_argument(
+        "--lock-depth",
+        action="store_true",
+        help="the founder chose the depth (flag or FOUNDER.md default_depth): G1 must not change it",
+    )
     p.add_argument("--source", help="channel[:ref], e.g. issue:#12, inbox, claude")
     p.add_argument("--branch", default=None)
     p.set_defaults(func=cmd_new)
@@ -997,7 +1047,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("inbox", help="list ideas waiting in ideas/INBOX.md, or move one to processed")
     p.add_argument("--json", action="store_true")
-    p.add_argument("--take", type=int, help="1-based index of the idea to mark processed")
+    p.add_argument("--take", type=int, help="1-based index (in this same listing) of the idea to mark processed")
+    p.add_argument("--match", help="mark processed the idea whose text equals this (preferred over --take)")
     p.add_argument("--slug", help="product created from the taken idea")
     p.add_argument(
         "--exclude-taken",
@@ -1042,8 +1093,10 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        fx = Factory(repo_root(args.root))
-        return args.func(fx, args)
+        root = repo_root(args.root)
+        with repo_lock(root):
+            fx = Factory(root)
+            return args.func(fx, args)
     except FactoryError as exc:
         print(f"erro: {exc}", file=sys.stderr)
         return 1

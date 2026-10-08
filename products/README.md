@@ -6,7 +6,8 @@ rascunho** que funciona como a "casa" do produto: estado atualizado, ligações 
 dás feedback com comentários.
 
 Quando fazes merge do PR de um produto para `main`, estás a dizer "aceito este produto": o
-código passa a viver aqui e, se o deploy automático estiver ativo, vai para produção.
+código passa a viver aqui (e, se o deploy automático estiver ativo, gera uma pré-visualização).
+Pôr em produção é sempre um passo explícito: `/lancar <produto>`.
 
 Ver todos os produtos, em todos os branches:
 

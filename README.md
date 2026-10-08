@@ -4,8 +4,8 @@ Envias uma ideia — uma frase chega. A fábrica valida-a, define o produto, cri
 escreve e testa o código, prepara a parte legal e o marketing, e deixa-o **pronto a publicar
 e a faturar**, com o mínimo de intervenção tua.
 
-> **Começa aqui:** [configuração única](SETUP.md) — o passo 1 é fazer merge do PR da fábrica.
-> Depois disso, basta enviar ideias.
+> **Começa aqui:** [configuração única](SETUP.md) — primeiro decides se o repositório fica
+> privado e fazes merge do PR da fábrica (passos 1 e 2). Depois disso, basta enviar ideias.
 
 ## Enviar ideias
 
@@ -59,7 +59,8 @@ copiar, o que cada tarefa desbloqueia. Enquanto não as fazes, a fábrica contin
 - **PR de cada produto:** comenta para pedir alterações ("muda o nome", "baixa o preço",
   "acrescenta login com Google"). A sessão do produto acorda, faz e responde.
 - **`/portfolio`:** todos os produtos, o que precisa de ti e o que está na fila.
-- **Issue fixada "📊 Portfólio da Fábrica":** resumo atualizado pelo piloto automático.
+- **Issue "📊 Portfólio da Fábrica":** resumo atualizado pelo piloto automático (fixa-a uma
+  vez no GitHub com *Pin issue* para a teres sempre à mão).
 
 ## Comandos
 
@@ -85,7 +86,8 @@ copiar, o que cada tarefa desbloqueia. Enquanto não as fazes, a fábrica contin
   esforço alto ou máximo; o trabalho mecânico corre em Haiku.
 - **Pipeline multi-agente** ([`.claude/workflows/idea-to-product.js`](.claude/workflows/idea-to-product.js)):
   fases em paralelo quando possível, gates, ciclo QA → correção, e commit + push após cada
-  fase (se uma sessão cair, nada se perde e outra retoma).
+  fase e durante as fases longas (se uma sessão cair, perde-se no máximo o trabalho desde a
+  última gravação, e outra sessão retoma daí).
 - **Conhecimento** ([`factory/`](factory)): playbooks por fase, receitas de stack por tipo de
   produto (web, SaaS, IA, API, mobile, extensões, e-commerce, conteúdo, bots), templates e
   checklists de qualidade.
@@ -94,8 +96,8 @@ copiar, o que cada tarefa desbloqueia. Enquanto não as fazes, a fábrica contin
   Record*, SEO e testes.
 - **Estado** ([`factory/scripts/factory.py`](factory/scripts/factory.py)): `product.json` de
   cada produto, validação e portfólio em todos os branches.
-- **CI/CD**: testes da fábrica e de cada produto em cada PR; deploy na Vercel ao fazer merge
-  (opcional).
+- **CI/CD**: testes da fábrica e de cada produto em cada PR; pré-visualização na Vercel ao
+  fazer merge (opcional); produção só com `/lancar`.
 - **Melhoria contínua**: [`factory/LEARNINGS.md`](factory/LEARNINGS.md) junta as lições de
   cada produto, e os playbooks são corrigidos com elas.
 

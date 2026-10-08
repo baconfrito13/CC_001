@@ -296,13 +296,19 @@ class TestChanged(FactoryTestCase):
 class TestPortfolio(FactoryTestCase):
     """Products live on their own branches; the portfolio must see all of them."""
 
+    clock = 1_790_000_000
+
     def git(self, *argv: str) -> str:
+        TestPortfolio.clock += 60  # strictly increasing commit times
+        stamp = f"{TestPortfolio.clock} +0000"
         env = {
             **os.environ,
             "GIT_AUTHOR_NAME": "t",
             "GIT_AUTHOR_EMAIL": "t@t",
             "GIT_COMMITTER_NAME": "t",
             "GIT_COMMITTER_EMAIL": "t@t",
+            "GIT_AUTHOR_DATE": stamp,
+            "GIT_COMMITTER_DATE": stamp,
         }
         out = subprocess.run(["git", *argv], cwd=self.root, check=True, capture_output=True, text=True, env=env)
         return out.stdout
@@ -334,6 +340,8 @@ class TestPortfolio(FactoryTestCase):
         self.git("checkout", "-q", "main")
         self.git("checkout", "-qb", "produto/beta")
         self.new(name="Beta", idea="App  de receitas")
+        self.touch("beta", "HUMAN_TASKS.md", "# T\n- [ ] **HT-01** domínio\n- [x] **HT-02** conta\n- [ ] **HT-03** IBAN\n")
+        run(self.root, "set-phase", "beta", "qa", "blocked", "--summary", "2 bloqueios")
         self.commit_all("beta intake")
         self.git("push", "-q", "origin", "produto/beta")
 
@@ -349,7 +357,20 @@ class TestPortfolio(FactoryTestCase):
         self.assertEqual(rows["alpha"]["branch"], "claude/followup", "newest copy wins")
         self.assertEqual(rows["alpha"]["status"], "needs-founder")
         self.assertEqual(rows["beta"]["branch"], "produto/beta")
+        self.assertEqual((rows["beta"]["founder_tasks_open"], rows["beta"]["founder_tasks_done"]), (2, 1))
+        self.assertEqual(rows["beta"]["blocked"], ["qa"])
+        self.assertEqual(rows["alpha"]["blocked"], [])
         self.assertEqual(run(self.root, "portfolio")[0], 0)
+
+        # a stale copy merged into main must not hide newer work on the product branch
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-q", "--no-ff", "-m", "merge alpha", "origin/produto/alpha")
+        self.git("push", "-q", "origin", "main")
+        self.git("fetch", "-q", "origin")
+        rows = {r["slug"]: r for r in json.loads(run(self.root, "portfolio", "--json")[1])}
+        self.assertEqual(rows["alpha"]["branch"], "claude/followup")
+        # the merged copy is also checked out locally now; it is older than claude/followup
+        self.assertEqual(rows["alpha"]["status"], "needs-founder")
 
         (self.root / "ideas").mkdir()
         (self.root / "ideas" / "INBOX.md").write_text(
@@ -362,6 +383,66 @@ class TestPortfolio(FactoryTestCase):
         # slugs taken on other branches are not reused
         self.assertEqual(run(self.root, "slugify", "Alpha")[1].strip(), "alpha-2")
         self.assertEqual(run(self.root, "slugify", "Gamma Ray")[1].strip(), "gamma-ray")
+
+
+class TestRobustness(FactoryTestCase):
+    """Findings from the adversarial review, reproduced as tests."""
+
+    def test_parallel_writes_never_corrupt_product_json(self) -> None:
+        slug = self.new()
+        script = str(Path(__file__).resolve().parent / "factory.py")
+        procs = [
+            subprocess.Popen(
+                [sys.executable, script, "--root", str(self.root), "set", slug, "links.preview", f"https://p{i}.example"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            for i in range(30)
+        ]
+        results = [(p.wait(), p.stderr.read()) for p in procs]
+        for proc in procs:
+            proc.stdout.close()
+            proc.stderr.close()
+        failures = [err for code, err in results if code != 0]
+        self.assertEqual(failures, [])
+        self.assertTrue(self.product(slug)["links"]["preview"].startswith("https://p"))
+        self.assertEqual(run(self.root, "validate", slug)[0], 0)
+
+    def test_inbox_match_moves_the_named_idea(self) -> None:
+        (self.root / "ideas").mkdir()
+        inbox = self.root / "ideas" / "INBOX.md"
+        inbox.write_text("## Por processar\n- ideia A\n- ideia B\n- ideia C\n\n## Processadas\n", encoding="utf-8")
+        self.new(name="Prod A", idea="ideia A")
+        code, out, _ = run(self.root, "inbox", "--json", "--exclude-taken")
+        self.assertEqual([i["idea"] for i in json.loads(out)], ["ideia B", "ideia C"])
+        code, _, err = run(self.root, "inbox", "--match", "Ideia  C", "--slug", "prod-c")
+        self.assertEqual(code, 0, err)
+        text = inbox.read_text(encoding="utf-8")
+        self.assertIn("- ideia B", text.split("## Processadas")[0])
+        self.assertIn("ideia C → `products/prod-c`", text)
+        self.assertEqual(run(self.root, "inbox", "--match", "nope", "--slug", "x")[0], 1)
+
+    def test_directory_output_needs_a_real_file(self) -> None:
+        slug = self.new()
+        self.touch(slug, "docs/07-compliance.md")
+        # `new` created the empty legal/public/ folder: that must not satisfy `legal/`
+        code, _, err = run(self.root, "set-phase", slug, "legal", "done")
+        self.assertEqual(code, 1)
+        self.assertIn("legal/", err)
+        self.touch(slug, "legal/ropa.md")
+        self.assertEqual(run(self.root, "set-phase", slug, "legal", "done")[0], 0)
+
+    def test_depth_lock_and_forced_override_are_recorded(self) -> None:
+        code, out, err = run(
+            self.root, "new", "auto", "--name", "Lean One", "--type", "web-static", "--idea", "i", "--depth", "lean", "--lock-depth"
+        )
+        self.assertEqual(code, 0, err)
+        slug = out.strip()
+        self.assertTrue(self.product(slug)["depth_locked"])
+        decision = '{"verdict": "kill", "score": 2.4, "rationale": "forçado pelo fundador", "forced": true}'
+        self.assertEqual(run(self.root, "set", slug, "decision", decision)[0], 0)
+        self.assertTrue(self.product(slug)["decision"]["forced"])
 
 
 class TestScaffold(FactoryTestCase):

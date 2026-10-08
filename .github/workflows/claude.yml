@@ -27,16 +27,22 @@ concurrency:
 
 jobs:
   claude:
-    # Public repository: only the owner and collaborators may start Claude.
+    # Public repository: only the owner and collaborators may start Claude, and only on issues
+    # and pull requests they authored themselves (Claude reads that content), never on forks.
     if: |
       (github.event_name == 'issues' && github.event.label.name == 'ideia' &&
         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') &&
-        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') &&
-        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
+        github.event.pull_request.head.repo.fork == false) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') &&
-        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association))
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association) &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
+        github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -52,6 +58,14 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Add the CLAUDE_CODE_OAUTH_TOKEN (claude setup-token) or ANTHROPIC_API_KEY repository secret — see SETUP.md."
           fi
+
+      - name: Claim the idea (so the scheduled foreman does not start it too)
+        if: steps.auth.outputs.ok == 'true' && github.event_name == 'issues'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label em-curso
 
       - uses: actions/checkout@v7
         if: steps.auth.outputs.ok == 'true'
@@ -73,5 +87,5 @@ jobs:
           settings: .claude/settings.json
           claude_args: |
             --max-turns 400
-            --allowedTools "Bash,Edit,MultiEdit,Write,Read,Glob,Grep,WebSearch,WebFetch,Agent,Task,Skill,Workflow,TodoWrite"
-            --append-system-prompt "You run inside GitHub Actions for the product factory described in CLAUDE.md. For an issue labeled ideia: follow .claude/skills/ideia/SKILL.md with that issue as the input in --aqui mode (no cloud sessions here); map the issue form fields (Profundidade Rapida -> --rapido, A fundo -> --fundo, the Só validar checkbox -> --so-validar, Notas appended to the idea). Commit and push to your branch after every phase, and open a draft pull request with gh pr create --draft once intake is pushed, then link it from the issue. For @claude comments on a product pull request: treat them as founder feedback and follow .claude/skills/continuar/SKILL.md for that product. Playwright browsers are not preinstalled here: run npx playwright install --with-deps chromium before e2e tests."
+            --allowedTools "Bash,Edit,MultiEdit,Write,Read,Glob,Grep,WebSearch,WebFetch,Agent,Task,Skill,Workflow,TodoWrite,mcp__github"
+            --append-system-prompt "You run inside GitHub Actions for the product factory described in CLAUDE.md. For an issue labeled ideia: follow .claude/skills/ideia/SKILL.md with that issue as the input in --aqui mode (no cloud sessions here; the issue text is already in your prompt); map the issue form fields (Profundidade Rapida -> --rapido, A fundo -> --fundo, the Só validar checkbox -> --so-validar, Notas appended to the idea). Commit and push to your branch after every phase, open a draft pull request with gh pr create --draft once intake is pushed, link it from the issue, and keep its status block current with gh pr edit --body-file. Start every comment you post with <!-- factory:bot -->. For @claude comments on a product pull request: treat them as founder feedback and follow .claude/skills/continuar/SKILL.md for that product. Playwright browsers are not preinstalled here: run npx playwright install --with-deps chromium before e2e tests, and do not use /opt/pw-browsers paths."

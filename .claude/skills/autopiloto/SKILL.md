@@ -41,7 +41,11 @@ Load the claude-code-remote tools with ToolSearch (`create_trigger`, `list_trigg
   - `name`: `Fábrica · capataz`
   - `cron_expression`: the argument if given, else `autopilot_cron` from `FOUNDER.md`, else
     `CRON_TZ=Europe/Lisbon 47 2 * * *` (daily 02:47 Lisbon)
-  - `prompt`: the text of `factory/routines/heartbeat.md`
+  - `prompt` (kept short so it never drifts from the repository): "Scheduled foreman run.
+    `git fetch --prune origin`; `git checkout -B fabrica/capataz origin/main` — or, if `main`
+    does not contain `factory/routines/heartbeat.md` yet, the head branch of the open
+    '🛠️ Fábrica' pull request the same way — then read `factory/routines/heartbeat.md` and
+    follow it."
   - `initiation`: `human_request`
   Confirm in pt-PT: schedule, what each run does, rough cost (one short run per day, plus
   product sessions only when there is work), and how to turn it off.

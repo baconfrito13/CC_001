@@ -95,7 +95,7 @@
 ## 12. Plano de reversão
 
 - **Gatilhos:** checkout em baixo > 5 min · erros > 2× o normal durante 10 min · corrupção de dados · problema legal/segurança
-- **Passos:** 1) `vercel rollback <deploy anterior>` (ou equivalente) 2) interruptor `{{CHECKOUT_ENABLED=false}}` → lista de espera 3) migrações compatíveis (sem «down») 4) pausar anúncios 5) avisar o fundador 6) lição em `LEARNINGS.md`
+- **Passos:** 1) `vercel rollback <deploy anterior>` (ou equivalente) 2) interruptor `{{CHECKOUT_ENABLED=false}}` → lista de espera 3) migrações compatíveis (sem «down») 4) pausar anúncios 5) avisar o fundador 6) lição em `docs/lessons.md`
 - **Deploy bom conhecido:** {{id/URL}}
 
 ## 13. Teste de fumo em produção

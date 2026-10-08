@@ -1,5 +1,6 @@
-# Deploys product web apps to Vercel. Merging a product PR into main = production deploy of
-# the apps it changed. Previews/production on demand via "Run workflow".
+# Deploys product web apps to Vercel. Merging a product PR into main = PREVIEW deploy of the
+# apps it changed. Production only on demand ("Run workflow" with production ticked) — the
+# factory's go-live path is /lancar, which also checks the founder tasks and approval.
 # Inactive until the VERCEL_TOKEN repository secret exists (optional variable VERCEL_SCOPE =
 # team slug). One Vercel project per app: <slug> for products/<slug>/app, <slug>-<folder> else.
 name: Products · Deploy (Vercel)
@@ -84,7 +85,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_SCOPE: ${{ vars.VERCEL_SCOPE }}
           DIR: ${{ matrix.dir }}
-          PROD: ${{ github.event_name == 'push' || inputs.production }}
+          PROD: ${{ github.event_name == 'workflow_dispatch' && inputs.production }}
         run: |
           set -euo pipefail
           slug=$(printf '%s' "$DIR" | cut -d/ -f2)

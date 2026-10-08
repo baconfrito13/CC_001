@@ -191,38 +191,46 @@ const CHECKPOINT = {
   required: ['ok', 'pushed', 'problems'],
 }
 
-// ───────────────────────────── checkpoints ─────────────────────────────
-// Only checkpoint agents touch git, and they run one at a time.
-function short(text) {
+// ───────────────────────────── bookkeeping ─────────────────────────────
+// Only the clerk touches git, one call at a time. A failed phase checkpoint aborts the run:
+// continuing for hours on unsaved work is how sessions lose a day of output.
+const FX = 'python3 factory/scripts/factory.py'
+function sq(text) {
+  // safe inside a double-quoted shell argument
   return String(text || '').replace(/["`$\\]/g, "'").replace(/\s+/g, ' ').slice(0, 140)
 }
-async function checkpoint(stage, phases, summary, extra) {
-  const marks = phases.map((p) => `python3 factory/scripts/factory.py set-phase ${slug} ${p} done --summary "${short(summary[p] || summary)}"`)
+function jsonArg(obj) {
+  // JSON as a single-quoted shell argument (single quotes become typographic apostrophes)
+  return "'" + JSON.stringify(obj).replace(/'/g, '’') + "'"
+}
+async function clerk(stage, label, commands, message, strict) {
   const r = await agent(
-    `Checkpoint product \`${slug}\`. Run, in order, stopping and reporting on the first failure:\n` +
-      (extra && extra.pre ? extra.pre.map((c) => `- \`${c}\`\n`).join('') : '') +
-      marks.map((m) => `- \`${m}\`\n`).join('') +
-      `- \`python3 factory/scripts/factory.py validate ${slug}\`\n` +
-      `- \`python3 factory/scripts/factory.py render-status ${slug} --write\`\n` +
-      `- \`git add ${P} ideas\` then \`git commit -m "${slug}: ${phases.join(' + ') || 'save'} — ${short(typeof summary === 'string' ? summary : phases.join(', ') + ' done')}"\` (skip the commit if nothing is staged)\n` +
-      '- push the current branch (`git push -u origin HEAD`, retry on network errors as your instructions say)\n' +
-      (pr ? `- update the status block in PR #${pr}'s description with \`python3 factory/scripts/factory.py render-status ${slug} --pr\`\n` : ''),
-    { label: `checkpoint:${phases.join('+') || 'save'}`, phase: stage, agentType: 'factory-clerk', schema: CHECKPOINT },
-  )
-  if (!r || !r.ok || !r.pushed) {
-    const problems = r ? r.problems.join('; ') : 'checkpoint agent failed'
-    result.notes.push(`checkpoint ${phases.join('+')}: ${problems}`)
-    log(`⚠️ checkpoint ${phases.join('+')}: ${problems}`)
+    `Bookkeeping for product \`${slug}\`. Run, in order, stopping and reporting on the first failure:\n` +
+      commands.map((c) => `- \`${c}\`\n`).join('') +
+      `- \`${FX} validate ${slug}\`\n` +
+      `- \`${FX} render-status ${slug} --write\`\n` +
+      `- \`git add ${P}\` then \`git commit -m "${slug}: ${sq(message)}"\` (skip the commit if nothing is staged)\n` +
+      '- `git push -u origin HEAD`; if it is rejected as non-fast-forward, `git pull --no-rebase --no-edit origin HEAD`, keep both sides of any trivial conflict, and push again; retry network errors as your instructions say\n' +
+      (pr ? `- replace the status block in PR #${pr}'s description with the output of \`${FX} render-status ${slug} --pr\`\n` : ''),
+    { label, phase: stage, agentType: 'factory-clerk', schema: CHECKPOINT })
+  const ok = !!(r && r.ok && r.pushed)
+  if (!ok) {
+    const problems = r ? r.problems.join('; ') || 'not pushed' : 'clerk agent failed'
+    if (strict) throw new Error(`${label} failed: ${problems} — fix the cause, then resume this workflow`)
+    result.notes.push(`${label}: ${problems}`)
+    log(`⚠️ ${label}: ${problems}`)
   }
+  return ok
+}
+async function checkpoint(stage, phases, summaries, pre) {
+  const marks = phases.map((p) => `${FX} set-phase ${slug} ${p} done --summary "${sq(summaries[p])}"`)
+  const message = `${phases.join(' + ')} — ${phases.map((p) => summaries[p]).filter(Boolean).join('; ') || 'done'}`
+  await clerk(stage, `checkpoint:${phases.join('+')}`, [...(pre || []), ...marks], message, true)
   phases.forEach((p) => done.add(p))
   result.ran.push(...phases)
-  return r
 }
-async function save(stage, label, paths) {
-  return agent(
-    `Save progress for product \`${slug}\` (no phase change): \`git add ${paths.join(' ')}\`, commit "${slug}: ${short(label)}" if anything is staged, push the current branch (\`git push -u origin HEAD\`, retry on network errors). Report the commit hash.`,
-    { label: `save:${short(label).slice(0, 30)}`, phase: stage, agentType: 'factory-clerk', schema: CHECKPOINT },
-  )
+async function save(stage, label, pre) {
+  return clerk(stage, `save:${sq(label).slice(0, 40)}`, pre || [], label, false)
 }
 
 // ───────────────────────────── 1 · Validar ─────────────────────────────
@@ -244,11 +252,12 @@ if (need('research')) {
   const tracksOk = notes.filter(Boolean)
   if (!tracksOk.length) throw new Error('all research tracks failed')
   if (tracksOk.length < tracks.length) log(`⚠️ ${tracks.length - tracksOk.length} track(s) de pesquisa falharam; a síntese preenche as lacunas`)
+  await save('Validar', 'research — track notes', [`${FX} set-phase ${slug} research in_progress`])
 
   let verdict = must(await agent(
     `${ctx('research')}Your task: SYNTHESIS. Read ${P}/docs/research/*.md (write any missing track briefly yourself), score the idea with factory/checklists/idea-scorecard.md and write ${P}/docs/01-research.md from factory/templates/research.md (scorecard, verdict, wedge, top risks, sources). ` +
-      'If the verdict is PIVOT, define the strongest pivot that keeps the founder\'s intent and re-score it (report the re-scored verdict). ' +
-      `Record it: python3 factory/scripts/factory.py set ${slug} decision '{"verdict": "<go|pivot|kill>", "score": <score>, "rationale": "<one line>"}'`,
+      'If the verdict is PIVOT, define the strongest pivot that keeps the founder\'s intent and re-score it (report the re-scored verdict and score). ' +
+      'If it is KILL, include the 3 alternative angles and the founder task the playbook prescribes. Report any knockout. Do not edit product.json (a checkpoint records the decision).',
     { label: 'research:synthesis', phase: 'Validar', agentType: 'market-researcher', schema: SCORECARD }), 'research synthesis')
 
   if (depth !== 'lean') {
@@ -259,24 +268,32 @@ if (need('research')) {
       log('😈 O advogado do diabo levantou objeções sérias — a responder com evidência')
       verdict = must(await agent(
         `${ctx('research')}Your task: REBUTTAL. Answer every objection appended to ${P}/docs/01-research.md (fatal: ${critic.fatal.join(' | ') || 'none'}; major: ${critic.major.join(' | ') || 'none'}) with evidence (WebSearch/WebFetch). ` +
-          'Update the scorecard and verdict honestly — an objection you cannot refute lowers the score — and write the answer under each objection. ' +
-          `Re-record the decision with python3 factory/scripts/factory.py set ${slug} decision '{...}'.`,
+          'Update the scorecard and verdict honestly — an objection you cannot refute lowers the score — and write the answer under each objection. Do not edit product.json.',
         { label: 'research:rebuttal', phase: 'Validar', agentType: 'market-researcher', schema: SCORECARD }), 'research rebuttal')
     }
   }
+  // G1 is enforced here, not trusted to the agent: continue only with score ≥ 3.5 and no
+  // knockout (a PIVOT counts with its re-scored value). Everything else is a KILL.
+  if (verdict.verdict !== 'kill' && (verdict.knockout || verdict.score < 3.5)) {
+    log(`🚦 G1: ${verdict.verdict.toUpperCase()} ${verdict.score}${verdict.knockout ? ` com knockout (${verdict.knockout})` : ''} não passa o limiar — KILL`)
+    verdict = { ...verdict, verdict: 'kill' }
+  }
   result.gate1 = verdict
   log(`🚦 G1: ${verdict.verdict.toUpperCase()} · score ${verdict.score} — ${verdict.summary}`)
+  const decision = { verdict: verdict.verdict, score: verdict.score, rationale: String(verdict.summary || '').slice(0, 300) }
 
   if (verdict.verdict === 'kill' && !A.force) {
     await checkpoint('Validar', ['research'], { research: `KILL ${verdict.score} — ${verdict.summary}` },
-      { pre: [`python3 factory/scripts/factory.py set ${slug} status needs-founder`] })
+      [`${FX} set ${slug} decision ${jsonArg(decision)}`, `${FX} set ${slug} status needs-founder`])
     result.stopped = 'kill'
     return result
   }
-  // Adaptive depth (PIPELINE.md G1) unless the founder chose a depth explicitly.
+  if (verdict.verdict === 'kill') decision.forced = true
+  // Adaptive depth (PIPELINE.md G1) unless the founder chose a depth.
   if (!A.depth_locked) depth = verdict.score >= 4 ? 'deep' : 'standard'
-  await checkpoint('Validar', ['research'], { research: `${verdict.verdict.toUpperCase()} ${verdict.score} — ${verdict.summary}` },
-    { pre: [`python3 factory/scripts/factory.py set ${slug} depth ${depth}`] })
+  const pre = [`${FX} set ${slug} decision ${jsonArg(decision)}`, `${FX} set ${slug} depth ${depth}`]
+  if (shouldStop('research')) pre.push(`${FX} set ${slug} status paused`)
+  await checkpoint('Validar', ['research'], { research: `${verdict.verdict.toUpperCase()} ${verdict.score} — ${verdict.summary}` }, pre)
   if (shouldStop('research')) { result.stopped = 'stop_after'; return result }
 }
 
@@ -296,6 +313,7 @@ if (need('strategy')) {
         { label: `strategy:${a.id}`, phase: 'Definir', agentType: 'product-strategist', schema: PROPOSAL })))
     const valid = proposals.map((p, i) => (p ? { n: i + 1, angle: ANGLES[i].id, p } : null)).filter(Boolean)
     if (!valid.length) throw new Error('all strategy proposals failed')
+    await save('Definir', 'strategy — competing proposals', [`${FX} set-phase ${slug} strategy in_progress`])
     const JUDGES = [
       { id: 'investor', persona: 'a skeptical investor who has seen many small SaaS fail' },
       { id: 'user', persona: 'the target customer described in the research, deciding whether to pay' },
@@ -337,7 +355,8 @@ if (need('strategy')) {
         { label: 'strategy:revise', phase: 'Definir', agentType: 'product-strategist', schema: PHASE_OUT })) || strategy
     }
   }
-  await checkpoint('Definir', ['strategy'], { strategy: strategy.summary })
+  await checkpoint('Definir', ['strategy'], { strategy: strategy.summary },
+    shouldStop('strategy') ? [`${FX} set ${slug} status paused`] : [])
   if (shouldStop('strategy')) { result.stopped = 'stop_after'; return result }
 }
 
@@ -346,7 +365,7 @@ if (need('brand')) {
   defineJobs.push(() => agent(
     `${ctx('brand')}Your task: name, domain checks, trademark sanity check, identity, ${P}/brand/logo.svg, ${P}/brand/logo-mark.svg, ${P}/brand/tokens.json, and ${P}/docs/03-brand.md.` +
       (depth === 'deep' ? ' Deep depth: run a name tournament and produce 2 logo directions, pick one with rationale.' : '') +
-      ` When the final name is chosen run: python3 factory/scripts/factory.py set ${slug} name "<Name>" and set one_liner.`,
+      ` When the final name is chosen run: ${FX} set ${slug} name "<Name>" and set one_liner.`,
     { label: 'brand', phase: 'Definir', agentType: 'brand-designer', schema: PHASE_OUT }).then((r) => ({ id: 'brand', r })))
 }
 if (need('architecture')) {
@@ -369,19 +388,29 @@ if (defineJobs.length) {
   const finished = defined.map((d) => d.id)
   const failed = defineJobs.length - finished.length
   if (failed) result.notes.push(`${failed} define job(s) failed — rerun /continuar ${slug}`)
-  if (finished.length) await checkpoint('Definir', finished, summaries)
+  const stopping = shouldStop('architecture') || shouldStop('brand')
+  if (finished.length) await checkpoint('Definir', finished, summaries, stopping ? [`${FX} set ${slug} status paused`] : [])
   if (!done.has('architecture') && need('build')) throw new Error('architecture is required before build; rerun /continuar')
 }
 if (shouldStop('architecture') || shouldStop('brand')) { result.stopped = 'stop_after'; return result }
 
 // ───────────────────────────── 3 · Construir ─────────────────────────────
+async function planBuild() {
+  const prompt =
+    `${ctx('build')}Your task: SKELETON + PLAN ONLY. Set up ${P}/${appDir} following the stack recipe (web: \`${FX} scaffold ${slug}\` if the app folder does not exist yet, customize site config, apply brand tokens with npm run brand:apply, content basics) until ${checks()} pass. ` +
+    `Then split the PRD "must" stories${depth === 'lean' ? '' : ' and the key "should" stories'} into 2–8 vertical slices in build order and write the slice plan into ${P}/docs/05-build.md. Do not implement slices yet. ` +
+    `RESUMING: if ${P}/docs/05-build.md already has a slice plan and \`git log -- ${P}/${appDir}\` shows slice commits from an earlier run, do not re-plan or redo finished work — return only the remaining slices.`
+  let plan = await agent(prompt, { label: 'build:plan', phase: 'Construir', agentType: builder, schema: BUILD_PLAN })
+  if (plan && !plan.slices.length) {
+    plan = await agent(`${prompt} Your previous answer had no slices: every unfinished PRD must-story needs one (return an empty list only if ${P}/docs/05-build.md shows every must-story done).`,
+      { label: 'build:plan:retry', phase: 'Construir', agentType: builder, schema: BUILD_PLAN })
+  }
+  return must(plan, 'build plan')
+}
 async function buildSequence() {
-  const plan = must(await agent(
-    `${ctx('build')}Your task: SKELETON + PLAN ONLY. Set up ${P}/${appDir} following the stack recipe (web: copy factory/starters/web per the playbook if not already there, customize site config, apply brand tokens with npm run brand:apply, content basics) until ${checks()} pass. ` +
-      `Then split the PRD "must" stories${depth === 'lean' ? '' : ' and the key "should" stories'} into 2–8 vertical slices in build order and write the slice plan into ${P}/docs/05-build.md. Do not implement slices yet.`,
-    { label: 'build:plan', phase: 'Construir', agentType: builder, schema: BUILD_PLAN }), 'build plan')
+  const plan = await planBuild()
   if (!plan.skeleton_green) log('⚠️ esqueleto com checks vermelhos — a primeira fatia corrige')
-  await save('Construir', 'build — skeleton', [`${P}/${appDir}`, `${P}/docs/05-build.md`])
+  await save('Construir', 'build — skeleton and slice plan', [`${FX} set-phase ${slug} build in_progress`])
   const report = { slices: [], blocked: [] }
   for (let i = 0; i < plan.slices.length; i++) {
     const s = plan.slices[i]
@@ -395,7 +424,7 @@ async function buildSequence() {
     }
     report.slices.push({ slice: s.id, ok: !!(r && r.checks_green), summary: r ? r.summary : 'failed' })
     if (r && r.stories_blocked) report.blocked.push(...r.stories_blocked)
-    await save('Construir', `build — slice ${i + 1}/${plan.slices.length} ${s.id}`, [`${P}/${appDir}`, `${P}/docs/05-build.md`])
+    await save('Construir', `build — slice ${i + 1}/${plan.slices.length} ${s.id}`)
   }
   return report
 }
@@ -405,12 +434,12 @@ const buildJobs = []
 if (need('build')) buildJobs.push(() => buildSequence().then((r) => ({ id: 'build', r })))
 if (need('legal')) {
   buildJobs.push(() => agent(
-    `${ctx('legal')}Your task: the full legal pack. Write public page drafts to ${P}/legal/public/<doc>.<locale>.md (no FILL blocks left), internal records in ${P}/legal/, and ${P}/docs/07-compliance.md. Do NOT edit ${P}/${appDir} — the integration step copies your pages in.`,
+    `${ctx('legal')}Your task: the full legal pack. Write public page drafts to ${P}/legal/public/<doc>.<locale>.md (locale codes \`en\` and \`pt\`; no FILL blocks left), internal records in ${P}/legal/, and ${P}/docs/07-compliance.md. Do NOT edit ${P}/${appDir} — the integration step copies your pages in.`,
     { label: 'legal', phase: 'Construir', agentType: 'legal-counsel', schema: PHASE_OUT }).then((r) => ({ id: 'legal', r })))
 }
 if (need('gtm')) {
   buildJobs.push(() => agent(
-    `${ctx('gtm')}Your task: the go-to-market plan ${P}/docs/08-gtm.md and assets in ${P}/marketing/, including final landing copy per locale in ${P}/marketing/copy/landing.<locale>.md. Do NOT edit ${P}/${appDir} — the integration step wires the copy in.` +
+    `${ctx('gtm')}Your task: the go-to-market plan ${P}/docs/08-gtm.md and assets in ${P}/marketing/, including final landing copy per locale in ${P}/marketing/copy/landing.<locale>.md (locale codes \`en\` and \`pt\`). Do NOT edit ${P}/${appDir} — the integration step wires the copy in.` +
       (depth === 'deep' ? ' Deep depth: also draft 10 SEO articles and 30 social posts.' : ''),
     { label: 'gtm', phase: 'Construir', agentType: 'growth-marketer', schema: PHASE_OUT }).then((r) => ({ id: 'gtm', r })))
 }
@@ -420,6 +449,7 @@ if (buildJobs.length) {
   const outcomes = (await parallel(buildJobs)).filter(Boolean)
   const byId = {}
   outcomes.forEach((o) => { byId[o.id] = o.r })
+  for (const id of ['legal', 'gtm']) if (need(id) && !byId[id]) result.notes.push(`${id} failed — rerun /continuar ${slug}`)
   const docsDone = ['legal', 'gtm'].filter((id) => byId[id])
   if (docsDone.length) {
     const sums = {}
@@ -431,8 +461,8 @@ if (buildJobs.length) {
   if (need('build') && !buildRan) result.notes.push(`build failed — rerun /continuar ${slug}`)
   if (buildRan || docsDone.length) {
     const integration = await agent(
-      `${ctx('build')}Your task: INTEGRATION. Put the final legal pages from ${P}/legal/public/<doc>.<locale>.md where the product shows them (web starter: ${P}/${appDir}/src/content/legal/<locale>/<doc>.md with locale folders en and pt; other types: as the stack recipe says) and wire the landing copy from ${P}/marketing/copy/landing.<locale>.md into the content dictionaries. ` +
-        `Fill site config company/legal fields from FOUNDER.md (keep placeholders where the founder has not provided data and list them as founder tasks). ${checks()} must still pass.`,
+      `${ctx('build')}Your task: INTEGRATION. Put the final legal pages from ${P}/legal/public/<doc>.<locale>.md where the product shows them (web starter: ${P}/${appDir}/src/content/legal/<locale>/<doc>.md with locale folders \`en\` and \`pt\`, updating the starter tests that assert the sample legal text; other types: as the stack recipe says) and wire the landing copy from ${P}/marketing/copy/landing.<locale>.md into the content dictionaries. ` +
+        `Fill site config company/legal fields from FOUNDER.md (keep the placeholder [A PREENCHER PELO FUNDADOR] where the founder has not provided data and list it as a founder task). ${checks()} must still pass.`,
       { label: 'build:integration', phase: 'Construir', agentType: builder, schema: SLICE })
     const ok = !!(integration && integration.checks_green)
     if (buildRan && ok) {
@@ -440,7 +470,7 @@ if (buildJobs.length) {
       const blocked = byId.build.blocked
       await checkpoint('Construir', ['build'], { build: `${okSlices}/${byId.build.slices.length} fatias; checks verdes${blocked.length ? '; bloqueado: ' + blocked.join(', ') : ''}` })
     } else {
-      await save('Construir', ok ? 'integration — legal pages and copy wired in' : 'integration — checks red, QA fix loop will address', [P])
+      await save('Construir', ok ? 'integration — legal pages and copy wired in' : 'integration — checks red, the QA fix loop addresses it')
       if (!ok) result.notes.push('integration left checks red; the QA fix loop addresses it')
     }
   }
@@ -448,6 +478,8 @@ if (buildJobs.length) {
 
 // ───────────────────────────── 4 · Qualidade ─────────────────────────────
 if (need('qa') && !buildAvailable) {
+  await clerk('Construir', 'checkpoint:build-blocked',
+    [`${FX} set-phase ${slug} build blocked --summary "build falhou; repetir com /continuar ${slug}"`], 'build — blocked', false)
   result.stopped = 'build-failed'
   log(`⛔ sem build utilizável — corre /continuar ${slug} para repetir a construção`)
   return result
@@ -462,7 +494,7 @@ if (need('qa')) {
   for (let round = 1; round <= maxRounds; round++) {
     log(`🧪 QA + segurança — ronda ${round}/${maxRounds}`)
     const [qa, sec] = await parallel([
-      () => agent(`${ctx('qa')}Your task: QA round ${round}. Full checks from a clean install, e2e for every must-story, axe, Lighthouse, exploratory screenshots. Write/update ${P}/docs/06-qa-report.md (link the security report ${P}/docs/06-security.md).`,
+      () => agent(`${ctx('qa')}Your task: QA round ${round}. Full checks from a clean install, e2e for every must-story, axe, Lighthouse, exploratory screenshots (keep bulky artifacts in $SCRATCH; commit only a few key screenshots). Write/update ${P}/docs/06-qa-report.md (link the security report ${P}/docs/06-security.md).`,
         { label: `qa:round-${round}`, phase: 'Qualidade', agentType: 'qa-engineer', schema: QA }),
       () => agent(`${ctx('qa')}Your task: security audit round ${round} of ${P}/${appDir}. Static review + npm audit only — do NOT run build/dev/test commands (QA is running them) and do NOT edit code. Write findings to ${P}/docs/06-security.md.`,
         { label: `security:round-${round}`, phase: 'Qualidade', agentType: 'security-auditor', schema: SECURITY }),
@@ -485,43 +517,50 @@ if (need('qa')) {
     await agent(
       `${ctx('qa')}Your task: FIX round ${round}. Fix the root cause of each blocking item, add a regression test for each, keep all checks green: ${blocking.join(' || ')}${cheap.length ? `. If cheap, also: ${cheap.join(' || ')}` : ''}. Details are in ${P}/docs/06-qa-report.md and ${P}/docs/06-security.md.`,
       { label: `fix:round-${round}`, phase: 'Qualidade', agentType: builder, schema: FIX })
-    await save('Qualidade', `qa — fix round ${round}`, [P])
+    await save('Qualidade', `qa — fix round ${round}`, [`${FX} set-phase ${slug} qa in_progress`])
   }
   result.gate2 = { passed: !blocking.length, blocking, scores: lastQa ? lastQa.scores : null }
   if (blocking.length) {
     log(`⛔ G2 falhou: ${blocking.length} bloqueio(s) após ${maxRounds} ronda(s)`)
-    await agent(
-      `Mark QA blocked for \`${slug}\`: run python3 factory/scripts/factory.py set-phase ${slug} qa blocked --summary "${short(blocking.length + ' bloqueios: ' + blocking.join('; '))}", then python3 factory/scripts/factory.py render-status ${slug} --write, git add ${P}, commit "${slug}: qa — blocked", push the current branch.`,
-      { label: 'checkpoint:qa-blocked', phase: 'Qualidade', agentType: 'factory-clerk', schema: CHECKPOINT })
+    await clerk('Qualidade', 'checkpoint:qa-blocked',
+      [`${FX} set-phase ${slug} qa blocked --summary "${sq(blocking.length + ' bloqueios: ' + blocking.join('; '))}"`], 'qa — blocked', false)
     result.stopped = 'qa-blocked'
     return result
   }
   log('✅ G2 passou')
   const qaSummary = `G2 ok${lastQa && lastQa.scores ? ` · perf ${lastQa.scores.performance ?? '?'} a11y ${lastQa.scores.accessibility ?? '?'} seo ${lastQa.scores.seo ?? '?'}` : ''}`
   // A green G2 also proves the build; close it if integration had left it open.
-  await checkpoint('Qualidade', done.has('build') ? ['qa'] : ['build', 'qa'], { build: 'checks verdes (confirmado no G2)', qa: qaSummary })
+  await checkpoint('Qualidade', done.has('build') ? ['qa'] : ['build', 'qa'], { build: 'checks verdes (confirmado no G2)', qa: qaSummary },
+    shouldStop('qa') ? [`${FX} set ${slug} status paused`] : [])
   if (shouldStop('qa')) { result.stopped = 'stop_after'; return result }
 }
 
 // ───────────────────────────── 5 · Lançar ─────────────────────────────
+if (need('launch') && !only) {
+  // Never prepare a launch with a missing phase (G2 assumes legal pages and marketing exist).
+  const missing = ['brand', 'architecture', 'build', 'legal', 'gtm', 'qa'].filter((p) => !done.has(p))
+  if (missing.length) {
+    result.stopped = 'incomplete'
+    result.notes.push(`em falta antes do lançamento: ${missing.join(', ')}`)
+    log(`⛔ lançamento adiado — fases em falta: ${missing.join(', ')}`)
+    return result
+  }
+}
 if (need('launch')) {
   phase('Lançar')
   log('🚀 A preparar o lançamento')
   const launch = must(await agent(
-    `${ctx('launch')}Your task: run python3 factory/scripts/factory.py doctor; if deploy tokens exist, deploy a PREVIEW of ${P}/${appDir}, smoke-test it and record links.preview; set up analytics/monitoring/payments in test mode where credentials allow; write ${P}/docs/09-launch.md (runbook, DNS records, rollback); batch every founder-only step in ${P}/HUMAN_TASKS.md (≤ 5 min each). ` +
-      'Deploy to PRODUCTION only if FOUNDER.md sets go_live: auto or the founder already approved go-live in HUMAN_TASKS.md; then record links.production.',
+    `${ctx('launch')}Your task: run ${FX} doctor; if deploy tokens exist, deploy a PREVIEW of ${P}/${appDir}, smoke-test it and record links.preview; set up analytics/monitoring/payments in test mode where credentials allow; write ${P}/docs/09-launch.md (runbook, DNS records, rollback); batch every founder-only step in ${P}/HUMAN_TASKS.md (≤ 5 min each), including the go-live approval. ` +
+      'Do NOT deploy to production in this phase — go-live is the /lancar command — unless FOUNDER.md sets go_live: auto AND HUMAN_TASKS.md has no open 🔴 task; only then deploy production, verify it and record links.production.',
     { label: 'launch', phase: 'Lançar', agentType: 'devops-engineer', schema: LAUNCH }), 'launch')
   result.preview = launch.preview_url || null
   if (launch.production_live) {
-    await checkpoint('Lançar', ['launch'], { launch: launch.summary },
-      { pre: [`python3 factory/scripts/factory.py set ${slug} status launched`] })
+    await checkpoint('Lançar', ['launch'], { launch: launch.summary }, [`${FX} set ${slug} status launched`])
   } else {
     const waiting = launch.blocking_tasks.length ? launch.blocking_tasks.join(', ') : `${launch.founder_tasks_open} tarefa(s)`
-    await agent(
-      `Checkpoint launch-in-progress for \`${slug}\`: run python3 factory/scripts/factory.py set-phase ${slug} launch in_progress --summary "${short('pronto; à espera do fundador: ' + waiting)}", ` +
-        `python3 factory/scripts/factory.py set ${slug} status needs-founder, python3 factory/scripts/factory.py render-status ${slug} --write, git add ${P} ideas, commit "${slug}: launch — ready, waiting for founder", push the current branch` +
-        (pr ? `, then update the status block in PR #${pr}'s description with python3 factory/scripts/factory.py render-status ${slug} --pr.` : '.'),
-      { label: 'checkpoint:launch-ready', phase: 'Lançar', agentType: 'factory-clerk', schema: CHECKPOINT })
+    await clerk('Lançar', 'checkpoint:launch-ready',
+      [`${FX} set-phase ${slug} launch in_progress --summary "${sq('pronto; à espera do fundador: ' + waiting)}"`, `${FX} set ${slug} status needs-founder`],
+      'launch — ready, waiting for founder', true)
     result.stopped = 'waiting-founder'
     result.notes.push(`à espera do fundador: ${waiting}`)
   }

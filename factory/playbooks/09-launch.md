@@ -1,6 +1,6 @@
 # 09 · Launch (`launch`)
 
-> **Owner:** `devops-engineer` (+ `growth-marketer` for launch-day assets, `qa-engineer` for the post-launch smoke test) · **Inputs:** `product.json` (`stack`, `type`), `docs/04-architecture.md`, `docs/05-build.md` (env vars, run/deploy notes), `docs/06-qa-report.md` (G2), `docs/07-compliance.md`, `docs/08-gtm.md` + `marketing/launch/*`, `HUMAN_TASKS.md`, `FOUNDER.md` (`go_live`), env tokens (`factory.py doctor`), `factory/checklists/launch-readiness.md`, `factory/playbooks/monetization.md` · **Outputs:** `docs/09-launch.md` (from `factory/templates/launch.md`: runbook + live status), preview and production deployments, DNS/email/monitoring configured, store submission packages, updated `HUMAN_TASKS.md`, `product.json` `links.*` · **Gate:** `launch` Definition of Done (`factory/PIPELINE.md`) on top of **G2**; production go-live is a **founder approval** unless `FOUNDER.md` sets `go_live: auto`.
+> **Owner:** `devops-engineer` (+ `growth-marketer` for launch-day assets, `qa-engineer` for the post-launch smoke test) · **Inputs:** `product.json` (`stack`, `type`), `docs/04-architecture.md`, `docs/05-build.md` (env vars, run/deploy notes), `docs/06-qa-report.md` (G2), `docs/07-compliance.md`, `docs/08-gtm.md` + `marketing/launch/*`, `HUMAN_TASKS.md`, `FOUNDER.md` (`go_live`), env tokens (`factory.py doctor`), `factory/checklists/launch-readiness.md`, `factory/playbooks/monetization.md` · **Outputs:** `docs/09-launch.md` (from `factory/templates/launch.md`: runbook + live status), preview and production deployments, DNS/email/monitoring configured, store submission packages, updated `HUMAN_TASKS.md`, `product.json` `links.*` · **Gate:** `launch` Definition of Done (`factory/PIPELINE.md`) on top of **G2**; production go-live is a **founder approval** (the `/lancar` command) unless `FOUNDER.md` sets `go_live: auto` and no 🔴 founder task is open. Inside the `idea-to-product` workflow this phase deploys previews only.
 
 ## Objective
 
@@ -10,7 +10,7 @@ Take a QA-passed product from "works on my branch" to "a stranger can find it, u
 
 1. `python3 factory/scripts/factory.py doctor` — lists which credentials exist (names only). Map them: `VERCEL_TOKEN`, `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, `SUPABASE_ACCESS_TOKEN`, `STRIPE_SECRET_KEY` (test key until Step 10), `LEMONSQUEEZY_API_KEY`/`POLAR_ACCESS_TOKEN`/`PADDLE_API_KEY`, `RESEND_API_KEY`, `SENTRY_AUTH_TOKEN`, `POSTHOG_PERSONAL_API_KEY`/`PLAUSIBLE_API_KEY`, `EXPO_TOKEN`. Missing token = prepare everything else and open one founder task for it (HT, `SETUP.md` explains how to add env vars). Test presence with `[ -n "$VERCEL_TOKEN" ] && echo set`, never `echo $VAR`.
 2. Confirm **G2 passed** (`docs/06-qa-report.md`, every row of `factory/checklists/launch-readiness.md` pass or N/A, no open P0/P1). If not, stop and return to `qa`.
-3. Read `product.json` `stack.hosting/payments/database` and `docs/05-build.md` env table. Read `FOUNDER.md` for `go_live` (default `approve`) and preferred registrar.
+3. Read `product.json` `stack.hosting/payments/database` and `docs/05-build.md` env table. Read `FOUNDER.md` for `go_live` (default `approval`) and preferred registrar.
 4. **Verify every CLI flag with `--help` before use** (flags below were verified against Vercel CLI 63.1.0, Wrangler 4.148.0, EAS CLI 24.12.0, Supabase CLI 2.120.0 on 2026-10-08; versions move: check `npm view <pkg> version`). Run CLIs with `npx <pkg>@<version>`; always pass tokens through env/flags, never into files.
 5. `python3 factory/scripts/factory.py set-phase <slug> launch in_progress --summary "launch started"`.
 
@@ -105,7 +105,7 @@ Perform in this order; stop at the first failure.
 
 ### Step 13 — Go-live gate and approval
 1. Preconditions all true: G2 passed; Steps 2–10 done (payments may stay in waitlist mode if verification is pending — go live as a waitlist and switch later); `docs/09-launch.md` runbook complete; founder tasks 🔴 closed or explicitly waived.
-2. **`go_live: auto`** in `FOUNDER.md` → proceed to Step 14 yourself and tell the founder afterwards. Otherwise send **one** pt-PT message: product, what goes live (URL, domain, payments mode), what was verified, costs, and "responde «lançar» para publicar"; set `status: needs-founder` with that single 🔴 task `HT-xx · Aprovar o lançamento (1 min)`. Do not post, email or submit to stores before the answer.
+2. **`go_live: auto`** in `FOUNDER.md` and no open 🔴 task → proceed to Step 14 yourself and tell the founder afterwards. Otherwise send **one** pt-PT message: product, what goes live (URL, domain, payments mode), what was verified, costs, and "responde «lançar» para publicar"; set `status: needs-founder` with that single 🔴 task `HT-xx · Aprovar o lançamento (1 min)`. Do not post, email or submit to stores before the answer.
 3. Push notification when the tool exists (see CLAUDE.md).
 
 ### Step 14 — Launch-day runbook (T-7 → T+7) and rollback
@@ -120,8 +120,8 @@ Perform in this order; stop at the first failure.
 | T0 +1 h / +4 h / +24 h | Smoke test, metrics snapshot (visits, signups, purchases, errors, Sentry, uptime), reply log | Claude | numbers into `docs/09-launch.md` |
 | T+1 | Thank-you posts, fix top 3 issues, update FAQ from questions | Claude/Founder | |
 | T+3 | Review channel results vs `docs/08-gtm.md` tests; apply stop-losses | Claude | |
-| T+7 | Retrospective: what broke, what converted, lessons → `factory/LEARNINGS.md`; hand to growth | Claude | `set-phase growth in_progress` |
-**Rollback plan** (write it in `docs/09-launch.md`): triggers — checkout failing > 5 min, error rate > 2× baseline for 10 min, data corruption, a legal/security issue. Steps: (1) `vercel rollback <previous-deployment-url> --yes` (Cloudflare: `wrangler rollback <version-id>`; EAS: `eas update:rollback`); (2) kill-switch env `CHECKOUT_ENABLED=false` (or equivalent) → CTA falls back to waitlist; (3) DB: migrations must be **expand/contract** (additive, backward-compatible) so code rollback never needs a down-migration; restore from backup only for corruption; (4) pause paid campaigns; (5) pt-PT status message to the founder + status page; (6) post-mortem in `factory/LEARNINGS.md`. `vercel promote <url>` re-promotes a good deployment; `vercel project pause` is the last resort to stop traffic.
+| T+7 | Retrospective: what broke, what converted, lessons → `products/<slug>/docs/lessons.md`; hand to growth | Claude | `set-phase growth in_progress` |
+**Rollback plan** (write it in `docs/09-launch.md`): triggers — checkout failing > 5 min, error rate > 2× baseline for 10 min, data corruption, a legal/security issue. Steps: (1) `vercel rollback <previous-deployment-url> --yes` (Cloudflare: `wrangler rollback <version-id>`; EAS: `eas update:rollback`); (2) kill-switch env `CHECKOUT_ENABLED=false` (or equivalent) → CTA falls back to waitlist; (3) DB: migrations must be **expand/contract** (additive, backward-compatible) so code rollback never needs a down-migration; restore from backup only for corruption; (4) pause paid campaigns; (5) pt-PT status message to the founder + status page; (6) post-mortem in `products/<slug>/docs/lessons.md` (the foreman consolidates it into `factory/LEARNINGS.md`). `vercel promote <url>` re-promotes a good deployment; `vercel project pause` is the last resort to stop traffic.
 
 ### Step 15 — Post-launch smoke test (run at T0, +1 h, +24 h; also after every production deploy)
 Automate as `tests/smoke/prod.spec.ts` run through `playwright.smoke.config.ts` (Playwright, Chromium via `CHROMIUM_PATH=/opt/pw-browsers/chromium`, `SMOKE_BASE_URL` = production, read-only, no real purchases): every locale home returns 200 with the correct `<title>`/hreflang; hero CTA works; waitlist/sign-up accepts a test address and the confirmation email arrives (use a tagged test inbox); pricing renders VAT-inclusive prices; checkout button redirects to the provider (stop before paying); legal pages 200; `/robots.txt`, `/sitemap.xml`, 404 page, security headers (`strict-transport-security`, `x-content-type-options`, CSP/frame-ancestors, `referrer-policy`); analytics event visible; Sentry test event received then silenced; `/api/health` OK; webhook test event 2xx; Lighthouse mobile ≥ 90 performance, ≥ 95 accessibility/SEO/best-practices on the home page.
@@ -167,7 +167,7 @@ Each task: why, exact links, values to paste, cost, what it unblocks, what Claud
 | `<app_dir>/tests/smoke/prod.spec.ts` + `playwright.smoke.config.ts` | production smoke test |
 | `marketing/launch/schedule.md` | updated with final domain and times |
 | `HUMAN_TASKS.md` | batches A/B/C with times and costs |
-| `factory/LEARNINGS.md` | one-line lessons from the launch |
+| `docs/lessons.md` | one-line lessons from the launch (the foreman consolidates them into `factory/LEARNINGS.md`) |
 
 ## Definition of Done
 
@@ -194,4 +194,4 @@ Vercel CLI (`link`, `env add`, `deploy [--prod]`, `inspect --wait`, `rollback`, 
 
 ## Hand-off
 
-**Growth (10):** baseline metrics from the first 24 h, analytics/Search Console/Stripe access notes, channel results vs tests, open issues, the live price history table. **Founder:** the pt-PT launch message and remaining tasks. **Foreman:** `status: launched`, `links.*` set, autopilot weekly `/crescer` eligible. `factory/LEARNINGS.md`: lessons added.
+**Growth (10):** baseline metrics from the first 24 h, analytics/Search Console/Stripe access notes, channel results vs tests, open issues, the live price history table. **Founder:** the pt-PT launch message and remaining tasks. **Foreman:** `status: launched`, `links.*` set, autopilot weekly `/crescer` eligible. `docs/lessons.md`: lessons added.

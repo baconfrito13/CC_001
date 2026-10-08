@@ -9,32 +9,50 @@ Ordem recomendada (o mais útil primeiro):
 
 | # | Passo | Tempo | Desbloqueia |
 |---|---|---|---|
-| 1 | Fazer merge do PR da fábrica | 1 min | sessões novas já arrancam com a fábrica |
-| 2 | Decidir: repositório público ou privado | 1 min | confidencialidade das tuas ideias |
+| 1 | Privacidade do repositório e proteção do `main` | 3 min | ideias confidenciais; nenhum agente escreve diretamente no `main` |
+| 2 | Fazer merge do PR da fábrica | 1 min | sessões novas já arrancam com a fábrica |
 | 3 | Preencher `FOUNDER.md` | 10 min | decisões de negócio sem perguntas |
 | 4 | Ligar o piloto automático (`/autopiloto ligar` na sessão "🏭 Fábrica · Capataz") | 1 min | ideias processadas sem abrires sessões |
 | 5 | Tokens no ambiente cloud do Claude | 15 min | deploys, bases de dados, pagamentos em teste |
-| 6 | GitHub Actions (opcional) | 5 min | ideias via issues, deploy automático no merge |
+| 6 | GitHub Actions (opcional) | 5 min | ideias via issues, pré-visualização automática no merge |
 | 7 | Contas de negócio (quando o 1.º produto passar a validação) | variável | cobrar dinheiro de verdade |
 
 ---
 
-## 1. Merge do PR da fábrica
+## 1. Privacidade e proteção do `main`
 
-No GitHub, abre o pull request **"🛠️ Fábrica de produtos"** e carrega em *Merge*. A partir
-daí o `main` tem a fábrica e cada produto novo nasce num branch limpo a partir dele.
-
-## 2. Público ou privado?
-
-Este repositório está **público**: qualquer pessoa pode ler as tuas ideias, pesquisas,
-planos de negócio e código.
+**Público ou privado?** Este repositório está **público**: qualquer pessoa pode ler as tuas
+ideias, pesquisas, planos de negócio e código. Decide antes de enviares a primeira ideia.
 
 - **Privado (recomendado se as ideias forem confidenciais):** GitHub → *Settings* → *General*
   → *Danger Zone* → *Change repository visibility* → *Private*. As sessões do Claude
-  continuam a funcionar igual. Só os minutos do GitHub Actions passam a ser limitados no plano
-  gratuito (as sessões cloud do Claude não gastam esses minutos).
+  continuam a funcionar igual. Só os minutos do GitHub Actions passam a ter uma quota mensal
+  no plano gratuito (as sessões cloud do Claude não gastam esses minutos).
 - **Público:** minutos de Actions ilimitados e "build in public". Nesse caso não escrevas em
   `FOUNDER.md` nada que não queiras ver publicado.
+
+**Proteger o `main`.** Os agentes já estão proibidos de escrever no `main` (regras em
+`CLAUDE.md` e `.claude/settings.json`); uma regra no GitHub torna isso impossível, aconteça o
+que acontecer:
+
+1. GitHub → *Settings* → *Rules* → *Rulesets* → *New ruleset* → *New branch ruleset*.
+2. *Ruleset name*: `proteger-main` · *Enforcement status*: **Active**.
+3. *Target branches* → *Add target* → **Include default branch**.
+4. Deixa marcados **Restrict deletions** e **Block force pushes**; marca **Require a pull
+   request before merging** (*Required approvals*: 0, porque o GitHub não deixa aprovares os
+   teus próprios PRs). Não acrescentes ninguém à *Bypass list*.
+5. *Create*.
+
+As regras estão disponíveis em repositórios públicos no plano gratuito; num repositório
+**privado** exigem GitHub Pro (ou Team). Se ficares no privado e gratuito, salta este ponto —
+as regras do Claude continuam a proteger o `main`.
+
+## 2. Merge do PR da fábrica
+
+No GitHub, abre o pull request **"🛠️ Fábrica de produtos"**, carrega em *Ready for review*
+(está em rascunho) e depois em *Merge pull request* com a opção **Create a merge commit** (não
+*Squash*: os produtos que já tenham começado continuam a juntar-se ao `main` sem conflitos). A
+partir daí o `main` tem a fábrica e cada produto novo nasce num branch limpo a partir dele.
 
 ## 3. `FOUNDER.md`
 
@@ -95,21 +113,28 @@ acrescentas em *Network access* → *Allowed domains* no mesmo menu
 ## 6. GitHub Actions (opcional)
 
 Permite enviar ideias por **issues** (modelo "💡 Nova ideia") e falar com o Claude com
-`@claude` nos PRs dos produtos, mesmo sem abrires o Claude; e faz deploy automático quando
-fazes merge de um produto.
+`@claude` nos PRs dos produtos, mesmo sem abrires o Claude; e publica uma
+**pré-visualização** na Vercel quando fazes merge de um produto (produção é sempre com
+`/lancar`).
 
 1. Instala a app do Claude no repositório: no Claude Code (terminal) corre
    `/install-github-app`, ou em [github.com/apps/claude](https://github.com/apps/claude).
 2. No teu computador, com o Claude Code instalado: `claude setup-token` → copia o token.
 3. GitHub → *Settings* → *Secrets and variables* → *Actions* → *New repository secret*:
    - `CLAUDE_CODE_OAUTH_TOKEN` = o token do passo 2 (usa a tua subscrição Claude);
-   - `VERCEL_TOKEN` = o mesmo token da Vercel (ativa o deploy automático no merge);
+   - `VERCEL_TOKEN` = o mesmo token da Vercel (ativa a pré-visualização automática no merge);
    - opcional, em *Variables*: `VERCEL_SCOPE` = slug da equipa Vercel, se usares uma equipa.
-4. GitHub → *Issues* → *Labels*: cria `ideia`, `produto`, `em-curso`, `feedback` e
-   `portfolio` (o modelo de issue usa `ideia`).
+4. GitHub → *Issues* → *Labels*: cria `ideia`, `na-fila`, `em-curso`, `produto`, `feedback`
+   e `portfolio` (o modelo de issue usa `ideia`).
 
 Só tu (dono) e colaboradores conseguem pôr o Claude a trabalhar: issues e comentários de
 outras pessoas são ignorados.
+
+Com o Actions ligado, uma issue com a etiqueta `ideia` começa **logo** a ser trabalhada no
+GitHub, mesmo que já estejam a avançar `max_parallel_products` produtos (cada execução gasta
+minutos de Actions). Para guardar uma ideia sem a começar já, abre uma issue em branco
+(*Open a blank issue*) com a etiqueta `na-fila`, ou acrescenta-a a `ideas/INBOX.md`: o
+capataz pega nela quando houver vaga.
 
 ## 7. Contas de negócio (quando houver um produto validado)
 
