@@ -5,8 +5,8 @@
   "one_liner": "Óculos com câmara e auriculares com IA offline que descrevem o mundo a pessoas cegas, vendidos como kit sem subscrição",
   "idea": "Uma solução para pessoas cegas ou com outros tipos de problemas visuais graves que seria, no fundo, um conjunto de óculos e fones interligados e com um sistema de inteligência artificial integrado, de preferência sem necessidade de ligação à internet, que se fosse indespensável teria de ser feita através de ligação ao telemovel do utilizador. Uma solução nativa mesmo. Esses óculos teriam um câmara e o que vêm transmitem ao utilizador através dos fones, que também têm microfone e permitem ao utilizador fazer perguntas à IA. Tudo feito no mesmo ecosistema. A \"monetização\" seria através da venda do kit (óculos + fones/microfone), preferencialmente sem necessidade de subscrição e com possíveis atualizações OTA.",
   "type": "other",
-  "status": "active",
-  "phase": "research",
+  "status": "needs-founder",
+  "phase": "strategy",
   "depth": "standard",
   "depth_locked": false,
   "phases": {
@@ -19,9 +19,12 @@
       "summary": "other (hardware+IA offline), kit óculos+auriculares, venda única, depth standard"
     },
     "research": {
-      "status": "in_progress",
+      "status": "done",
       "started": "2026-10-08",
-      "started_at": "2026-10-08T16:24:25Z"
+      "started_at": "2026-10-08T16:24:25Z",
+      "completed": "2026-10-08",
+      "completed_at": "2026-10-08T16:57:23Z",
+      "summary": "KILL 2.5 — Respondi às 11 objeções em products/visao-guiada/docs/01-research.md (nenhuma fatal; as maiores são O1–O5). O KILL mantém-se e a "
     },
     "strategy": {
       "status": "pending"
@@ -51,7 +54,11 @@
       "status": "pending"
     }
   },
-  "decision": null,
+  "decision": {
+    "verdict": "kill",
+    "score": 2.5,
+    "rationale": "Respondi às 11 objeções em products/visao-guiada/docs/01-research.md (nenhuma fatal; as maiores são O1–O5). O KILL mantém-se e a nota desce de 2,55 para 2,50 (rota A) e 2,40 (rota B). Pessimista 2,15, ascendente 2,65, otimista 3,40; não é frágil.\n\nRespostas por objeção:\n- **O1, aceite.** Confirmei q"
+  },
   "stack": {
     "recipe": null,
     "app_dir": "app",
@@ -76,5 +83,18 @@
     "ref": null
   },
   "created": "2026-10-08",
-  "updated": "2026-10-08"
+  "updated": "2026-10-08",
+  "metrics_applied": [
+    "20261008T155003Z:checkpoint:research"
+  ],
+  "metrics": {
+    "turn_output_tokens_k": 959,
+    "research_tracks": 4,
+    "research_tracks_failed": 0,
+    "critic_fatal": 0,
+    "critic_major": 5,
+    "rebuttal": true,
+    "g1_score": 2.5,
+    "factory_rev": "b233efe"
+  }
 }

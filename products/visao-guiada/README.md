@@ -3,12 +3,12 @@
 > Óculos com câmara e auriculares com IA offline que descrevem o mundo a pessoas cegas, vendidos como kit sem subscrição
 
 <!-- factory:status:start -->
-**Estado:** 🟢 ativo · **Fase atual:** 01 Pesquisa · **Profundidade:** standard · **Score G1:** —
+**Estado:** 🟡 precisa de ti · **Fase atual:** 02 Estratégia · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
 
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
 | 00 | Receção | ✅ | other (hardware+IA offline), kit óculos+auriculares, venda única, depth standard |
-| 01 | Pesquisa | 🔄 |  |
+| 01 | Pesquisa | ✅ | KILL 2.5 — Respondi às 11 objeções em products/visao-guiada/docs/01-research.md (nenhuma fatal; as maiores são O1–O5). O KILL mantém-se e a  |
 | 02 | Estratégia | ⬜ |  |
 | 03 | Marca | ⬜ |  |
 | 04 | Arquitetura | ⬜ |  |
