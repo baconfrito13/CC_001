@@ -19,7 +19,7 @@
 | 09 | Lançamento | ⬜ |  |
 | 10 | Crescimento | ⬜ |  |
 
-**Links:** —
+**Links:** [sessão Claude](https://claude.ai/code/session_0128UXAXkUH8kQuWGsHHnBqT)
 **Tarefas do fundador:** 0 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
 _Atualizado: 2026-11-26_
 <!-- factory:status:end -->
