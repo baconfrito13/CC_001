@@ -19,7 +19,10 @@
       "summary": "ai-app, medições por IA para obra civil em PT, depth standard"
     },
     "research": {
-      "status": "pending"
+      "status": "in_progress",
+      "started": "2026-11-26",
+      "started_at": "2026-11-26T16:49:21Z",
+      "summary": "research started"
     },
     "strategy": {
       "status": "pending"

@@ -8,7 +8,7 @@
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
 | 00 | Receção | ✅ | ai-app, medições por IA para obra civil em PT, depth standard |
-| 01 | Pesquisa | ⬜ |  |
+| 01 | Pesquisa | 🔄 | research started |
 | 02 | Estratégia | ⬜ |  |
 | 03 | Marca | ⬜ |  |
 | 04 | Arquitetura | ⬜ |  |
