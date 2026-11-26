@@ -5,8 +5,8 @@
   "one_liner": "Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal",
   "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
   "type": "ai-app",
-  "status": "active",
-  "phase": "research",
+  "status": "needs-founder",
+  "phase": "strategy",
   "depth": "standard",
   "depth_locked": false,
   "phases": {
@@ -19,10 +19,12 @@
       "summary": "ai-app, medições por IA para obra civil em PT, depth standard"
     },
     "research": {
-      "status": "in_progress",
+      "status": "done",
       "started": "2026-11-26",
       "started_at": "2026-11-26T16:49:21Z",
-      "summary": "research started"
+      "summary": "KILL 2.45 — Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n",
+      "completed": "2026-11-26",
+      "completed_at": "2026-11-26T17:22:48Z"
     },
     "strategy": {
       "status": "pending"
@@ -52,7 +54,11 @@
       "status": "pending"
     }
   },
-  "decision": null,
+  "decision": {
+    "verdict": "kill",
+    "score": 2.45,
+    "rationale": "Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n"
+  },
   "stack": {
     "recipe": null,
     "app_dir": "app",
@@ -77,5 +83,18 @@
     "ref": null
   },
   "created": "2026-11-26",
-  "updated": "2026-11-26"
+  "updated": "2026-11-26",
+  "metrics_applied": [
+    "20261126T163713Z:checkpoint:research"
+  ],
+  "metrics": {
+    "turn_output_tokens_k": 610,
+    "research_tracks": 4,
+    "research_tracks_failed": 0,
+    "critic_fatal": 0,
+    "critic_major": 6,
+    "rebuttal": true,
+    "g1_score": 2.45,
+    "factory_rev": "06388cf"
+  }
 }
