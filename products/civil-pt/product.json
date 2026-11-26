@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "slug": "civil-pt",
+  "name": "Medições PT",
+  "one_liner": "Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal",
+  "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
+  "type": "ai-app",
+  "status": "active",
+  "phase": "research",
+  "depth": "standard",
+  "depth_locked": false,
+  "phases": {
+    "intake": {
+      "status": "done",
+      "started": "2026-11-26",
+      "started_at": "2026-11-26T16:36:19Z",
+      "completed": "2026-11-26",
+      "completed_at": "2026-11-26T16:36:48Z",
+      "summary": "ai-app, medições por IA para obra civil em PT, depth standard"
+    },
+    "research": {
+      "status": "pending"
+    },
+    "strategy": {
+      "status": "pending"
+    },
+    "brand": {
+      "status": "pending"
+    },
+    "architecture": {
+      "status": "pending"
+    },
+    "build": {
+      "status": "pending"
+    },
+    "qa": {
+      "status": "pending"
+    },
+    "legal": {
+      "status": "pending"
+    },
+    "gtm": {
+      "status": "pending"
+    },
+    "launch": {
+      "status": "pending"
+    },
+    "growth": {
+      "status": "pending"
+    }
+  },
+  "decision": null,
+  "stack": {
+    "recipe": null,
+    "app_dir": "app",
+    "components": [],
+    "hosting": null,
+    "payments": null,
+    "database": null,
+    "auth": null
+  },
+  "links": {
+    "branch": "produto/civil-pt",
+    "pr": null,
+    "issue": null,
+    "session": null,
+    "preview": null,
+    "production": null,
+    "domain": null,
+    "repo": null
+  },
+  "source": {
+    "channel": "claude",
+    "ref": null
+  },
+  "created": "2026-11-26",
+  "updated": "2026-11-26"
+}
