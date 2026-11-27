@@ -6,7 +6,7 @@
   "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
   "type": "ai-app",
   "status": "active",
-  "phase": "strategy",
+  "phase": "brand",
   "depth": "standard",
   "depth_locked": false,
   "phases": {
@@ -27,7 +27,11 @@
       "completed_at": "2026-11-26T17:22:48Z"
     },
     "strategy": {
-      "status": "pending"
+      "status": "done",
+      "started": "2026-11-27",
+      "completed": "2026-11-27",
+      "completed_at": "2026-11-27T14:41:38Z",
+      "summary": "Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ("
     },
     "brand": {
       "status": "pending"
@@ -86,16 +90,18 @@
   "created": "2026-11-26",
   "updated": "2026-11-27",
   "metrics_applied": [
-    "20261126T163713Z:checkpoint:research"
+    "20261126T163713Z:checkpoint:research",
+    "20261127T134901Z:checkpoint:strategy"
   ],
   "metrics": {
-    "turn_output_tokens_k": 610,
+    "turn_output_tokens_k": 1057,
     "research_tracks": 4,
     "research_tracks_failed": 0,
     "critic_fatal": 0,
     "critic_major": 6,
     "rebuttal": true,
     "g1_score": 2.45,
-    "factory_rev": "06388cf"
+    "factory_rev": "06388cf",
+    "strategy_revised": true
   }
 }

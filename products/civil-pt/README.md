@@ -3,13 +3,13 @@
 > Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal
 
 <!-- factory:status:start -->
-**Estado:** 🟢 ativo · **Fase atual:** 02 Estratégia · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
+**Estado:** 🟢 ativo · **Fase atual:** 03 Marca · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
 
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
 | 00 | Receção | ✅ | ai-app, medições por IA para obra civil em PT, depth standard |
 | 01 | Pesquisa | ✅ | KILL 2.45 — Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n |
-| 02 | Estratégia | ⬜ |  |
+| 02 | Estratégia | ✅ | Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ( |
 | 03 | Marca | ⬜ |  |
 | 04 | Arquitetura | ⬜ |  |
 | 05 | Construção | ⬜ |  |
