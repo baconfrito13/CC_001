@@ -5,7 +5,7 @@
   "one_liner": "Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal",
   "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
   "type": "ai-app",
-  "status": "needs-founder",
+  "status": "active",
   "phase": "strategy",
   "depth": "standard",
   "depth_locked": false,
@@ -57,7 +57,8 @@
   "decision": {
     "verdict": "kill",
     "score": 2.45,
-    "rationale": "Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n"
+    "rationale": "forçado pelo fundador; veredicto original: kill 2.45",
+    "forced": true
   },
   "stack": {
     "recipe": null,
@@ -83,7 +84,7 @@
     "ref": null
   },
   "created": "2026-11-26",
-  "updated": "2026-11-26",
+  "updated": "2026-11-27",
   "metrics_applied": [
     "20261126T163713Z:checkpoint:research"
   ],

@@ -3,7 +3,7 @@
 > Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal
 
 <!-- factory:status:start -->
-**Estado:** 🟡 precisa de ti · **Fase atual:** 02 Estratégia · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
+**Estado:** 🟢 ativo · **Fase atual:** 02 Estratégia · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
 
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
@@ -21,7 +21,7 @@
 
 **Links:** [PR](https://github.com/baconfrito13/CC_001/pull/11) · [sessão Claude](https://claude.ai/code/session_0128UXAXkUH8kQuWGsHHnBqT)
 **Tarefas do fundador:** 0 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
-_Atualizado: 2026-11-26_
+_Atualizado: 2026-11-27_
 <!-- factory:status:end -->
 
 
