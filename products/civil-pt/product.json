@@ -49,7 +49,9 @@
       "summary": "Arquitetura do civil-pt (Rastoplan) escrita e validada com 'factory.py validate civil-pt'. Escolhi a receita 'web-saas', apesar de 'product."
     },
     "build": {
-      "status": "pending"
+      "status": "in_progress",
+      "started": "2026-11-28",
+      "started_at": "2026-11-28T14:43:55Z"
     },
     "qa": {
       "status": "pending"

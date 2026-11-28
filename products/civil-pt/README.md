@@ -12,7 +12,7 @@
 | 02 | Estratégia | ✅ | Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ( |
 | 03 | Marca | ✅ | Nome escolhido: Rastoplan (rasto + plan). Domínio: rastoplan.com disponível segundo a ferramenta Shopify generate-domain-names em 2026-11-28 |
 | 04 | Arquitetura | ✅ | Arquitetura do civil-pt (Rastoplan) escrita e validada com 'factory.py validate civil-pt'. Escolhi a receita 'web-saas', apesar de 'product. |
-| 05 | Construção | ⬜ |  |
+| 05 | Construção | 🔄 |  |
 | 06 | Qualidade | ⬜ |  |
 | 07 | Legal | ⬜ |  |
 | 08 | Go-to-market | ⬜ |  |
@@ -20,7 +20,7 @@
 | 10 | Crescimento | ⬜ |  |
 
 **Links:** [PR](https://github.com/baconfrito13/CC_001/pull/11) · [sessão Claude](https://claude.ai/code/session_0128UXAXkUH8kQuWGsHHnBqT)
-**Tarefas do fundador:** 3 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
+**Tarefas do fundador:** 9 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
 _Atualizado: 2026-11-28_
 <!-- factory:status:end -->
 
