@@ -1,0 +1,25 @@
+# Brief 09 — Estrutura de um mapa de quantidades: capítulos e artigos
+
+- keyword: estrutura de um mapa de quantidades
+- secondary: mapa de quantidades capítulos artigos; como fazer um mapa de quantidades; regras de medição obra
+- locale: pt
+- intent: info (topo de funil)
+- serp_notes: Não inspecionado. Esperar muito conteúdo brasileiro (orçamento de obra) e fóruns portugueses (Fórum da Casa). Lacuna: guia pt-PT escrito com a nomenclatura de concursos (capítulo, artigo, unidade, peças desenhadas).
+- title: Estrutura de um mapa de quantidades: capítulos e artigos
+- description: Como se organiza um mapa de quantidades em Portugal: capítulos, artigos, unidade e quantidade, com um exemplo de pavimentos e arranjos exteriores.
+- slug: estrutura-mapa-de-quantidades  (URL `/pt/guias/estrutura-mapa-de-quantidades`; rota a criar na integração)
+- outline:
+  - H2 O que é e para que serve
+  - H2 Capítulos e artigos: como se agrupam
+  - H2 Unidades (m, m², un) e o que cada uma implica
+  - H2 Exemplo de pavimentos e arranjos exteriores
+  - H2 Erros de estrutura frequentes
+- must-include facts + sources: Estrutura e vocabulário: glossário da marca; confirmar a prática com 2–3 mapas de quantidades públicos de concursos (Portal BASE / plataformas), sem os republicar.
+- information gain: Exemplo real anonimizado e simplificado de um capítulo de pavimentos, com os campos explicados.
+- internal links: Pilar B; 04; 08
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + FAQPage
+- length: 1 100–1 500 palavras
+- image ideas: Esquema capítulo > artigo > unidade
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

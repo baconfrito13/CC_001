@@ -1,0 +1,114 @@
+"use client";
+
+import Script from "next/script";
+import { useEffect } from "react";
+import { configureTracking } from "@/lib/track";
+import { useConsent } from "./CookieConsent";
+
+export interface AnalyticsProps {
+  provider: "none" | "plausible" | "posthog";
+  plausibleDomain?: string;
+  plausibleScriptSrc: string;
+  posthogKey?: string;
+  posthogHost: string;
+  /** Plausible only: a cookieless setup may run without consent. */
+  cookieless: boolean;
+}
+
+interface PostHogLike {
+  __loaded?: boolean;
+  opt_in_capturing?: () => void;
+  opt_out_capturing?: () => void;
+}
+
+declare global {
+  interface Window {
+    posthog?: PostHogLike;
+  }
+}
+
+/** Where PostHog serves its JavaScript from (`eu.i.posthog.com` -> `eu-assets.i.posthog.com`). */
+export function posthogAssetsHost(apiHost: string): string {
+  return apiHost.replace(".i.posthog.com", "-assets.i.posthog.com");
+}
+
+/** A JavaScript string literal that is also safe inside an inline <script> element. */
+function jsString(value: string): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
+/**
+ * Minimal PostHog loader (the official snippet without the method stubs we never call).
+ * Key and host are embedded as escaped string literals so they cannot break out of the script.
+ */
+export function posthogSnippet(key: string, apiHost: string): string {
+  return `(function(w,d){
+if(w.posthog&&w.posthog.__loaded)return;
+var ph=w.posthog=Array.isArray(w.posthog)?w.posthog:[];
+ph._i=[];ph.__SV=1;
+ph.capture=function(){ph.push(["capture"].concat(Array.prototype.slice.call(arguments)))};
+ph.init=function(token,config,name){
+ph._i.push([token,config,name]);
+var s=d.createElement("script");s.async=true;s.crossOrigin="anonymous";
+s.src=${jsString(`${posthogAssetsHost(apiHost)}/static/array.js`)};
+d.head.appendChild(s);
+};
+ph.init(${jsString(key)},{api_host:${jsString(apiHost)},defaults:"2025-05-24",person_profiles:"identified_only"});
+})(window,document);`;
+}
+
+/**
+ * Loads the configured analytics provider, and only when allowed:
+ *  - Plausible: after consent, or immediately when `cookieless` is true (no cookies, no
+ *    personal data stored on the device).
+ *  - PostHog: only after consent.
+ * Withdrawing consent later switches PostHog capturing off for the rest of the session.
+ */
+export function Analytics(props: AnalyticsProps) {
+  const { status } = useConsent();
+  const granted = status === "granted";
+
+  const plausibleReady =
+    props.provider === "plausible" &&
+    Boolean(props.plausibleDomain) &&
+    (props.cookieless || granted);
+  const posthogReady =
+    props.provider === "posthog" && Boolean(props.posthogKey) && granted;
+
+  // Lets track() know whether it may send events.
+  const allowed = plausibleReady || posthogReady;
+  useEffect(() => {
+    configureTracking({ provider: props.provider, allowed });
+  }, [props.provider, allowed]);
+
+  useEffect(() => {
+    if (props.provider !== "posthog") return;
+    const posthog = window.posthog;
+    if (!posthog?.__loaded) return;
+    if (granted) posthog.opt_in_capturing?.();
+    else posthog.opt_out_capturing?.();
+  }, [props.provider, granted]);
+
+  // Script ids must not equal the global names (window.plausible / window.posthog): browsers
+  // expose elements by id on `window`, which would shadow the real objects.
+  if (plausibleReady && props.plausibleDomain) {
+    return (
+      <Script
+        id="analytics-plausible"
+        src={props.plausibleScriptSrc}
+        data-domain={props.plausibleDomain}
+        strategy="afterInteractive"
+      />
+    );
+  }
+
+  if (posthogReady && props.posthogKey) {
+    return (
+      <Script id="analytics-posthog" strategy="afterInteractive">
+        {posthogSnippet(props.posthogKey, props.posthogHost)}
+      </Script>
+    );
+  }
+
+  return null;
+}

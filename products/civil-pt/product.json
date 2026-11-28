@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "slug": "civil-pt",
+  "name": "Rastoplan",
+  "one_liner": "Mapas de quantidades a partir de plantas em PDF vetorial, com cada quantidade confirmada no desenho e rasto até à folha, para orçamentistas em Portugal",
+  "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
+  "type": "ai-app",
+  "status": "active",
+  "phase": "build",
+  "depth": "standard",
+  "depth_locked": false,
+  "phases": {
+    "intake": {
+      "status": "done",
+      "started": "2026-11-26",
+      "started_at": "2026-11-26T16:36:19Z",
+      "completed": "2026-11-26",
+      "completed_at": "2026-11-26T16:36:48Z",
+      "summary": "ai-app, medições por IA para obra civil em PT, depth standard"
+    },
+    "research": {
+      "status": "done",
+      "started": "2026-11-26",
+      "started_at": "2026-11-26T16:49:21Z",
+      "summary": "KILL 2.45 — Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n",
+      "completed": "2026-11-26",
+      "completed_at": "2026-11-26T17:22:48Z"
+    },
+    "strategy": {
+      "status": "done",
+      "started": "2026-11-27",
+      "completed": "2026-11-27",
+      "completed_at": "2026-11-27T14:41:38Z",
+      "summary": "Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ("
+    },
+    "brand": {
+      "status": "done",
+      "started": "2026-11-28",
+      "started_at": "2026-11-28T13:56:14Z",
+      "summary": "Nome escolhido: Rastoplan (rasto + plan). Domínio: rastoplan.com disponível segundo a ferramenta Shopify generate-domain-names em 2026-11-28",
+      "completed": "2026-11-28",
+      "completed_at": "2026-11-28T14:16:42Z"
+    },
+    "architecture": {
+      "status": "done",
+      "started": "2026-11-28",
+      "completed": "2026-11-28",
+      "completed_at": "2026-11-28T14:16:44Z",
+      "summary": "Arquitetura do civil-pt (Rastoplan) escrita e validada com 'factory.py validate civil-pt'. Escolhi a receita 'web-saas', apesar de 'product."
+    },
+    "build": {
+      "status": "in_progress",
+      "started": "2026-11-28",
+      "started_at": "2026-11-28T14:43:55Z"
+    },
+    "qa": {
+      "status": "pending"
+    },
+    "legal": {
+      "status": "pending"
+    },
+    "gtm": {
+      "status": "pending"
+    },
+    "launch": {
+      "status": "pending"
+    },
+    "growth": {
+      "status": "pending"
+    }
+  },
+  "decision": {
+    "verdict": "kill",
+    "score": 2.45,
+    "rationale": "forçado pelo fundador; veredicto original: kill 2.45",
+    "forced": true
+  },
+  "stack": {
+    "recipe": "web-saas",
+    "app_dir": "app",
+    "components": [],
+    "hosting": "Vercel Pro (fra1) + Supabase Pro (eu-central-1)",
+    "payments": "Stripe direto (Checkout, Billing, Portal; Tax conforme regime de IVA)",
+    "database": "Supabase Postgres (eu-central-1, RLS) + Storage privado",
+    "auth": "Supabase Auth (codigo OTP de 6 digitos + pagina de confirmacao)"
+  },
+  "links": {
+    "branch": "produto/civil-pt",
+    "pr": "https://github.com/baconfrito13/CC_001/pull/11",
+    "issue": null,
+    "session": "https://claude.ai/code/session_0128UXAXkUH8kQuWGsHHnBqT",
+    "preview": null,
+    "production": null,
+    "domain": null,
+    "repo": null
+  },
+  "source": {
+    "channel": "claude",
+    "ref": null
+  },
+  "created": "2026-11-26",
+  "updated": "2026-11-28",
+  "metrics_applied": [
+    "20261126T163713Z:checkpoint:research",
+    "20261127T134901Z:checkpoint:strategy",
+    "20261128T135602Z:checkpoint:brand+architecture"
+  ],
+  "metrics": {
+    "turn_output_tokens_k": 1288,
+    "research_tracks": 4,
+    "research_tracks_failed": 0,
+    "critic_fatal": 0,
+    "critic_major": 6,
+    "rebuttal": true,
+    "g1_score": 2.45,
+    "factory_rev": "06388cf",
+    "strategy_revised": true
+  }
+}

@@ -1,0 +1,25 @@
+# Brief 08 — Como justificar cada quantidade de um mapa de quantidades
+
+- keyword: como justificar quantidades mapa de quantidades
+- secondary: autos de medição obra; rasto de medições
+- locale: pt
+- intent: info (topo de funil)
+- serp_notes: Não inspecionado. Provável vazio em pt-PT. Ângulo: rastreabilidade de medições sem tocar em erros e omissões nem no CCP.
+- title: Como justificar cada quantidade de um mapa de quantidades
+- description: Um método simples para que cada número do mapa de quantidades tenha origem, folha e critério, e se defenda perante o diretor técnico ou o fiscal de obra.
+- slug: como-justificar-cada-quantidade-de-um-mapa  (URL `/pt/guias/como-justificar-cada-quantidade-de-um-mapa`; rota a criar na integração)
+- outline:
+  - H2 Porque se pergunta «de onde vem este número?»
+  - H2 O que registar por quantidade: folha, grupo/elemento, escala, critério
+  - H2 Um registo mínimo em Excel (colunas)
+  - H2 Revisão: o que o segundo par de olhos precisa de ver
+  - H2 Como o Rastoplan automatiza este registo (folha «Rasto»)
+- must-include facts + sources: Evitar referir artigos do CCP. Descrever a folha «Rasto» como no PRD US-06.
+- information gain: Modelo de registo de origem de 6 colunas (descarregável com o artigo 04).
+- internal links: Pilar B; 04; 09
+- CTA: Descarregar o modelo; Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article
+- length: 800–1 100 palavras
+- image ideas: Captura da folha «Rasto» (depois do QA)
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

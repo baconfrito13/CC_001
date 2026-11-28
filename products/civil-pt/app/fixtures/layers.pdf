@@ -1,0 +1,52 @@
+%PDF-1.7
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R /OCProperties << /OCGs [3 0 R 4 0 R] /D << /BaseState /ON /OFF [4 0 R] >> >> >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /OCG /Name (A-WALL) >>
+endobj
+4 0 obj
+<< /Type /OCG /Name (A-ANNO-HIDDEN) >>
+endobj
+5 0 obj
+<<  /Length 124 >>
+stream
+0 0 0 RG
+0.25 w
+/OC /L1 BDC
+50 50 m
+333.4646 50 l
+S
+EMC
+/OC /L2 BDC
+50 100 m
+616.9291 100 l
+S
+EMC
+50 150 m
+191.7323 150 l
+S
+
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.5512 1683.7795] /Resources << /Properties << /L1 3 0 R /L2 4 0 R >> >> /Contents 5 0 R >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000019 00000 n 
+0000000145 00000 n 
+0000000202 00000 n 
+0000000249 00000 n 
+0000000303 00000 n 
+0000000479 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+633
+%%EOF

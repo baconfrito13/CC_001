@@ -1,0 +1,26 @@
+# Brief 05 — Como saber se um PDF de planta é vetorial ou digitalizado
+
+- keyword: como saber se um pdf é vetorial
+- secondary: pdf vetorial ou digitalizado; pdf vetorial autocad
+- locale: pt
+- intent: info (meio de funil)
+- serp_notes: Não inspecionado. Esperar respostas genéricas (EN e pt-BR) sobre vetor vs raster em design gráfico; nenhuma sobre plantas de obra.
+- title: Como saber se um PDF de planta é vetorial ou digitalizado
+- description: Três testes rápidos para saber se uma planta em PDF é vetorial ou uma imagem, e porque isso decide se é possível medi-la com precisão no ecrã.
+- slug: pdf-vetorial-ou-digitalizado  (URL `/pt/guias/pdf-vetorial-ou-digitalizado`; rota a criar na integração)
+- outline:
+  - H2 Vetor vs imagem numa planta (com exemplo visual)
+  - H2 Teste 1: ampliar muito e ver se as linhas ficam nítidas
+  - H2 Teste 2: tentar selecionar uma linha ou o texto no leitor de PDF
+  - H2 Teste 3: tamanho do ficheiro e origem (exportado de CAD vs digitalizado)
+  - H2 E se o PDF for uma imagem? Opções (pedir o PDF de CAD ao projetista)
+  - H2 Como o Rastoplan trata os dois casos: recusa a imagem e não gasta folha
+- must-include facts + sources: Os três testes são método geral, a validar em 3 PDF reais na redação; o comportamento do Rastoplan com imagens: PRD US-04 e Termos §2 (páginas sem geometria vetorial não consomem folha).
+- information gain: Imagens comparadas lado a lado (vetor vs raster) de uma folha sintética; opcionalmente o verificador gratuito (clusters.md).
+- internal links: Pilar C; 06; 07; 03
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + HowTo
+- length: 900–1 200 palavras
+- image ideas: Duas capturas ampliadas a 800 %: vetor e raster
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

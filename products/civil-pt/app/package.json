@@ -1,0 +1,54 @@
+{
+  "name": "rastoplan",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Rastoplan: quantity takeoff from vector PDF plans, with a trace to the sheet (pt-PT, EUR).",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test tests/e2e/smoke.spec.ts",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "brand:apply": "node scripts/apply-brand.mjs",
+    "seed": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.mts",
+    "fixtures": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-fixtures.mts",
+    "ggeo": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts-resolver.mjs scripts/ggeo-metrics.mts",
+    "test:pg": "vitest run --config vitest.pg.config.mts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.119.2",
+    "marked": "18.1.0",
+    "next": "16.4.6",
+    "pdfjs-dist": "6.5.438",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "resend": "6.41.0",
+    "server-only": "0.0.1",
+    "stripe": "23.2.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.1",
+    "@biomejs/biome": "2.5.15",
+    "@electric-sql/pglite": "0.6.1",
+    "@playwright/test": "1.65.1",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "pg": "8.23.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vitest": "5.1.2"
+  }
+}
