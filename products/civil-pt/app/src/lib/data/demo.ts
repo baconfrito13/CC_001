@@ -9,10 +9,15 @@ import type { MemoryDataStore } from "./memory";
 const DAY_MS = 86_400_000;
 const FOUNDER_SLOTS = 10;
 
+/** A2 landscape in PDF points, what `supabase/seed.sql` gives every demo sheet. */
+const DEMO_SHEET_WIDTH_PT = 1683.78;
+const DEMO_SHEET_HEIGHT_PT = 1190.55;
+
 /**
- * Load the demo accounts, their lots and the sheets they already used into a memory store, the
- * same state `supabase/seed.sql` gives a Supabase project. Projects, documents and groups
- * join in when their repositories exist (slices S-03 and S-04).
+ * Load the demo accounts, their projects, documents, sheets and lots into a memory store, the
+ * same state `supabase/seed.sql` gives a Supabase project. Groups join in with slice S-04.
+ * The demo documents have no file behind them (storage starts empty), so their sheets can be
+ * listed and given a scale but not rendered.
  */
 export async function loadDemoData(
   store: MemoryDataStore,
@@ -22,7 +27,7 @@ export async function loadDemoData(
   const ago = (days: number) => new Date(now.getTime() - days * DAY_MS);
 
   for (const user of fixtures.users) {
-    store.addUser(user.id);
+    store.addUser(user.id, { email: user.email, locale: user.locale, role: user.role });
     await store.ledger.grantTrial({
       userId: user.id,
       email: user.email,
@@ -42,7 +47,44 @@ export async function loadDemoData(
       now: granted,
     });
   }
-  for (const sheet of fixtures.sheets) store.addSheet(sheet.id, sheet.userId);
+  for (const project of fixtures.projects) {
+    store.workspace.seedProject({
+      id: project.id,
+      userId: project.userId,
+      name: project.name,
+      createdAt: ago(1),
+    });
+  }
+  for (const document of fixtures.documents) {
+    store.workspace.seedDocument({
+      id: document.id,
+      projectId: document.projectId,
+      userId: document.userId,
+      // Same path the seed.sql uses: <user>/<project>/<document>.pdf
+      storagePath: `${document.userId}/${document.projectId}/${document.id}.pdf`,
+      fileName: document.fileName,
+      sizeBytes: document.sizeBytes,
+      pageCount: document.pageCount,
+      status: "ready",
+      createdAt: ago(1),
+    });
+  }
+  for (const sheet of fixtures.sheets) {
+    store.workspace.seedSheet({
+      id: sheet.id,
+      documentId: sheet.documentId,
+      projectId: sheet.projectId,
+      userId: sheet.userId,
+      pageNo: sheet.pageNo,
+      widthPt: DEMO_SHEET_WIDTH_PT,
+      heightPt: DEMO_SHEET_HEIGHT_PT,
+      scaleRatio: sheet.scaleRatio,
+      scaleSource: sheet.scaleRatio === null ? null : "detected",
+      status: sheet.status,
+      needsRecalc: false,
+      createdAt: ago(1),
+    });
+  }
   for (const reservation of fixtures.reservations) {
     const reserved = await store.ledger.reserveSheet({
       userId: reservation.userId,

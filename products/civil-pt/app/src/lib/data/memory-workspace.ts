@@ -344,6 +344,12 @@ export class MemoryWorkspace implements Workspace {
 
   // Test and demo support (the SQL side gets this from the seed and from `auth.users`).
 
+  /** What slice S-04 does when a sheet finishes processing: used by tests of scale rules. */
+  setSheetStatus(sheetId: string, status: SheetRecord["status"]): void {
+    const row = this.sheets.get(sheetId);
+    if (row) row.status = status;
+  }
+
   /** Load a sheet that already exists (demo data); the project and document must exist. */
   seedProject(row: ProjectRow): void {
     this.projects.set(row.id, row);

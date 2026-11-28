@@ -17,6 +17,18 @@ export interface SignedUrl {
   expiresAt: Date;
 }
 
+/**
+ * A URL the browser sends the PDF to with a PUT (multipart, the way the Supabase storage
+ * client does), so the file never passes through the application (US-02 criterion 1). The
+ * memory adapter keeps it valid for 10 minutes. Supabase fixes the validity of its signed
+ * upload URLs at 2 hours and offers no way to shorten it: the application therefore refuses to
+ * finalize a document older than 10 minutes and removes its object (SR-11).
+ */
+export type SignedUploadUrl = SignedUrl;
+
+/** SR-11: a document must be finalized within 10 minutes of its upload URL being issued. */
+export const FINALIZE_WINDOW_SECONDS = 600;
+
 export interface ObjectStorage {
   readonly name: "memory" | "supabase";
   put(input: {
@@ -30,6 +42,12 @@ export interface ObjectStorage {
   remove(input: { bucket: Bucket; paths: string[] }): Promise<void>;
   /** Delete every file under `prefix` (e.g. `<user>/<project>/`); returns how many. */
   removePrefix(input: { bucket: Bucket; prefix: string }): Promise<number>;
+  /** A URL a browser can upload ONE new object to (no overwrite). */
+  createSignedUploadUrl(input: {
+    bucket: Bucket;
+    path: string;
+    now: Date;
+  }): Promise<SignedUploadUrl>;
   /** A URL a browser can download from, valid for `expiresInSeconds` (at most 600). */
   createSignedDownloadUrl(input: {
     bucket: Bucket;

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { MemoryDataStore } from "@/lib/data/memory";
 import { createRpcDataStore } from "@/lib/data/rpc";
-import type { DataStore } from "@/lib/data/types";
+import type { DataStore, SheetStatus } from "@/lib/data/types";
 import { createMigratedDb } from "../support/pglite";
 import { runnerRpc } from "../support/sql-rpc";
 import type { SqlRunner } from "../support/sql-runner";
@@ -16,6 +16,8 @@ export interface Harness {
   readonly label: string;
   readonly store: DataStore;
   newUser(options?: { email?: string }): Promise<string>;
+  /** Mark a sheet as processed, as slice S-04 will (the scale rules depend on it). */
+  setSheetStatus(sheetId: string, status: SheetStatus): Promise<void>;
   newSheet(userId: string): Promise<string>;
   newPurchase(userId: string): Promise<string>;
   setFrozen(userId: string, frozen: boolean): Promise<void>;
@@ -28,10 +30,13 @@ export function createMemoryHarness(): Harness {
   return {
     label: "memory",
     store,
-    async newUser() {
+    async newUser(options) {
       const id = randomUUID();
-      store.addUser(id);
+      store.addUser(id, options?.email ? { email: options.email } : {});
       return id;
+    },
+    async setSheetStatus(sheetId, status) {
+      store.workspace.setSheetStatus(sheetId, status);
     },
     async newSheet(userId) {
       const id = randomUUID();
@@ -70,6 +75,12 @@ export async function createSqlHarness(
       await db.query("delete from public.sheet_lots where user_id = $1", [id]);
       await db.query("delete from public.trial_grants where user_id = $1", [id]);
       return id;
+    },
+    async setSheetStatus(sheetId, status) {
+      await db.query("update public.sheets set status = $2 where id = $1", [
+        sheetId,
+        status,
+      ]);
     },
     async newSheet(userId) {
       const projectId = randomUUID();

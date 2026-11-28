@@ -4,6 +4,7 @@ import {
   assertSignedUrlTtl,
   type Bucket,
   type ObjectStorage,
+  type SignedUploadUrl,
   type SignedUrl,
   StorageError,
 } from "./types";
@@ -27,7 +28,13 @@ export interface StorageBucketLike {
     path: string,
     expiresIn: number,
   ): PromiseLike<{ data: { signedUrl: string } | null; error: StorageFailure }>;
+  createSignedUploadUrl(
+    path: string,
+  ): PromiseLike<{ data: { signedUrl: string } | null; error: StorageFailure }>;
 }
+
+/** Supabase signed upload URLs last 2 hours and the duration cannot be changed (storage-js docs). */
+const SUPABASE_UPLOAD_URL_SECONDS = 7200;
 
 export interface StorageClientLike {
   storage: { from(bucket: string): StorageBucketLike };
@@ -81,6 +88,14 @@ export function createSupabaseStorage(client: StorageClientLike): ObjectStorage 
         if (removeError) fail("remove", removeError);
         removed += names.length;
       }
+    },
+    async createSignedUploadUrl({ bucket, path, now }): Promise<SignedUploadUrl> {
+      const { data, error } = await bucketOf(bucket).createSignedUploadUrl(path);
+      if (error || !data) fail("sign_upload", error ?? { message: "no url" });
+      return {
+        url: data.signedUrl,
+        expiresAt: new Date(now.getTime() + SUPABASE_UPLOAD_URL_SECONDS * 1000),
+      };
     },
     async createSignedDownloadUrl({
       bucket,

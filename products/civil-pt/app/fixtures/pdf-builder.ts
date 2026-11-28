@@ -142,6 +142,16 @@ export class Content {
   clip(): this {
     return this.raw("W n");
   }
+  /** One line of text in a font added with {@link PdfBuilder.addFont} (default name `F1`). */
+  text(x: number, y: number, size: number, value: string, font = "F1"): this {
+    const escaped = value
+      .replaceAll("\\", "\\\\")
+      .replaceAll("(", "\\(")
+      .replaceAll(")", "\\)");
+    return this.raw(
+      `BT /${font} ${num(size)} Tf ${num(x)} ${num(y)} Td (${escaped}) Tj ET`,
+    );
+  }
   /** `Do` */
   paintXObject(name: string): this {
     return this.raw(`/${name} Do`);
@@ -176,6 +186,8 @@ export interface PageOptions {
 export interface PageResources {
   /** Name to object id, from `addForm` / `addImage`. */
   xobjects?: Record<string, number>;
+  /** Font name to object id, from `addFont`. */
+  fonts?: Record<string, number>;
   /** Property list name to OCG object id, from `addLayer`. */
   properties?: Record<string, number>;
   /** Graphics state name to ExtGState object id, from `addGraphicsState`. */
@@ -293,6 +305,30 @@ export class PdfBuilder {
     return id;
   }
 
+  /** A standard Type 1 font (not embedded): enough for the text of a title block. */
+  addFont(baseFont = "Helvetica"): number {
+    return this.addObject(
+      ascii(
+        `<< /Type /Font /Subtype /Type1 /BaseFont /${baseFont} /Encoding /WinAnsiEncoding >>`,
+      ),
+    );
+  }
+
+  /**
+   * An unused stream of `bytes` bytes that no page refers to: makes the file as large as a real
+   * tender drawing set without making the pages heavier (upload tests).
+   */
+  addPadding(bytes: number): number {
+    const block = ascii("rastoplan-padding-0123456789abcdef\n");
+    const data = new Uint8Array(bytes);
+    for (let offset = 0; offset < bytes; offset += block.length) {
+      data.set(block.subarray(0, Math.min(block.length, bytes - offset)), offset);
+    }
+    return this.addObject(
+      this.streamObject("/Type /EmbeddedFile", data, { compress: false }),
+    );
+  }
+
   /** An ExtGState dictionary body such as `/LW 2 /D [[4 1] 0]`. */
   addGraphicsState(entries: string): number {
     return this.addObject(ascii(`<< /Type /ExtGState ${entries} >>`));
@@ -330,7 +366,11 @@ export class PdfBuilder {
     const states = Object.entries(resources?.graphicsStates ?? {})
       .map(([name, id]) => `/${name} ${id} 0 R`)
       .join(" ");
+    const fonts = Object.entries(resources?.fonts ?? {})
+      .map(([name, id]) => `/${name} ${id} 0 R`)
+      .join(" ");
     const parts = [
+      fonts ? `/Font << ${fonts} >>` : "",
       xobjects ? `/XObject << ${xobjects} >>` : "",
       properties ? `/Properties << ${properties} >>` : "",
       states ? `/ExtGState << ${states} >>` : "",

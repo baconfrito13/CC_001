@@ -2,9 +2,14 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   assertSignedUrlTtl,
   type Bucket,
+  FINALIZE_WINDOW_SECONDS,
   type ObjectStorage,
+  type SignedUploadUrl,
   type SignedUrl,
 } from "./types";
+
+/** What a signed URL allows: it is part of the signature, so a download URL cannot upload. */
+export type SignedOperation = "download" | "upload";
 
 interface StoredObject {
   body: Uint8Array;
@@ -13,8 +18,9 @@ interface StoredObject {
 
 /**
  * In-memory storage for development and tests. Signed URLs point at a development route
- * (`/api/dev/storage/...`, added with the upload flow in slice S-03) and carry an HMAC
- * signature and an expiry, like the real ones, so the same expiry rules can be tested.
+ * (`/api/dev/storage/...`, which exists only while the memory adapters are active) and carry an
+ * HMAC signature, the operation they allow and an expiry, like the real ones, so the same
+ * rules can be tested.
  */
 export class MemoryObjectStorage implements ObjectStorage {
   readonly name = "memory" as const;
@@ -68,10 +74,33 @@ export class MemoryObjectStorage implements ObjectStorage {
     return [...this.objects.keys()].filter((key) => key.startsWith(`${bucket}/`)).length;
   }
 
-  private sign(bucket: Bucket, path: string, expiresAtSeconds: number): string {
+  private sign(
+    operation: SignedOperation,
+    bucket: Bucket,
+    path: string,
+    expiresAtSeconds: number,
+  ): string {
     return createHmac("sha256", this.secret)
-      .update(`${bucket}\n${path}\n${expiresAtSeconds}`)
+      .update(`${operation}\n${bucket}\n${path}\n${expiresAtSeconds}`)
       .digest("hex");
+  }
+
+  /** Does the object exist? (Test helper and the development route.) */
+  has(bucket: Bucket, path: string): boolean {
+    return this.objects.has(MemoryObjectStorage.key(bucket, path));
+  }
+
+  async createSignedUploadUrl(input: {
+    bucket: Bucket;
+    path: string;
+    now: Date;
+  }): Promise<SignedUploadUrl> {
+    const exp = Math.floor(input.now.getTime() / 1000) + FINALIZE_WINDOW_SECONDS;
+    const sig = this.sign("upload", input.bucket, input.path, exp);
+    return {
+      url: `/api/dev/storage/${input.bucket}/${input.path}?exp=${exp}&sig=${sig}&op=upload`,
+      expiresAt: new Date(exp * 1000),
+    };
   }
 
   async createSignedDownloadUrl(input: {
@@ -82,15 +111,16 @@ export class MemoryObjectStorage implements ObjectStorage {
   }): Promise<SignedUrl> {
     assertSignedUrlTtl(input.expiresInSeconds);
     const exp = Math.floor(input.now.getTime() / 1000) + input.expiresInSeconds;
-    const sig = this.sign(input.bucket, input.path, exp);
+    const sig = this.sign("download", input.bucket, input.path, exp);
     return {
-      url: `/api/dev/storage/${input.bucket}/${input.path}?exp=${exp}&sig=${sig}`,
+      url: `/api/dev/storage/${input.bucket}/${input.path}?exp=${exp}&sig=${sig}&op=download`,
       expiresAt: new Date(exp * 1000),
     };
   }
 
   /** What the development route calls: is this URL still valid, and for this exact file? */
   verifySignedUrl(input: {
+    operation?: SignedOperation;
     bucket: Bucket;
     path: string;
     exp: number;
@@ -99,7 +129,10 @@ export class MemoryObjectStorage implements ObjectStorage {
   }): boolean {
     if (!Number.isInteger(input.exp) || input.exp * 1000 <= input.now.getTime())
       return false;
-    const expected = Buffer.from(this.sign(input.bucket, input.path, input.exp), "hex");
+    const expected = Buffer.from(
+      this.sign(input.operation ?? "download", input.bucket, input.path, input.exp),
+      "hex",
+    );
     const given = Buffer.from(input.sig, "hex");
     return given.length === expected.length && timingSafeEqual(given, expected);
   }

@@ -7,7 +7,13 @@ export function namedCall(fn: string, args: Record<string, unknown>) {
   const placeholders = names.map((name, index) => `${name} => $${index + 1}`);
   return {
     text: `select public.${fn}(${placeholders.join(", ")}) as result`,
-    values: names.map((name) => args[name]),
+    // PostgREST sends JSON bodies: objects and arrays reach jsonb parameters as JSON text.
+    values: names.map((name) => {
+      const value = args[name];
+      return value !== null && typeof value === "object" && !(value instanceof Date)
+        ? JSON.stringify(value)
+        : value;
+    }),
   };
 }
 

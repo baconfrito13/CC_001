@@ -7,7 +7,11 @@ import {
   projectPrefix,
 } from "@/lib/storage/paths";
 import { createSupabaseStorage, type StorageBucketLike } from "@/lib/storage/supabase";
-import { MAX_SIGNED_URL_SECONDS, StorageError } from "@/lib/storage/types";
+import {
+  FINALIZE_WINDOW_SECONDS,
+  MAX_SIGNED_URL_SECONDS,
+  StorageError,
+} from "@/lib/storage/types";
 
 const USER = "a1000000-0000-4000-8000-000000000001";
 const OTHER = "a1000000-0000-4000-8000-000000000002";
@@ -106,6 +110,54 @@ describe("memory storage", () => {
     expect(await storage.get({ bucket: "uploads", path: otherUser })).not.toBeNull();
   });
 
+  it("US-02.1: a signed upload URL allows one upload, for 10 minutes, and cannot be used to download", async () => {
+    const storage = new MemoryObjectStorage("secret");
+    const signed = await storage.createSignedUploadUrl({
+      bucket: "uploads",
+      path,
+      now: NOW,
+    });
+    expect(signed.expiresAt).toEqual(
+      new Date(NOW.getTime() + FINALIZE_WINDOW_SECONDS * 1000),
+    );
+    const url = new URL(signed.url, "http://localhost");
+    expect(url.pathname).toBe(`/api/dev/storage/uploads/${path}`);
+    const query = {
+      exp: Number(url.searchParams.get("exp")),
+      sig: url.searchParams.get("sig") ?? "",
+    };
+    const check = (over: Partial<{ operation: "upload" | "download"; now: Date }>) =>
+      storage.verifySignedUrl({
+        operation: "upload",
+        bucket: "uploads",
+        path,
+        ...query,
+        now: NOW,
+        ...over,
+      });
+    expect(check({})).toBe(true);
+    expect(check({ operation: "download" })).toBe(false);
+    expect(check({ now: new Date(NOW.getTime() + 600_000) })).toBe(false);
+    // and a download URL cannot be used to upload
+    const download = await storage.createSignedDownloadUrl({
+      bucket: "uploads",
+      path,
+      expiresInSeconds: 60,
+      now: NOW,
+    });
+    const downloadUrl = new URL(download.url, "http://localhost");
+    expect(
+      storage.verifySignedUrl({
+        operation: "upload",
+        bucket: "uploads",
+        path,
+        exp: Number(downloadUrl.searchParams.get("exp")),
+        sig: downloadUrl.searchParams.get("sig") ?? "",
+        now: NOW,
+      }),
+    ).toBe(false);
+  });
+
   it("SR-11: signed URLs last at most 10 minutes and expire", async () => {
     const storage = new MemoryObjectStorage("secret");
     const signed = await storage.createSignedDownloadUrl({
@@ -196,6 +248,13 @@ describe("supabase storage adapter", () => {
           error: null,
         };
       },
+      async createSignedUploadUrl(path) {
+        calls.push({ fn: "sign_upload", args: [path] });
+        return {
+          data: { signedUrl: `https://x.supabase.co/upload/sign/${path}?token=u` },
+          error: null,
+        };
+      },
       ...overrides,
     };
     const buckets: string[] = [];
@@ -211,6 +270,18 @@ describe("supabase storage adapter", () => {
   }
 
   const path = `${USER}/${PROJECT}/${OBJECT}.pdf`;
+
+  it("US-02.1: asks Supabase for a signed upload URL and reports its fixed 2 hour validity", async () => {
+    const { storage, calls } = fakeBucket();
+    const signed = await storage.createSignedUploadUrl({
+      bucket: "uploads",
+      path,
+      now: NOW,
+    });
+    expect(calls).toEqual([{ fn: "sign_upload", args: [path] }]);
+    expect(signed.url).toContain("/upload/sign/");
+    expect(signed.expiresAt).toEqual(new Date(NOW.getTime() + 7_200_000));
+  });
 
   it("never overwrites: upsert is off, and the bucket is the one asked for", async () => {
     const { storage, calls, buckets } = fakeBucket();
