@@ -24,6 +24,7 @@
     "test:pg": "vitest run --config vitest.pg.config.mts"
   },
   "dependencies": {
+    "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.119.2",
     "marked": "18.1.0",
     "next": "16.4.6",
