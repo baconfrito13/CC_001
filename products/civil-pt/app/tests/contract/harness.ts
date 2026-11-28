@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { PGlite } from "@electric-sql/pglite";
 import { MemoryDataStore } from "@/lib/data/memory";
 import { createRpcDataStore } from "@/lib/data/rpc";
 import type { DataStore } from "@/lib/data/types";
 import { createMigratedDb } from "../support/pglite";
-import { pgliteRpc } from "../support/sql-rpc";
+import { runnerRpc } from "../support/sql-rpc";
+import type { SqlRunner } from "../support/sql-runner";
 
 /**
  * What the contract suite needs besides the store itself: a way to create the rows the SQL
@@ -52,9 +52,11 @@ export function createMemoryHarness(): Harness {
 }
 
 /** The SQL functions of the migration, run on PGlite as the service role. */
-export async function createSqlHarness(existing?: PGlite): Promise<Harness> {
+export async function createSqlHarness(
+  existing?: SqlRunner & { close?: () => Promise<unknown> },
+): Promise<Harness> {
   const db = existing ?? (await createMigratedDb());
-  const store = createRpcDataStore(pgliteRpc(db), "supabase");
+  const store = createRpcDataStore(runnerRpc(db), "supabase");
   return {
     label: "sql",
     store,
@@ -108,7 +110,8 @@ export async function createSqlHarness(existing?: PGlite): Promise<Harness> {
       await db.query("delete from public.sheets where id = $1", [sheetId]);
     },
     async close() {
-      if (!existing) await db.close();
+      // A runner handed in by the caller is closed by the caller.
+      if (!existing) await (db as { close: () => Promise<unknown> }).close();
     },
   };
 }

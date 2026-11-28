@@ -5,9 +5,21 @@
 -- default privileges that hand every new table and function to the API roles (the migrations
 -- must revoke what they do not want to expose).
 
-create role anon nologin noinherit;
-create role authenticated nologin noinherit;
-create role service_role nologin noinherit bypassrls;
+-- Roles are cluster-wide: create them only when missing so the shim can load into a database
+-- of a cluster that already ran it (the real-Postgres suite creates one database per run).
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin noinherit;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    create role authenticated nologin noinherit;
+  end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then
+    create role service_role nologin noinherit bypassrls;
+  end if;
+end
+$$;
 
 create schema auth;
 create table auth.users (
