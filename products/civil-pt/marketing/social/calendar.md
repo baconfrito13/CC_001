@@ -3,7 +3,7 @@
 > Janela: L-14 (2027-01-19) a L+15 (2027-02-17), fuso Europe/Lisbon (= UTC até 2027-03-27). **L é uma proposta condicionada** aos portões de `docs/08-gtm.md` §12 (build, QA, legal, identidade legal, domínio, go-live aprovado): se o portão falhar, **todas as datas deslocam-se em bloco**. Uma só plataforma social (LinkedIn): o público-alvo está lá e a presença noutras não se justifica com 5 h/semana de fundador. Mix 12 valor · 5 produto · 3 história (60/25/15 %). Os lotes de contacto continuam depois de L+15 (10 lotes até L+30).
 > Nada é publicado, enviado ou pago por Claude. Estado: `a aprovar` = o fundador copia e cola/agenda (≤ 5 min por lote, `launch/schedule.md`). Artigos: ≥ 1 por semana a partir de L, **bloqueados** até a integração criar a rota de guias (a starter não a tem).
 
-| Dia | Data (Lisboa) | Canal | Formato | Tema / gancho | Recurso | CTA + UTM | Estado |
+| Dia | Data (Lisboa) | Canal | Formato | Tema / gancho | Recurso | CTA ou ligação + UTM | Estado |
 |---|---|---|---|---|---|---|---|
 | L-21 | 2027-01-12 (Tue) | Interno | Aprovação da lista-alvo e do texto de contacto | 50 contactos + mensagens | `launch/outbound.md` | — | a aprovar (GTM-01) |
 | L-14 | 2027-01-19 (Tue) | LinkedIn | Publicação (story) | Estou a construir uma ferramenta para medir plantas em PDF. Eis o prob… | `social/posts.pt.md` P01 | /pt/; UTM `utm_content=p01` | a aprovar (GTM-03) |
