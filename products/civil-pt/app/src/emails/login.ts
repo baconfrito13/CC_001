@@ -28,20 +28,20 @@ const escapeHtml = (value: string) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
-function body(locale: Locale, code: string, link: string, escape: (v: string) => string) {
+function body(locale: Locale, code: string, link: string, esc: (v: string) => string) {
   const copy = authCopy[locale].email;
   const name = site.name;
   return {
-    greeting: escape(copy.greeting),
-    codeIntro: escape(fill(copy.codeIntro, { name })),
+    greeting: esc(copy.greeting),
+    codeIntro: esc(fill(copy.codeIntro, { name })),
     code,
-    validity: escape(copy.validity),
-    linkIntro: escape(copy.linkIntro),
+    validity: esc(copy.validity),
+    linkIntro: esc(copy.linkIntro),
     link,
-    linkButton: escape(copy.linkButton),
-    ignore: escape(copy.ignore),
-    signature: escape(fill(copy.signature, { name })),
-    preheader: escape(copy.preheader),
+    linkButton: esc(copy.linkButton),
+    ignore: esc(copy.ignore),
+    signature: esc(fill(copy.signature, { name })),
+    preheader: esc(copy.preheader),
   };
 }
 
