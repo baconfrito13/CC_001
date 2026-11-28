@@ -60,12 +60,15 @@ export interface AuthProvider {
   verifyCode(input: {
     email: string;
     code: string;
+    /** The language of the page, kept as the preference of an account created now. */
+    locale: SessionUser["locale"];
     now: Date;
     request: AuthRequest;
   }): Promise<VerifyOutcome>;
   /** Finish with the token of the link. Called only by the POST of the confirmation page. */
   verifyToken(input: {
     tokenHash: string;
+    locale: SessionUser["locale"];
     now: Date;
     request: AuthRequest;
   }): Promise<VerifyOutcome>;
