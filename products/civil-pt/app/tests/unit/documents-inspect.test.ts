@@ -1,18 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { Content, MM, PdfBuilder } from "../../fixtures/pdf-builder";
-import { vectorA2 } from "../../fixtures/sheets";
-import { passwordProtected, rasterOnly } from "../../fixtures/sheets";
 import { hasPdfHeader, inspectPdf } from "@/lib/documents/inspect";
+import { Content, MM, PdfBuilder } from "../../fixtures/pdf-builder";
+import { passwordProtected, rasterOnly, vectorA2 } from "../../fixtures/sheets";
 
 const A3 = { width: 420 * MM, height: 297 * MM };
 
 /** A multi-page sheet set whose pages carry the given title-block texts. */
-function sheetSet(texts: (string | null)[], extra: { padding?: number } = {}): Uint8Array {
+function sheetSet(
+  texts: (string | null)[],
+  extra: { padding?: number } = {},
+): Uint8Array {
   const builder = new PdfBuilder();
   const font = builder.addFont();
   if (extra.padding) builder.addPadding(extra.padding);
   for (const text of texts) {
-    const content = new Content().strokeGray(0).lineWidth(0.5).rect(20, 20, 200, 100).stroke();
+    const content = new Content()
+      .strokeGray(0)
+      .lineWidth(0.5)
+      .rect(20, 20, 200, 100)
+      .stroke();
     if (text !== null) content.text(30, 40, 10, text);
     builder.addPage(A3, content, { fonts: { F1: font } });
   }
@@ -31,7 +37,12 @@ describe("inspectPdf (US-02, US-03)", () => {
 
   it("US-03.1: reads the scale of each page from its text and marks it detected", async () => {
     const result = await inspectPdf(
-      sheetSet(["PLANTA PISO 0   ESC. 1/100", "ESCALA 1:50", null, "ESC. 1/100 e ESC. 1/20"]),
+      sheetSet([
+        "PLANTA PISO 0   ESC. 1/100",
+        "ESCALA 1:50",
+        null,
+        "ESC. 1/100 e ESC. 1/20",
+      ]),
       { maxPages: 40 },
     );
     if (!result.ok) throw new Error("expected a readable PDF");
@@ -53,7 +64,9 @@ describe("inspectPdf (US-02, US-03)", () => {
   it("US-02.3: more pages than allowed is refused with reason 'pages', before reading any page", async () => {
     const result = await inspectPdf(sheetSet(Array(45).fill(null)), { maxPages: 40 });
     expect(result).toEqual({ ok: false, reason: "pages" });
-    expect((await inspectPdf(sheetSet(Array(40).fill(null)), { maxPages: 40 })).ok).toBe(true);
+    expect((await inspectPdf(sheetSet(Array(40).fill(null)), { maxPages: 40 })).ok).toBe(
+      true,
+    );
   });
 
   it("US-02.3: text, an Office file, a truncated PDF and a protected PDF are refused with reason 'type'", async () => {
@@ -67,7 +80,10 @@ describe("inspectPdf (US-02, US-03)", () => {
       new Uint8Array([...encoder.encode("%PDF-1.7\n"), ...new Uint8Array(50).fill(7)]),
       passwordProtected(),
     ]) {
-      expect(await inspectPdf(bad, { maxPages: 40 })).toEqual({ ok: false, reason: "type" });
+      expect(await inspectPdf(bad, { maxPages: 40 })).toEqual({
+        ok: false,
+        reason: "type",
+      });
     }
   });
 
