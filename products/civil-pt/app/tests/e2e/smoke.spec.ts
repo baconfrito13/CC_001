@@ -8,7 +8,7 @@ import { expect, test } from "@playwright/test";
  * Nothing here submits a form, starts a checkout or depends on test-only configuration.
  */
 test.describe("production smoke test", () => {
-  test("health endpoint reports ok and a version, without leaking configuration", async ({
+  test("health endpoint reports ok, a version and the database check, without leaking configuration", async ({
     request,
   }) => {
     const response = await request.get("/api/health");
@@ -17,7 +17,8 @@ test.describe("production smoke test", () => {
     const body = await response.json();
     expect(body.status).toBe("ok");
     expect(body.version).toMatch(/^\d+\.\d+\.\d+/);
-    expect(Object.keys(body).sort()).toEqual(["status", "version"]);
+    expect(body.db).toBe("ok");
+    expect(Object.keys(body).sort()).toEqual(["db", "status", "version"]);
   });
 
   for (const [path, lang] of [

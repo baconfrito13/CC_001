@@ -905,6 +905,12 @@ begin
     now()
   );
   return new;
+exception when others then
+  -- A problem with the trial (a bad app.trial_* setting, say) must never stop someone from
+  -- creating an account: the account is made without a trial and the cause is logged by
+  -- Postgres. Support can grant the sheets afterwards.
+  raise warning 'trial grant failed for a new account (sqlstate %)', sqlstate;
+  return new;
 end
 $$;
 

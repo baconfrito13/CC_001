@@ -51,8 +51,14 @@ export default defineConfig({
           // Analytics is enabled for tests that verify consent gating (the script is stubbed).
           NEXT_PUBLIC_ANALYTICS_PROVIDER: "plausible",
           NEXT_PUBLIC_PLAUSIBLE_DOMAIN: "rastoplan.com",
+          // `next start` always runs in production mode, where the test adapters (memory data
+          // and storage, mock auth and payments, console email) are refused at boot unless this
+          // switch is set. Only ever set it here and in local production builds.
+          ALLOW_TEST_ADAPTERS: "true",
           // `next start` runs in production mode, where the console adapter must be explicit.
           WAITLIST_ADAPTER: "console",
+          // Only feeds the CSP connect-src check: the adapters stay `memory` (the default).
+          NEXT_PUBLIC_SUPABASE_URL: "https://demo-project.supabase.co",
           // Behave like production for search engines (robots.txt, no noindex).
           NEXT_PUBLIC_INDEXABLE: "true",
         },

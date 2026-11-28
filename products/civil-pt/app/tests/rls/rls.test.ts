@@ -591,7 +591,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
       "length_m = 1",
       "element_count = 0",
       "style_key = 'x'",
-      "user_id = '" + BRUNO + "'",
+      `user_id = '${BRUNO}'`,
     ]) {
       const result = await attempt(
         "authenticated",

@@ -1,19 +1,18 @@
+import { handleHealth } from "@/lib/health";
 import { version } from "../../../../package.json";
 
 /**
- * GET /api/health: liveness endpoint for uptime monitors (UptimeRobot, Better Stack, ...).
- * It reports no configuration or secrets and never touches third-party services, so a
- * failing dependency cannot make it flap.
+ * GET /api/health: liveness and data check for uptime monitors (UptimeRobot, Better Stack, ...).
+ * It pings the data adapter, reports no configuration or secrets, and never touches other
+ * third-party services (Stripe, Resend), so a failing vendor cannot make it flap. The logic
+ * lives in src/lib/health.ts.
  */
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  return Response.json(
-    { status: "ok", version },
-    { headers: { "Cache-Control": "no-store" } },
-  );
+export function GET(request: Request) {
+  return handleHealth(request, version);
 }
 
-export function HEAD() {
-  return new Response(null, { status: 200, headers: { "Cache-Control": "no-store" } });
+export function HEAD(request: Request) {
+  return handleHealth(request, version);
 }

@@ -115,6 +115,26 @@ describe("US-08.6: the signup triggers", () => {
     expect(Number(lot.days)).toBe(7);
   });
 
+  it("never block a signup when the trial cannot be granted", async () => {
+    await db.exec("select set_config('app.trial_sheets', 'many', false)");
+    const id = uuid();
+    try {
+      await db.query(
+        "insert into auth.users (id, email) values ($1, 'sem.avaliacao@example.pt')",
+        [id],
+      );
+    } finally {
+      await db.exec("select set_config('app.trial_sheets', '', false)");
+    }
+    expect(await n("select count(*) as n from auth.users where id = $1", [id])).toBe(1);
+    expect(await n("select count(*) as n from public.profiles where id = $1", [id])).toBe(
+      1,
+    );
+    expect(
+      await n("select count(*) as n from public.sheet_lots where user_id = $1", [id]),
+    ).toBe(0);
+  });
+
   it("never hold more than one trial lot per account", async () => {
     const id = uuid();
     await db.query("insert into auth.users (id, email) values ($1, 'unico@example.pt')", [

@@ -84,7 +84,12 @@ describe(".env.example", () => {
   });
 
   it("only documents variables the app knows (test-only ones excepted)", () => {
-    const known = new Set([...Object.keys(envSchema.shape), "CHROMIUM_PATH", "BASE_URL"]);
+    const known = new Set([
+      ...Object.keys(envSchema.shape),
+      "CHROMIUM_PATH",
+      "BASE_URL",
+      "PG_TEST_URL",
+    ]);
     for (const key of documented)
       expect(known.has(key), `${key} is not in the env schema`).toBe(true);
   });
