@@ -34,6 +34,8 @@ Leave `CHROMIUM_PATH` unset where Playwright's own Chromium is installed (CI).
 | `npm test` | Unit, contract and RLS suites. No service needed: the SQL runs on PGlite (Postgres in WebAssembly). |
 | `npm run test:pg` | The same ledger contract and a concurrency suite on a **real** Postgres 16 (`PG_TEST_URL`), where parallel connections really run in parallel (SR-02, T-06). Not part of `npm run check`. |
 | `npm run seed` | Regenerates `supabase/seed.sql` from `src/lib/data/fixtures.ts` (a test fails if it is stale). |
+| `npm run fixtures` | Regenerates the small synthetic PDF sheets in `fixtures/*.pdf` from `fixtures/sheets.ts` (a test fails if they are stale). `-- --large <dir>` also writes the 50 000 and 38 000 element sheets outside the repository. |
+| `npm run ggeo -- [--scale 100] <pdf-or-folder>...` | The G-GEO gate script: runs the real engine over PDF files and prints per-page metrics M1 to M4, M6, M9 and the verdict on criteria C1 to C5 (ADR 0006). Real tender drawings stay outside the repository. |
 
 A throwaway Postgres 16 for `test:pg` (the sandbox ships the binaries; `initdb` refuses to run as root):
 
@@ -94,3 +96,17 @@ Apply with `supabase db push --linked` (migrations first, then the app).
   QA and launch fail while it is present.
 - Dependencies are pinned to the exact versions in `package.json` (the starter's Next.js 16.4.0
   and zod 4.6.5 have published advisories; see `../docs/05-build.md`, section 8).
+
+## Measurement engine (`src/lib/engine`)
+
+A pure library from PDF bytes to measured, grouped geometry (S-02): `analyzeSheet(pdf, { pageNo, scaleRatio })`
+returns the outcome (`ready`, `unsupported_raster`, `no_geometry`, `low_diversity`), the elements in columnar
+typed arrays, the groups, and the metrics of the gate. `encodeGeometryPackage` / `decodeGeometryPackage` read and
+write the geometry package v1 (layout in `src/lib/engine/package.ts`). Notes for whoever uses it:
+
+- `pdfjs-dist` is pinned to **6.5.438** and kept in `serverExternalPackages` (`next.config.ts`); the worker is
+  imported statically in `pdf.ts`. Server code imports the barrel `@/lib/engine`; browser code imports only
+  `package`, `types`, `grouping`, `table` and `metrics` (a test checks they stay free of pdf.js and Node modules).
+- The engine reads no environment variables: the executor passes `maxElements` (`PROCESSING_MAX_ELEMENTS`) and
+  `lowDiversityShare` (`LOW_DIVERSITY_SHARE`).
+- Synthetic fixtures only (`fixtures/`): real tender drawings never enter the repository.

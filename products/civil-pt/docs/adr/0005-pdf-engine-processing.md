@@ -57,3 +57,9 @@ p95 de processamento > 63 s ou RSS > 1,4 GB (contentor dedicado, novo ADR); `pdf
 - https://vercel.com/docs/functions/limitations e https://nextjs.org/docs/app/api-reference/functions/after — acedidos em 2026-11-28
 - https://supabase.com/docs/guides/storage/uploads/standard-uploads — acedido em 2026-11-28 (URL assinado de upload; recomenda resumable > 6 MB)
 - `products/civil-pt/docs/research/risks.md` (spike S27, limite das Bézier)
+
+## Nota do S-02 (2026-11-28): três ajustes à regra 1 e à decisão 4
+
+1. **`isEvalSupported` já não existe** no `pdfjs-dist` 6.5.438 (nenhuma ocorrência na build nem nos tipos: o código de fontes que usava `eval` foi retirado). A garantia que a regra queria («sem `eval` no processamento de PDF não confiável») passa a ser um **teste de contrato** que varre `legacy/build/pdf.mjs` e `pdf.worker.mjs` à procura de `eval(` e `new Function(` e falha se uma versão futura os trouxer de volta (`tests/engine/contract.test.ts`, SR-05). As opções de abertura (`useSystemFonts: false`, `enableXfa: false`, `useWorkerFetch: false`, `verbosity` só erros, `maxImageSize`) vivem em `src/lib/engine/pdf.ts`.
+2. **O *worker* do pdf.js tem de ser importado de forma estática.** Em Next 16 empacotado, o `import()` dinâmico do *worker* falha («Setting up fake worker failed») e o rastreio de ficheiros da Vercel não o veria. O motor importa `pdf.worker.mjs` e entrega-o em `globalThis.pdfjsWorker`; `next.config.ts` leva `serverExternalPackages: ["pdfjs-dist"]`. Verificado numa rota temporária com `next build` + `next start` (200, e o `pdf.worker.mjs` aparece no rastreio `.nft.json`).
+3. **Reprocessar dá os mesmos bytes, e o motor não lê o ambiente.** A duração da extração (`stats.durationMs`) vai no cabeçalho do pacote; o teste «mesmo PDF, mesmos bytes» fixa o relógio injetado. O motor não lê variáveis de ambiente: o executor passa `maxElements` (`PROCESSING_MAX_ELEMENTS`) e `lowDiversityShare` (`LOW_DIVERSITY_SHARE`).

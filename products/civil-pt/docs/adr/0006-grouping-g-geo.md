@@ -73,3 +73,15 @@ Houver ≥ 10 folhas de planta reais, ou as 20 primeiras folhas de clientes dere
 
 - `products/civil-pt/docs/02-product.md` §5.2, §8 (T4, T4b)
 - Fontes da tabela acima, acedidas a 2026-11-28 (uso interno de teste; os PDF ficaram em `$SCRATCH`, fora do repositório)
+
+## Atualização do S-02 (2026-11-28): regresso ao gate com o motor real
+
+O núcleo do motor (WP-05a, slice S-02) está verde, por isso corre-se aqui o «regresso ao gate» que a decisão 2 exige antes de o S-05 (revisão) arrancar.
+
+- **Ferramenta:** `npm run ggeo -- [--scale 100] <pdf-ou-pasta>…` (`app/scripts/ggeo-metrics.mts`) corre o motor verdadeiro por página, imprime M1 a M4, M6 e M9 e avalia C1 a C5. Uma folha de desenho é uma página ≥ A3; uma pasta é um procedimento por subpasta. Os PDF ficam fora do repositório.
+- **Folhas disponíveis:** as mesmas 7 PDF do S5 (233 páginas, **todas A4**: peças escritas, memórias, cadernos de encargos, um mapa de quantidades). **0 folhas de desenho** (≥ A3), logo **C1 continua a falhar e o resultado continua «inconclusivo»** (não é um resultado negativo sobre o agrupamento).
+- **Nova tentativa de obter folhas (tempo limitado):** duas pesquisas na web (só EUA) devolveram repositórios académicos (teses de arquitetura paisagista com exemplos de «plano de pavimentos», 1:200) e páginas brasileiras; a descarga direta dos repositórios académicos e de um anexo municipal falhou com ligação recusada na rede desta sessão. Não se contornou.
+- **Sinal fraco, sem peso na decisão:** nas páginas 17 a 20 do PDF da rede predial (A4, esquemas, não são folhas de planta) o motor mede 42 a 169 elementos em 2 a 7 estilos, com o maior estilo a 40–55 % dos elementos, G90 de 2 a 5 e 52–55 % de polígonos fechados. Em folhas deste tipo C2, C3 e C4 passariam; não conta para C1.
+- **Robustez em PDF reais (M9):** o motor processou as 233 páginas sem uma falha; tempo por página p50 5 ms, p95 64 ms, máximo 151 ms (páginas A4, poucos elementos: não prova nada sobre folhas A1).
+- **Decisão mantida:** continua o caminho **A com risco aceite e medido** (T4/T4b). O S-05 pode arrancar; o orquestrador aplica a regra das 4 h do PRD §5.2 («se continuar inconclusivo, regista-se e segue-se por A») com este registo à frente. A tarefa K (≥ 10 folhas de ≥ 6 procedimentos) continua a ser a forma de fechar o gate: com os PDF numa pasta, `npm run ggeo -- <pasta>` repete C1 a C5 em segundos.
+- **Definição usada pelo motor para «grupo dominante»:** a **maior fração de elementos num só estilo, seja qual for o tipo** (M2 e C2 do PRD falam em «maior grupo de estilo»). É a medida mais estrita: um estilo com 95 % dos elementos divididos meio a meio entre linhas e polígonos também é recusado (US-04 critério 6). O agrupamento em si continua a ser por estilo **e** tipo.

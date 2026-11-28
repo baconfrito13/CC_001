@@ -31,6 +31,10 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // pdf.js loads its worker (`pdf.worker.mjs`) from next to its own module at run time. Bundled,
+  // it cannot find it ("Setting up fake worker failed"): keep it external so Node resolves it
+  // from node_modules, and Vercel's file tracing ships the package with the function.
+  serverExternalPackages: ["pdfjs-dist"],
   // `next dev` would otherwise write an AGENTS.md into the project; the README covers this.
   agentRules: false,
   async headers() {

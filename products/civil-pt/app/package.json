@@ -19,12 +19,15 @@
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
     "brand:apply": "node scripts/apply-brand.mjs",
     "seed": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.mts",
+    "fixtures": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/gen-fixtures.mts",
+    "ggeo": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts-resolver.mjs scripts/ggeo-metrics.mts",
     "test:pg": "vitest run --config vitest.pg.config.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.2",
     "marked": "18.1.0",
     "next": "16.4.6",
+    "pdfjs-dist": "6.5.438",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "resend": "6.41.0",

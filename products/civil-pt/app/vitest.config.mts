@@ -11,8 +11,9 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // unit: pure logic; contract: memory vs SQL; rls: row level security on PGlite.
-    include: ["tests/{unit,contract,rls}/**/*.test.{ts,tsx}"],
+    // unit: pure logic; contract: memory vs SQL; rls: row level security on PGlite;
+    // engine: the pure measurement engine (pdfjs-dist, synthetic PDF fixtures).
+    include: ["tests/{unit,contract,rls,engine}/**/*.test.{ts,tsx}"],
     clearMocks: true,
     restoreMocks: true,
     // PGlite boots a WASM Postgres per file: give the first query room on a busy machine.
