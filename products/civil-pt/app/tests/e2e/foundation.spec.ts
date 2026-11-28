@@ -1,7 +1,16 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { uniqueIp } from "./helpers";
+
+/**
+ * A client address nobody else used in the last minute. The server (and its in-memory rate
+ * limiter) outlives test workers and repeated runs, so a per-worker counter would repeat
+ * addresses; 24 random bits make a collision practically impossible.
+ */
+const uniqueIp = () => {
+  const octet = () => Math.floor(Math.random() * 256);
+  return `10.${octet()}.${octet()}.${octet()}`;
+};
 
 /**
  * Slice S-01 (foundation): what is observable from outside the server. The ledger, RLS and the
