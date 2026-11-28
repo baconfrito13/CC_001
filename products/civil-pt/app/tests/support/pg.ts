@@ -28,6 +28,12 @@ export async function createPgDatabase(): Promise<PgTestDatabase> {
   const target = new URL(url);
   target.pathname = `/${name}`;
   const pool = new pg.Pool({ connectionString: target.toString(), max: 24 });
+  // An idle client can be told to go away while the database is dropped at teardown; any
+  // such error before teardown starts is a real failure and is rethrown.
+  let closing = false;
+  pool.on("error", (error) => {
+    if (!closing) throw error;
+  });
   // Several statements per call: the simple query protocol (no parameters) allows it.
   await pool.query(SHIM_SQL);
   for (const migration of readMigrations()) await pool.query(migration.sql);
@@ -35,6 +41,7 @@ export async function createPgDatabase(): Promise<PgTestDatabase> {
   return {
     pool,
     async close() {
+      closing = true;
       await pool.end();
       const cleanup = new pg.Client({ connectionString: url });
       await cleanup.connect();
