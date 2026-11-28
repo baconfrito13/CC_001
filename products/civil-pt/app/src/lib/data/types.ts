@@ -148,11 +148,12 @@ const timestamp = z
   .refine((value) => !Number.isNaN(Date.parse(value)), "invalid timestamp")
   .transform((value) => new Date(value));
 
-const uuid = z.string().min(1);
+/** Ids come from the database; only their presence is checked (formats differ per adapter). */
+const id = z.string().min(1);
 
 export const reserveResultSchema = z.union([
   z
-    .object({ ok: z.literal(true), already: z.boolean(), lot_id: uuid })
+    .object({ ok: z.literal(true), already: z.boolean(), lot_id: id })
     .transform((r): ReserveResult => ({ ok: true, lotId: r.lot_id, already: r.already })),
   z
     .object({
@@ -189,12 +190,12 @@ export const releaseResultSchema = z.union([
 ]);
 
 export const grantLotResultSchema = z
-  .object({ lot_id: uuid, created: z.boolean() })
+  .object({ lot_id: id, created: z.boolean() })
   .transform((r): GrantLotResult => ({ lotId: r.lot_id, created: r.created }));
 
 export const trialResultSchema = z.union([
   z
-    .object({ granted: z.literal(true), lot_id: uuid })
+    .object({ granted: z.literal(true), lot_id: id })
     .transform((r): TrialResult => ({ granted: true, lotId: r.lot_id })),
   z
     .object({ granted: z.literal(false), reason: z.literal("already_used") })
@@ -218,7 +219,7 @@ export const balanceSchema = z
     frozen: z.boolean(),
     lots: z.array(
       z.object({
-        lot_id: uuid,
+        lot_id: id,
         origin: z.enum(["trial", "subscription", "pass"]),
         remaining: z.number().int().positive(),
         expires_at: timestamp,

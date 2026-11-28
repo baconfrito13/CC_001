@@ -31,7 +31,6 @@ export async function loadDemoData(
       now: ago(user.trialGrantedDaysAgo),
     });
   }
-  const purchaseIds = new Map(fixtures.purchases.map((p) => [p.id, p.id]));
   for (const lot of fixtures.lots) {
     const granted = ago(lot.grantedDaysAgo);
     await store.ledger.grantLot({
@@ -39,9 +38,7 @@ export async function loadDemoData(
       origin: lot.origin,
       sheets: lot.sheets,
       expiresAt: new Date(granted.getTime() + lot.validityDays * DAY_MS),
-      ...(lot.purchaseId && purchaseIds.has(lot.purchaseId)
-        ? { purchaseId: lot.purchaseId }
-        : {}),
+      ...(lot.purchaseId ? { purchaseId: lot.purchaseId } : {}),
       now: granted,
     });
   }

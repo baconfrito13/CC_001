@@ -59,8 +59,8 @@ interface AttemptRow {
 }
 
 class MemoryLedger implements Ledger {
-  readonly lots = new Map<string, Lot>();
-  readonly reservations = new Map<string, Reservation>();
+  private readonly lots = new Map<string, Lot>();
+  private readonly reservations = new Map<string, Reservation>();
   private readonly trialHashes = new Set<string>();
   private readonly founders = new Set<string>();
   private seq = 0;
