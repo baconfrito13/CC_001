@@ -32,6 +32,7 @@ export interface ProblemBody {
   code: ProblemCode;
   detail?: string;
   errors?: { path: string; message: string }[];
+  [extension: string]: unknown;
 }
 
 const TITLES: Record<number, string> = {
@@ -53,6 +54,8 @@ export interface ProblemOptions {
   detail?: string;
   errors?: ProblemBody["errors"];
   headers?: HeadersInit;
+  /** Extension members (RFC 9457 section 3.2): short machine-readable values, never user input. */
+  extra?: Record<string, string | number | boolean>;
 }
 
 /** An error a handler throws on purpose; `toProblem` turns it into a response. */
@@ -73,6 +76,7 @@ export function problem(
   options: ProblemOptions = {},
 ): Response {
   const body: ProblemBody = {
+    ...options.extra,
     type: "about:blank",
     title: TITLES[status] ?? "Error",
     status,

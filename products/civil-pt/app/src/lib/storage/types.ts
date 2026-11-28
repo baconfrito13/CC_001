@@ -26,6 +26,9 @@ export interface SignedUrl {
  */
 export type SignedUploadUrl = SignedUrl;
 
+/** Why an upload was refused: the `reason` of the `upload_rejected` event (PRD section 9). */
+export type UploadRejectReason = "type" | "size" | "pages" | "interrupted";
+
 /** SR-11: a document must be finalized within 10 minutes of its upload URL being issued. */
 export const FINALIZE_WINDOW_SECONDS = 600;
 
