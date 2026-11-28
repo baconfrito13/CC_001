@@ -932,5 +932,8 @@ grant execute on function
   public.db_ping()
   to service_role;
 
--- Functions created later are private by default too.
-alter default privileges in schema public revoke execute on functions from public, anon, authenticated;
+-- Functions created later by this role are not handed to the API roles (a test lists every
+-- function in `public` and fails if one is executable by anon or authenticated; Postgres
+-- still grants EXECUTE to PUBLIC on new functions, so a later migration must also
+-- `revoke execute ... from public`).
+alter default privileges in schema public revoke execute on functions from anon, authenticated;
