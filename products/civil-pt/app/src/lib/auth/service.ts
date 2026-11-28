@@ -69,6 +69,7 @@ export function createAuthService(deps: AuthServiceDeps) {
     const result = await store.security.rateLimitHit({ key, limit, windowSeconds, now });
     return {
       allowed: result.allowed,
+      count: result.count,
       retryAfterSeconds: Math.max(
         1,
         Math.ceil((result.resetAt.getTime() - now.getTime()) / 1000),
@@ -85,10 +86,13 @@ export function createAuthService(deps: AuthServiceDeps) {
       const hashed = emailHash(input.email);
       const client = ipHash(input.ip);
 
-      for (const limited of [
-        await hit(`otp:email:${hashed}`, AUTH_LIMITS.otpPerEmailPerHour, HOUR),
-        await hit(`otp:ip:${client}`, AUTH_LIMITS.otpPerIpPerHour, HOUR),
-      ]) {
+      const perEmail = await hit(
+        `otp:email:${hashed}`,
+        AUTH_LIMITS.otpPerEmailPerHour,
+        HOUR,
+      );
+      const perIp = await hit(`otp:ip:${client}`, AUTH_LIMITS.otpPerIpPerHour, HOUR);
+      for (const limited of [perEmail, perIp]) {
         if (!limited.allowed) {
           return {
             ok: false,
@@ -99,13 +103,19 @@ export function createAuthService(deps: AuthServiceDeps) {
       }
 
       const known = await store.workspace.userExists(input.email);
-      if (!known) {
+      // A new account counts once per address and email: only the first request of the hour for
+      // this email counts, so asking again for a code that did not arrive is free.
+      if (!known && perEmail.count === 1) {
         const created = await hit(
           `otp:new:${client}`,
           AUTH_LIMITS.newAccountsPerIpPerDay,
           DAY,
         );
         if (!created.allowed) {
+          // Use up the email's hourly budget too, so asking again cannot slip past the limit.
+          for (let i = 1; i < AUTH_LIMITS.otpPerEmailPerHour; i += 1) {
+            await hit(`otp:email:${hashed}`, AUTH_LIMITS.otpPerEmailPerHour, HOUR);
+          }
           return {
             ok: false,
             error: "rate_limited",
