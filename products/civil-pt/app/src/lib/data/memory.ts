@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { trialEmailHash } from "@/lib/core/email";
+import { MemoryUserDirectory, MemoryWorkspace } from "./memory-workspace";
 import {
   ATTEMPT_LOCK_SECONDS,
   ATTEMPT_MAX_FAILURES,
@@ -68,7 +69,7 @@ class MemoryLedger implements Ledger {
   constructor(
     private readonly world: {
       users: Map<string, { frozen: boolean }>;
-      sheets: Map<string, { userId: string }>;
+      sheets: { get(sheetId: string): { userId: string } | undefined };
     },
   ) {}
 
@@ -331,21 +332,46 @@ export class MemoryDataStore implements DataStore {
   readonly name = "memory" as const;
   readonly ledger: MemoryLedger;
   readonly security: MemorySecurity = new MemorySecurity();
+  readonly directory = new MemoryUserDirectory();
+  readonly workspace: MemoryWorkspace = new MemoryWorkspace(this.directory);
   private readonly users = new Map<string, { frozen: boolean }>();
-  private readonly sheets = new Map<string, { userId: string }>();
+  /** Sheets registered only for the ledger tests (no project or document behind them). */
+  private readonly registeredSheets = new Map<string, { userId: string }>();
 
   constructor() {
-    this.ledger = new MemoryLedger({ users: this.users, sheets: this.sheets });
+    this.ledger = new MemoryLedger({
+      users: this.users,
+      sheets: {
+        get: (sheetId) => {
+          const owner = this.workspace.sheetOwner(sheetId);
+          return owner ? { userId: owner } : this.registeredSheets.get(sheetId);
+        },
+      },
+    });
   }
 
   async ping(): Promise<void> {}
 
-  // Test-support: what the SQL side gets from `auth.users`, `profiles` and `sheets`. The
-  // repositories for projects, documents and sheets arrive with slices S-03 and S-04, which
-  // will own these registries.
+  // Test-support: what the SQL side gets from `auth.users`, `profiles` and `sheets`.
 
-  addUser(userId: string, options: { frozen?: boolean } = {}): void {
+  addUser(
+    userId: string,
+    options: {
+      frozen?: boolean;
+      email?: string;
+      locale?: "en" | "pt";
+      role?: "user" | "admin";
+    } = {},
+  ): void {
     this.users.set(userId, { frozen: options.frozen ?? false });
+    if (options.email) {
+      this.directory.add({
+        id: userId,
+        email: options.email,
+        locale: options.locale ?? "pt",
+        role: options.role ?? "user",
+      });
+    }
   }
 
   setFrozen(userId: string, frozen: boolean): void {
@@ -354,10 +380,10 @@ export class MemoryDataStore implements DataStore {
   }
 
   addSheet(sheetId: string, userId: string): void {
-    this.sheets.set(sheetId, { userId });
+    this.registeredSheets.set(sheetId, { userId });
   }
 
   removeSheet(sheetId: string): void {
-    this.sheets.delete(sheetId);
+    this.registeredSheets.delete(sheetId);
   }
 }

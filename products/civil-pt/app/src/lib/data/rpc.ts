@@ -1,16 +1,26 @@
-import type { z } from "zod";
+import { z } from "zod";
 import {
+  abandonDocumentSchema,
   attemptFailureSchema,
   attemptStatusSchema,
   balanceSchema,
   commitResultSchema,
   type DataStore,
+  documentSchema,
+  documentsSchema,
+  finalizeDocumentSchema,
   founderResultSchema,
   grantLotResultSchema,
+  projectListSchema,
+  projectSchema,
   rateLimitSchema,
+  registerDocumentSchema,
   releaseResultSchema,
   reserveResultSchema,
   revokeResultSchema,
+  setScaleSchema,
+  sheetSchema,
+  stalePendingSchema,
   trialResultSchema,
 } from "./types";
 
@@ -48,6 +58,9 @@ export function createRpcDataStore(call: RpcCaller, name: DataStore["name"]): Da
     return parsed.data;
   };
   const iso = (date: Date) => date.toISOString();
+  /** Functions that answer "the row or nothing": SQL null becomes null here. */
+  const maybe = <T extends z.ZodType>(schema: T) => z.nullable(schema);
+  const deleted = z.object({ ok: z.boolean() }).transform((result) => result.ok);
 
   return {
     name,
@@ -109,6 +122,88 @@ export function createRpcDataStore(call: RpcCaller, name: DataStore["name"]): Da
           { p_user: i.userId, p_slots: i.slots },
           founderResultSchema,
         ),
+    },
+    workspace: {
+      createProject: (i) =>
+        run(
+          "create_project",
+          { p_user: i.userId, p_name: i.name, p_now: iso(i.now) },
+          projectSchema,
+        ),
+      listProjects: (i) => run("list_projects", { p_user: i.userId }, projectListSchema),
+      getProject: (i) =>
+        run(
+          "get_project",
+          { p_user: i.userId, p_project: i.projectId },
+          maybe(projectSchema),
+        ),
+      deleteProject: (i) =>
+        run("delete_project", { p_user: i.userId, p_project: i.projectId }, deleted),
+      registerDocument: (i) =>
+        run(
+          "register_document",
+          {
+            p_user: i.userId,
+            p_project: i.projectId,
+            p_document: i.documentId,
+            p_path: i.storagePath,
+            p_file_name: i.fileName,
+            p_size: i.sizeBytes,
+            p_now: iso(i.now),
+          },
+          registerDocumentSchema,
+        ),
+      getDocument: (i) =>
+        run(
+          "get_document",
+          { p_user: i.userId, p_document: i.documentId },
+          maybe(documentSchema),
+        ),
+      listDocuments: (i) =>
+        run(
+          "list_documents",
+          { p_user: i.userId, p_project: i.projectId },
+          documentsSchema,
+        ),
+      finalizeDocument: (i) =>
+        run(
+          "finalize_document",
+          {
+            p_user: i.userId,
+            p_document: i.documentId,
+            p_page_count: i.pageCount,
+            p_sheets: i.sheets.map((sheet) => ({
+              page_no: sheet.pageNo,
+              width_pt: sheet.widthPt,
+              height_pt: sheet.heightPt,
+              scale_ratio: sheet.scaleRatio,
+              scale_source: sheet.scaleSource,
+            })),
+            p_now: iso(i.now),
+          },
+          finalizeDocumentSchema,
+        ),
+      abandonDocument: (i) =>
+        run(
+          "abandon_document",
+          { p_user: i.userId, p_document: i.documentId },
+          abandonDocumentSchema,
+        ),
+      listStalePendingDocuments: (i) =>
+        run(
+          "list_stale_pending_documents",
+          { p_before: iso(i.before), p_limit: i.limit },
+          stalePendingSchema,
+        ),
+      getSheet: (i) =>
+        run("get_sheet", { p_user: i.userId, p_sheet: i.sheetId }, maybe(sheetSchema)),
+      setSheetScale: (i) =>
+        run(
+          "set_sheet_scale",
+          { p_user: i.userId, p_sheet: i.sheetId, p_ratio: i.ratio, p_now: iso(i.now) },
+          setScaleSchema,
+        ),
+      userExists: (email) => run("auth_user_exists", { p_email: email }, z.boolean()),
     },
     security: {
       rateLimitHit: (i) =>
