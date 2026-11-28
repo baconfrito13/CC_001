@@ -17,6 +17,11 @@ export type ProblemCode =
   | "unsupported_media_type"
   | "rate_limited"
   | "no_balance"
+  | "invalid_email"
+  | "invalid_code"
+  | "too_many_attempts"
+  | "upload_rejected"
+  | "upload_interrupted"
   | "service_unavailable"
   | "internal";
 
@@ -33,6 +38,7 @@ const TITLES: Record<number, string> = {
   400: "Bad Request",
   401: "Unauthorized",
   402: "Payment Required",
+  422: "Unprocessable Content",
   403: "Forbidden",
   404: "Not Found",
   409: "Conflict",
