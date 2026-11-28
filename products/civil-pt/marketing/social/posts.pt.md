@@ -216,6 +216,7 @@ Fonte de cada ligação: `launch/links.csv`. Recursos `IB-xx`: `image-briefs.md`
 
 ## P13 · LinkedIn · pt · value
 - hook: 3 erros ao exportar PDF do AutoCAD que estragam a medição.
+- verificar antes de publicar: os 3 erros e os nomes de menus contra a documentação oficial da Autodesk (não verificados nesta fase)
 - body:
 
   1. Imprimir para uma impressora de imagem em vez de um PDF vetorial.
