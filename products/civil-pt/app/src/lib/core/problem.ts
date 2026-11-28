@@ -23,6 +23,7 @@ export type ProblemCode =
   | "upload_rejected"
   | "upload_interrupted"
   | "service_unavailable"
+  | "not_implemented"
   | "internal";
 
 export interface ProblemBody {
@@ -47,6 +48,7 @@ const TITLES: Record<number, string> = {
   415: "Unsupported Media Type",
   429: "Too Many Requests",
   500: "Internal Server Error",
+  501: "Not Implemented",
   503: "Service Unavailable",
 };
 

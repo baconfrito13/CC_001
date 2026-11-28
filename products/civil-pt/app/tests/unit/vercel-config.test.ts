@@ -8,7 +8,10 @@ describe("vercel.json (ADR 0002: functions next to the database)", () => {
     readFileSync(path.join(import.meta.dirname, "../../vercel.json"), "utf8"),
   );
   const config = z
-    .object({ regions: z.array(z.string()) })
+    .object({
+      regions: z.array(z.string()),
+      crons: z.array(z.object({ path: z.string(), schedule: z.string() })).optional(),
+    })
     .passthrough()
     .parse(raw);
 
@@ -16,7 +19,11 @@ describe("vercel.json (ADR 0002: functions next to the database)", () => {
     expect(config.regions).toEqual(["fra1"]);
   });
 
-  it("does not schedule a cron yet: the routes it would call arrive in slices S-04 and S-08", () => {
-    expect(config).not.toHaveProperty("crons");
+  it("runs the maintenance route every minute (dead uploads are removed within 10 minutes; Vercel sends CRON_SECRET)", () => {
+    // Replaces the S-01 expectation "no cron yet": the route exists since slice S-03 (US-02.4).
+    expect(config).toHaveProperty("crons");
+    expect(config.crons).toEqual([
+      { path: "/api/cron/maintenance", schedule: "* * * * *" },
+    ]);
   });
 });
