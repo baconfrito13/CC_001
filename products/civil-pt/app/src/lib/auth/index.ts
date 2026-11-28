@@ -16,9 +16,8 @@ export { SESSION_COOKIE, type SessionUser } from "./types";
 
 export async function createAuthProvider(env: Env): Promise<AuthProvider> {
   if (env.AUTH_ADAPTER === "supabase") {
-    const { createSupabaseAuthProvider, realSupabaseClients } = await import(
-      "./supabase"
-    );
+    const { createSupabaseAuthProvider } = await import("./supabase");
+    const { realSupabaseClients } = await import("./supabase-clients");
     return createSupabaseAuthProvider(
       realSupabaseClients({
         // reason: parseEnv guarantees these when AUTH_ADAPTER=supabase.

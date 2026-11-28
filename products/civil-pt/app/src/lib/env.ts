@@ -163,6 +163,12 @@ function configProblems(env: Env): string[] {
     ["STRIPE_SECRET_KEY", env.STRIPE_SECRET_KEY],
   ]);
 
+  // The mock sign-in keeps its accounts in the memory store: with a database behind it, the
+  // account ids would not exist there (every project has a foreign key to auth.users).
+  if (env.AUTH_ADAPTER === "mock" && env.DATA_ADAPTER !== "memory") {
+    problems.push("AUTH_ADAPTER=mock: needs DATA_ADAPTER=memory");
+  }
+
   const key = env.STRIPE_SECRET_KEY;
   if (env.PAYMENTS_LIVE) {
     if (env.PAYMENTS_ADAPTER !== "stripe") {
