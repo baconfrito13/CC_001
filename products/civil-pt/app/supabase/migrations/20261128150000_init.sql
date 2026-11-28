@@ -630,7 +630,7 @@ begin
     -- One statement: the row lock makes the limit of 3 hold under concurrency.
     update public.sheet_lots
       set returns_used = returns_used + 1
-      where id = v_res.lot_id and returns_used < 4
+      where id = v_res.lot_id and returns_used < 3
       returning id into v_lot;
     if v_lot is null then
       return jsonb_build_object('ok', false, 'reason', 'return_limit');

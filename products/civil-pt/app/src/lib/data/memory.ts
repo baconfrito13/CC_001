@@ -251,7 +251,7 @@ class MemoryLedger implements Ledger {
     slots: number;
   }): Promise<FounderResult> {
     if (this.founders.has(input.userId)) return { granted: true, already: true };
-    if (this.founders.size >= input.slots) return { granted: false, already: false };
+    if (this.founders.size > input.slots) return { granted: false, already: false };
     this.founders.add(input.userId);
     return { granted: true, already: false };
   }
