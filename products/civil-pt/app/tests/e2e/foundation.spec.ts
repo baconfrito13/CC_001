@@ -96,11 +96,13 @@ test.describe("S-01: SR-08 test adapters are refused in production", () => {
   // The suite's own server runs with ALLOW_TEST_ADAPTERS=true. A production server started
   // WITHOUT it must not serve anything: Next.js keeps the process up but answers 500 to every
   // request after the boot check (src/instrumentation.ts) fails.
-  const PORT = 3199;
+  // One port per Playwright worker, so repeated or parallel runs never fight over it.
+  let PORT = 3200;
   let child: ChildProcess | undefined;
   let log = "";
 
   test.beforeAll(async () => {
+    PORT = 3200 + test.info().parallelIndex;
     // The switch the suite's own server uses is left out on purpose.
     const { ALLOW_TEST_ADAPTERS: _switch, ...inherited } = process.env;
     const env = { ...inherited, NODE_ENV: "production" as const, PORT: String(PORT) };

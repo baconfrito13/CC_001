@@ -36,12 +36,14 @@ test.describe("SEO and metadata routes", () => {
     await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
   });
 
-  test("GET /api/health answers 200 {status, version}", async ({ request }) => {
+  test("GET /api/health answers 200 {status, version, db}", async ({ request }) => {
     const response = await request.get("/api/health");
     expect(response.status()).toBe(200);
+    // S-01 added the database ping: the body is still free of configuration and secrets.
     expect(await response.json()).toEqual({
       status: "ok",
       version: expect.stringMatching(/^\d+\.\d+\.\d+/),
+      db: "ok",
     });
     expect((await request.head("/api/health")).status()).toBe(200);
     expect((await request.post("/api/health")).status()).toBe(405);
