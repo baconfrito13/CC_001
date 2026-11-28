@@ -372,11 +372,12 @@ describe("POST /api/auth/confirm (the button of the confirmation page)", () => {
 
   it("a form without a token or with a wrong type goes back with erro=link", async () => {
     const w = authWorld();
-    for (const fields of [
+    const cases: Record<string, string>[] = [
       { locale: "pt" },
       { token_hash: "short", type: "email", locale: "pt" },
       { token_hash: "a".repeat(40), type: "magiclink", locale: "pt" },
-    ]) {
+    ];
+    for (const fields of cases) {
       const response = await handleConfirm(form(fields), deps(w));
       expect(response.status).toBe(303);
       expect(response.headers.get("location")).toBe("/pt/entrar?erro=link");

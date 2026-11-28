@@ -124,32 +124,32 @@ describe("proxy (locale redirect)", () => {
       }),
     );
 
-  it("redirects / to the best locale with a temporary redirect", () => {
-    const pt = call("/", "pt-PT,pt;q=0.9,en;q=0.5");
+  it("redirects / to the best locale with a temporary redirect", async () => {
+    const pt = await call("/", "pt-PT,pt;q=0.9,en;q=0.5");
     expect(pt.status).toBe(307);
     expect(new URL(pt.headers.get("location") ?? "").pathname).toBe("/pt");
     expect(pt.headers.get("vary")).toContain("Accept-Language");
 
-    const en = call("/", "en-US");
+    const en = await call("/", "en-US");
     expect(new URL(en.headers.get("location") ?? "").pathname).toBe("/en");
   });
 
-  it("falls back to the default locale without Accept-Language", () => {
-    expect(new URL(call("/").headers.get("location") ?? "").pathname).toBe(
+  it("falls back to the default locale without Accept-Language", async () => {
+    expect(new URL((await call("/")).headers.get("location") ?? "").pathname).toBe(
       `/${defaultLocale}`,
     );
   });
 
-  it("keeps the path and query when adding the locale", () => {
-    const response = call("/pricing?ref=x", "pt");
+  it("keeps the path and query when adding the locale", async () => {
+    const response = await call("/pricing?ref=x", "pt");
     const location = new URL(response.headers.get("location") ?? "");
     expect(location.pathname).toBe("/pt/pricing");
     expect(location.search).toBe("?ref=x");
   });
 
-  it("lets already-localized paths through", () => {
+  it("lets already-localized paths through", async () => {
     for (const path of ["/en", "/pt/pricing", "/en/legal/privacy"]) {
-      const response = call(path, "pt");
+      const response = await call(path, "pt");
       expect(response.status).toBe(200);
       expect(response.headers.get("location")).toBeNull();
     }
