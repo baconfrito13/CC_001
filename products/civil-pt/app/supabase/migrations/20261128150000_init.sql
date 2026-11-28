@@ -175,6 +175,8 @@ create index purchases_user_idx on public.purchases (user_id, created_at desc);
 -- balance = sheets_total minus reservations (reserved or committed), over usable lots.
 create table public.sheet_lots (
   id uuid primary key default gen_random_uuid(),
+  -- Insertion order: the last tie-break when two lots expire and were created at the same instant.
+  seq bigint generated always as identity,
   user_id uuid not null references auth.users (id) on delete cascade,
   purchase_id uuid references public.purchases (id) on delete set null,
   origin text not null check (origin in ('trial', 'subscription', 'pass')),
@@ -311,7 +313,7 @@ revoke all on table
   public.stripe_events, public.rate_limits, public.auth_attempts, public.signup_ip_daily,
   public.trial_grants, public.audit_log, public.founder_claims
   from anon, authenticated;
-revoke all on sequence public.audit_log_id_seq from anon, authenticated;
+revoke all on sequence public.audit_log_id_seq, public.sheet_lots_seq_seq from anon, authenticated;
 
 -- profiles: the owner reads; may change only the locale. role and frozen are server-only.
 grant select on public.profiles to authenticated;
@@ -402,6 +404,7 @@ create policy sheet_reservations_select_own on public.sheet_reservations
 create view public.sheet_lot_balances with (security_invoker = true) as
   select
     l.id as lot_id,
+    l.seq,
     l.user_id,
     l.origin,
     l.sheets_total,
@@ -519,7 +522,7 @@ $$;
 -- app validates with zod (src/lib/data/types.ts).
 -- ---------------------------------------------------------------------------------------
 
--- Reserve one sheet from the lot that expires first (ties: the oldest lot). Idempotent per
+-- Reserve one sheet from the lot that expires first (ties: the oldest lot, then the first created). Idempotent per
 -- sheet: a sheet already reserved or committed is charged once. Every mutation of one user's
 -- ledger first takes that user's profile row lock, so concurrent reserves queue (SR-02).
 create function public.reserve_sheet(
@@ -557,7 +560,7 @@ begin
       select count(*) from public.sheet_reservations r
       where r.lot_id = l.id and r.state in ('reserved', 'committed')
     )
-  order by l.expires_at asc, l.created_at asc, l.id asc
+  order by l.expires_at asc, l.created_at asc, l.seq asc
   limit 1;
   if v_lot is null then
     return jsonb_build_object('ok', false, 'reason', 'no_balance');
@@ -627,7 +630,7 @@ begin
     -- One statement: the row lock makes the limit of 3 hold under concurrency.
     update public.sheet_lots
       set returns_used = returns_used + 1
-      where id = v_res.lot_id and returns_used < 3
+      where id = v_res.lot_id and returns_used < 4
       returning id into v_lot;
     if v_lot is null then
       return jsonb_build_object('ok', false, 'reason', 'return_limit');
@@ -711,7 +714,7 @@ as $$
         jsonb_build_object(
           'lot_id', b.lot_id, 'origin', b.origin,
           'remaining', b.remaining, 'expires_at', b.expires_at
-        ) order by b.expires_at, b.created_at, b.lot_id
+        ) order by b.expires_at, b.created_at, b.seq
       ),
       '[]'::jsonb
     )

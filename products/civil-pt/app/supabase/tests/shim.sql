@@ -11,8 +11,16 @@ create role service_role nologin noinherit bypassrls;
 
 create schema auth;
 create table auth.users (
+  instance_id uuid,
   id uuid primary key default gen_random_uuid(),
+  aud text,
+  role text,
   email text,
+  email_confirmed_at timestamptz,
+  confirmation_token text,
+  recovery_token text,
+  email_change_token_new text,
+  email_change text,
   raw_user_meta_data jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );

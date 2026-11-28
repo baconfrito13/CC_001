@@ -17,7 +17,9 @@
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/e2e/smoke.spec.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "brand:apply": "node scripts/apply-brand.mjs"
+    "brand:apply": "node scripts/apply-brand.mjs",
+    "seed": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.mts",
+    "test:pg": "vitest run --config vitest.pg.config.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.119.2",
