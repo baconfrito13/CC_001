@@ -1,0 +1,25 @@
+# Brief 07 — Escala numa planta em PDF: como confirmar antes de medir
+
+- keyword: escala de planta em pdf
+- secondary: como verificar a escala de uma planta pdf
+- locale: pt
+- intent: info (meio de funil)
+- serp_notes: Não inspecionado. Provável conteúdo genérico de CAD. Lacuna: como confirmar a escala de um PDF antes de medir (carimbo, cota conhecida, barra de escala) e o que acontece em folhas com escalas mistas.
+- title: Escala numa planta em PDF: como confirmar antes de medir
+- description: Como ler a escala no carimbo, confirmá-la com uma cota conhecida e evitar erros em folhas com escalas diferentes, antes de medir áreas e comprimentos.
+- slug: escala-em-plantas-pdf  (URL `/pt/guias/escala-em-plantas-pdf`; rota a criar na integração)
+- outline:
+  - H2 Onde está a escala (carimbo, barra, texto)
+  - H2 Confirmar com uma cota conhecida: exemplo numérico
+  - H2 Escala do papel vs escala real: A1, A3 e reduções
+  - H2 Folhas com várias escalas: o que fazer (e porque o Rastoplan não as suporta no MVP)
+  - H2 Erros típicos de escala
+- must-include facts + sources: Cálculo de escala: matemática elementar, com exemplo verificável. US-03 e US-14 (Should) do PRD para o comportamento do produto; «escalas mistas» fora do MVP (§5.5).
+- information gain: Calculadora simples (tabela) escala × medida no papel = medida real, com 6 exemplos resolvidos.
+- internal links: Pilar C; 05; 06; 03
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + HowTo
+- length: 900–1 200 palavras
+- image ideas: Esquema do cálculo da escala
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

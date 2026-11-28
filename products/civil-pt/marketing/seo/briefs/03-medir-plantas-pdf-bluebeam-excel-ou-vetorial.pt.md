@@ -1,0 +1,25 @@
+# Brief 03 — Medir plantas em PDF: Bluebeam, Excel ou leitura vetorial
+
+- keyword: medir plantas em pdf
+- secondary: bluebeam medições; medir áreas em pdf; medir comprimentos em planta pdf
+- locale: pt
+- intent: commercial (fundo de funil)
+- serp_notes: Não inspecionado. Esperar tutoriais de Bluebeam e Acrobat e conteúdo brasileiro. Lacuna: comparação sóbria entre medir à mão no Bluebeam/Excel e medir com leitura vetorial, em pt-PT.
+- title: Medir plantas em PDF: Bluebeam, Excel ou leitura vetorial
+- description: Três formas de medir áreas e comprimentos numa planta PDF, com os prós, contras e limites de cada uma, e quando faz sentido ler a geometria vetorial.
+- slug: medir-plantas-pdf-bluebeam-excel-ou-vetorial  (URL `/pt/guias/medir-plantas-pdf-bluebeam-excel-ou-vetorial`; rota a criar na integração)
+- outline:
+  - H2 Medir à mão em PDF (Bluebeam, Acrobat): controlo total, tempo por folha
+  - H2 Medir no Excel a partir de cotas: o que se perde
+  - H2 Ler a geometria vetorial do PDF: o que muda e o que exige (PDF exportado de CAD)
+  - H2 Limites: escalas, camadas, tramas e blocos
+  - H2 Qual escolher consoante o concurso
+- must-include facts + sources: Preços e idiomas do Bluebeam só de bluebeam.com com data. Descrição do que o Rastoplan lê/não lê: PRD §2 e §7.
+- information gain: Exemplo de uma folha sintética medida das três formas, com os passos e o tempo cronometrado por quem escreve (registar o método; não generalizar o número).
+- internal links: Pilar A; 01; 05; 07
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + HowTo
+- length: 1 300–1 700 palavras
+- image ideas: Captura de uma folha sintética com grupos realçados (do projeto de exemplo, após QA)
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

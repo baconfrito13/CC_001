@@ -1,0 +1,25 @@
+# Brief 10 — Medir pavimentos, lancis e valetas em planta: o que falta
+
+- keyword: medir pavimentos em planta
+- secondary: medição de lancis e valetas; medição de arranjos exteriores; mapa de medições e redes
+- locale: pt
+- intent: info (topo de funil)
+- serp_notes: Não inspecionado. Provável vazio em pt-PT. É o artigo mais próximo da persona primária: orçamentista de pavimentos, arranjos exteriores e redes.
+- title: Medir pavimentos, lancis e valetas em planta: o que falta
+- description: O que se mede em planta (áreas, perímetros, comprimentos), o que a planta não diz (profundidades, perfis, camas) e como não deixar nada de fora ao orçar.
+- slug: medir-pavimentos-lancis-valetas-em-planta  (URL `/pt/guias/medir-pavimentos-lancis-valetas-em-planta`; rota a criar na integração)
+- outline:
+  - H2 O que a planta dá: áreas de pavimento, comprimento de lancis, valetas e tubagens
+  - H2 O que a planta não dá: espessuras, perfis, profundidades, declives
+  - H2 Como juntar a planta às peças escritas e a perfis
+  - H2 Lista para não esquecer elementos (legenda, notas, detalhes)
+  - H2 Onde a medição assistida ajuda e onde não
+- must-include facts + sources: Limites do que o Rastoplan mede: PRD §2. Não afirmar o que um caderno de encargos tem de incluir (conteúdo jurídico).
+- information gain: Lista de verificação de 12 pontos por tipo de elemento (pavimento, lancil, valeta, tubagem).
+- internal links: Pilar D; 09; 03
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article
+- length: 1 000–1 400 palavras
+- image ideas: Esquema planta vs perfil
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

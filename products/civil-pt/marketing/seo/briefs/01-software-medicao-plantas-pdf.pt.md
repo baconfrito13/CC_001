@@ -1,0 +1,25 @@
+# Brief 01 — Software para medir plantas em PDF: o que procurar
+
+- keyword: software medição plantas pdf
+- secondary: medir plantas em pdf; software mapa de quantidades
+- locale: pt
+- intent: commercial (fundo de funil)
+- serp_notes: Não inspecionado (pesquisa web só dos EUA). Esperar: páginas de fornecedores (Bluebeam, CYPE), agregadores e conteúdo pt-BR. Lacuna a explorar: nenhum guia pt-PT que explique os 3 tipos de ferramenta (medição manual em PDF, software de orçamentação, medição vetorial assistida).
+- title: Software para medir plantas em PDF: o que procurar
+- description: Medição manual, orçamentação ou medição vetorial assistida? Critérios para escolher software que mede plantas em PDF, em Portugal, sem perder o rasto.
+- slug: software-medicao-plantas-pdf  (URL `/pt/guias/software-medicao-plantas-pdf`; rota a criar na integração)
+- outline:
+  - H2 Três tipos de ferramenta (e o que cada uma faz): medição manual em PDF, software de orçamentação com BC3, medição vetorial assistida
+  - H2 Perguntas a fazer antes de escolher: aceita PDF vetorial e/ou digitalizado? permite confirmar cada quantidade? exporta Excel? em que língua e moeda? onde ficam os ficheiros?
+  - H2 O que nenhuma ferramenta substitui: a revisão do orçamentista
+  - H3 Quanto tempo se perde em medir à mão (sem inventar número: pedir ao leitor para cronometrar uma folha)
+  - H2 Como pedir uma demonstração com uma folha sua
+- must-include facts + sources: Bluebeam: 15 idiomas, sem português (competitors.md, 2026-11-26; reverificar em bluebeam.com antes de publicar). CYPE Arquimedes importa DXF/DWG e não lê PDF (info.cype.com, 2026-11-26). Tabela de comparação só com factos de páginas oficiais, datadas.
+- information gain: Matriz de decisão descarregável (1 página) com as 7 perguntas e espaço para o leitor pontuar as ferramentas que está a avaliar; nenhum concorrente a publica em pt-PT.
+- internal links: Pilar A; 03; 02; /pt/precos
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + FAQPage
+- length: 1 400–1 800 palavras
+- image ideas: Tabela de 3 tipos de ferramenta; captura da folha «Rasto» (depois do QA)
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

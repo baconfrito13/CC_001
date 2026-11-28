@@ -1,0 +1,25 @@
+# Brief 06 — Como exportar um PDF vetorial a partir do AutoCAD
+
+- keyword: exportar pdf vetorial autocad
+- secondary: pdf vetorial autocad; plotar pdf autocad linhas finas
+- locale: pt
+- intent: info (meio de funil)
+- serp_notes: Não inspecionado. Esperar documentação Autodesk e tutoriais pt-BR. Lacuna: passos pensados para quem vai medir, não imprimir (camadas, espessuras, escala, uma vista por folha).
+- title: Como exportar um PDF vetorial a partir do AutoCAD
+- description: Passos para exportar uma planta do AutoCAD em PDF vetorial pronto a medir: impressora PDF, escala, espessuras, camadas e erros que o tornam uma imagem.
+- slug: exportar-pdf-vetorial-do-autocad  (URL `/pt/guias/exportar-pdf-vetorial-do-autocad`; rota a criar na integração)
+- outline:
+  - H2 O que torna um PDF «medível»: vetor, escala conhecida, uma vista por folha
+  - H2 Passo a passo no AutoCAD (impressora «DWG To PDF», formato, escala de impressão, estilo de traço)
+  - H2 Erros que estragam a medição: rasterizar, escalas mistas, camadas desligadas, texto convertido
+  - H2 Verificar o resultado (ligação ao artigo 05)
+  - H2 Quando pedir o PDF ao projetista
+- must-include facts + sources: **Passos e nomes de menus só da documentação oficial Autodesk, lidos e datados na redação** (não escritos de memória). Versões do AutoCAD variam.
+- information gain: Lista de verificação de 8 pontos para pedir o PDF ao projetista (modelo de mensagem incluído).
+- internal links: Pilar C; 05; 07
+- CTA: Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + HowTo
+- length: 1 000–1 400 palavras
+- image ideas: Captura do diálogo de impressão com campos anotados (da documentação, com licença; ou captura própria)
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief

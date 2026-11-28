@@ -1,0 +1,25 @@
+# Brief 04 — Modelo Excel de mapa de quantidades (capítulos e artigos)
+
+- keyword: mapa de quantidades modelo excel
+- secondary: modelo de mapa de quantidades; mapa de quantidades xls; mapa de quantidades construção civil excel
+- locale: pt
+- intent: transactional (fundo de funil (isco: modelo gratuito))
+- serp_notes: Não inspecionado. Esperar modelos em pt-BR (planilhas), fóruns e vendedores de modelos. Lacuna: modelo pt-PT com a nomenclatura de capítulos/artigos/unidades de concursos e uma folha de origem das quantidades.
+- title: Modelo Excel de mapa de quantidades (capítulos e artigos)
+- description: Descarregue um modelo de mapa de quantidades em Excel com capítulos, artigos, unidades e uma folha de origem para cada quantidade. Gratuito, sem registo.
+- slug: modelo-excel-mapa-de-quantidades  (URL `/pt/guias/modelo-excel-mapa-de-quantidades`; rota a criar na integração)
+- outline:
+  - H2 O que tem um mapa de quantidades (capítulo, artigo, designação, unidade, quantidade)
+  - H2 Descarregar o modelo (sem registo)
+  - H2 Como preencher: exemplo com pavimento, lancil e valeta
+  - H2 Folha de origem: porque cada quantidade deve ter a sua referência
+  - H2 Do modelo à medição automática: o que o Rastoplan exporta
+- must-include facts + sources: Estrutura de capítulo > artigo > unidade: glossário do `docs/03-brand.md`. O modelo gratuito não promete cumprir nenhuma norma nem contrato.
+- information gain: O próprio ficheiro `.xlsx` (utilidade). Construí-lo à mão com fórmulas simples e a mesma lógica da folha «Rasto» do produto.
+- internal links: Pilar B; 09; 08; /pt/precos
+- CTA: Descarregar o modelo; depois Pedir demonstração (UTM `utm_source=site&utm_medium=organic-seo&utm_campaign=202702-guias` só em ligações externas; nunca em ligações internas)
+- schema: Article + HowTo
+- length: 800–1 100 palavras + ficheiro
+- image ideas: Captura do modelo preenchido
+- regras: sem percentagens de precisão, sem «IA», sem erros e omissões/CCP, sem «poupa X horas»; pt-PT, sem «você»
+- status: brief
