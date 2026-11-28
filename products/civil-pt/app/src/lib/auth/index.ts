@@ -7,15 +7,12 @@ import { getEmailSender } from "@/lib/email";
 import { type Env, getEnv } from "@/lib/env";
 import { getEvents } from "@/lib/events";
 import { authRequestFrom } from "./cookies";
-import { MockAuthProvider } from "./mock";
+import { DEV_SESSION_SECRET, MockAuthProvider } from "./mock";
 import { type AuthService, createAuthService } from "./service";
 import type { AuthProvider, AuthRequest, SessionUser } from "./types";
 
 export { authRequestFrom } from "./cookies";
 export { SESSION_COOKIE, type SessionUser } from "./types";
-
-/** Signs the mock session when HASH_SALT is not set (production forbids both). */
-export const DEV_SESSION_SECRET = "rastoplan-dev-session-secret";
 
 export async function createAuthProvider(env: Env): Promise<AuthProvider> {
   if (env.AUTH_ADAPTER === "supabase") {

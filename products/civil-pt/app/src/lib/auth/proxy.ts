@@ -1,11 +1,9 @@
 import type { NextRequest } from "next/server";
 import { getEnv } from "@/lib/env";
 import { authRequestFrom } from "./cookies";
-import { readSession } from "./mock";
+import { DEV_SESSION_SECRET, readSession } from "./mock";
 import type { CookieToSet } from "./types";
 import { SESSION_COOKIE } from "./types";
-
-const DEV_SESSION_SECRET = "rastoplan-dev-session-secret";
 
 export interface ProxySession {
   authenticated: boolean;
@@ -29,13 +27,14 @@ export async function sessionForProxy(request: NextRequest): Promise<ProxySessio
     const userId = readSession(value, env.HASH_SALT ?? DEV_SESSION_SECRET, new Date());
     return { authenticated: userId !== null, cookies: [] };
   }
-  const { createSupabaseAuthProvider, realSupabaseClients } = await import("./supabase");
+  const { createSupabaseAuthProvider } = await import("./supabase");
+  const { realSupabaseClients } = await import("./supabase-clients");
   const provider = createSupabaseAuthProvider(
     realSupabaseClients({
-      // reason: parseEnv guarantees these when AUTH_ADAPTER=supabase.
+      // reason: parseEnv guarantees these when AUTH_ADAPTER=supabase. No service-role key: the
+      // proxy only reads and refreshes sessions.
       url: env.NEXT_PUBLIC_SUPABASE_URL as string,
       anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-      serviceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY as string,
     }),
   );
   const { user, cookies } = await provider.currentUser({

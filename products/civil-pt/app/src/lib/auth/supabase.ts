@@ -1,9 +1,5 @@
-import "server-only";
-import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
 import type { Locale } from "@/config/site";
 import { isLocale } from "@/lib/i18n";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   AuthProvider,
   AuthRequest,
@@ -227,36 +223,5 @@ export function createSupabaseAuthProvider(clients: SupabaseAuthClients): AuthPr
       await clients.session(cookieBridge).auth.signOut({ scope: "local" });
       return cookies;
     },
-  };
-}
-
-/** The real clients, from the three Supabase variables `parseEnv` already checked. */
-export function realSupabaseClients(options: {
-  url: string;
-  anonKey: string;
-  serviceRoleKey: string;
-}): SupabaseAuthClients {
-  return {
-    anon: () =>
-      createClient(options.url, options.anonKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-          flowType: "implicit",
-        },
-      }) as unknown as AuthClientLike, // reason: the SDK type is a superset of AuthClientLike
-    session: (bridge) =>
-      createServerClient(options.url, options.anonKey, {
-        cookies: {
-          getAll: () => bridge.getAll(),
-          setAll: (list) => bridge.setAll(list),
-        },
-      }) as unknown as AuthClientLike, // reason: the SDK type is a superset of AuthClientLike
-    admin: () =>
-      createAdminClient({
-        url: options.url,
-        serviceRoleKey: options.serviceRoleKey,
-      }) as unknown as AuthClientLike, // reason: the SDK type is a superset of AuthClientLike
   };
 }

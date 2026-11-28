@@ -38,6 +38,9 @@ interface IssuedCode {
   used: boolean;
 }
 
+/** Signs the mock session when HASH_SALT is not set (production forbids both). */
+export const DEV_SESSION_SECRET = "rastoplan-dev-session-secret";
+
 export interface MockAuthOptions {
   store: MemoryDataStore;
   email: EmailSender;
