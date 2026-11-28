@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "slug": "civil-pt",
-  "name": "Medições PT",
-  "one_liner": "Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal",
+  "name": "Rastoplan",
+  "one_liner": "Mapas de quantidades a partir de plantas em PDF vetorial, com cada quantidade confirmada no desenho e rasto até à folha, para orçamentistas em Portugal",
   "idea": "criar um produto como o deste site mas adaptado ao mercado português: https://civils.ai/",
   "type": "ai-app",
   "status": "active",
-  "phase": "brand",
+  "phase": "build",
   "depth": "standard",
   "depth_locked": false,
   "phases": {
@@ -34,10 +34,19 @@
       "summary": "Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ("
     },
     "brand": {
-      "status": "pending"
+      "status": "done",
+      "started": "2026-11-28",
+      "started_at": "2026-11-28T13:56:14Z",
+      "summary": "Nome escolhido: Rastoplan (rasto + plan). Domínio: rastoplan.com disponível segundo a ferramenta Shopify generate-domain-names em 2026-11-28",
+      "completed": "2026-11-28",
+      "completed_at": "2026-11-28T14:16:42Z"
     },
     "architecture": {
-      "status": "pending"
+      "status": "done",
+      "started": "2026-11-28",
+      "completed": "2026-11-28",
+      "completed_at": "2026-11-28T14:16:44Z",
+      "summary": "Arquitetura do civil-pt (Rastoplan) escrita e validada com 'factory.py validate civil-pt'. Escolhi a receita 'web-saas', apesar de 'product."
     },
     "build": {
       "status": "pending"
@@ -65,13 +74,13 @@
     "forced": true
   },
   "stack": {
-    "recipe": null,
+    "recipe": "web-saas",
     "app_dir": "app",
     "components": [],
-    "hosting": null,
-    "payments": null,
-    "database": null,
-    "auth": null
+    "hosting": "Vercel Pro (fra1) + Supabase Pro (eu-central-1)",
+    "payments": "Stripe direto (Checkout, Billing, Portal; Tax conforme regime de IVA)",
+    "database": "Supabase Postgres (eu-central-1, RLS) + Storage privado",
+    "auth": "Supabase Auth (codigo OTP de 6 digitos + pagina de confirmacao)"
   },
   "links": {
     "branch": "produto/civil-pt",
@@ -88,13 +97,14 @@
     "ref": null
   },
   "created": "2026-11-26",
-  "updated": "2026-11-27",
+  "updated": "2026-11-28",
   "metrics_applied": [
     "20261126T163713Z:checkpoint:research",
-    "20261127T134901Z:checkpoint:strategy"
+    "20261127T134901Z:checkpoint:strategy",
+    "20261128T135602Z:checkpoint:brand+architecture"
   ],
   "metrics": {
-    "turn_output_tokens_k": 1057,
+    "turn_output_tokens_k": 1288,
     "research_tracks": 4,
     "research_tracks_failed": 0,
     "critic_fatal": 0,

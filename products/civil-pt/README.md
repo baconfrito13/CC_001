@@ -3,15 +3,15 @@
 > Mapas de quantidades (medições) a partir de plantas PDF, com IA, para empreiteiros e projetistas em Portugal
 
 <!-- factory:status:start -->
-**Estado:** 🟢 ativo · **Fase atual:** 03 Marca · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
+**Estado:** 🟢 ativo · **Fase atual:** 05 Construção · **Profundidade:** standard · **Score G1:** 2.5 (KILL)
 
 | # | Fase | Estado | Resumo |
 |---|---|---|---|
 | 00 | Receção | ✅ | ai-app, medições por IA para obra civil em PT, depth standard |
 | 01 | Pesquisa | ✅ | KILL 2.45 — Rebuttal feito: respondi às objeções D1 a D8 em /home/user/CC_001/products/civil-pt/docs/01-research.md. A nota da ideia original desce de 2,60 para 2,45 e o veredicto passa a KILL provisório, não validado (banda 1,70-3,00). Dor desce de 3 para 2: os sinais PT vêm de um só fórum, de edifícios, sem n |
 | 02 | Estratégia | ✅ | Estratégia revista (v0.2) das duas peças '02-product.md' e '02-business.md', com as 12 objeções do advogado do diabo respondidas uma a uma ( |
-| 03 | Marca | ⬜ |  |
-| 04 | Arquitetura | ⬜ |  |
+| 03 | Marca | ✅ | Nome escolhido: Rastoplan (rasto + plan). Domínio: rastoplan.com disponível segundo a ferramenta Shopify generate-domain-names em 2026-11-28 |
+| 04 | Arquitetura | ✅ | Arquitetura do civil-pt (Rastoplan) escrita e validada com 'factory.py validate civil-pt'. Escolhi a receita 'web-saas', apesar de 'product. |
 | 05 | Construção | ⬜ |  |
 | 06 | Qualidade | ⬜ |  |
 | 07 | Legal | ⬜ |  |
@@ -20,8 +20,8 @@
 | 10 | Crescimento | ⬜ |  |
 
 **Links:** [PR](https://github.com/baconfrito13/CC_001/pull/11) · [sessão Claude](https://claude.ai/code/session_0128UXAXkUH8kQuWGsHHnBqT)
-**Tarefas do fundador:** 0 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
-_Atualizado: 2026-11-27_
+**Tarefas do fundador:** 3 abertas, 0 feitas → [HUMAN_TASKS.md](HUMAN_TASKS.md)
+_Atualizado: 2026-11-28_
 <!-- factory:status:end -->
 
 

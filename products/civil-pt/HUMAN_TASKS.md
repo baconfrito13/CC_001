@@ -33,7 +33,7 @@ WORKED EXAMPLE (format reference — do not keep in real files)
 > Aqui só aparecem ações que **só tu** podes fazer (dinheiro, contas e identidade legal, contratos, ações públicas irreversíveis, segredos). Cada tarefa demora **≤ 5 minutos**; tudo o resto avança sem ti, em modo de teste.
 > **Como dar uma tarefa por feita:** marca a caixa (`- [x]`) neste ficheiro, ou escreve «HT-xx feito» num comentário do PR ou no chat. **Nunca** cole chaves ou palavras-passe no chat nem no repositório: vê `SETUP.md` para as definir como variáveis de ambiente.
 
-**Resumo:** 0 abertas · 🔴 0 · 🟡 0 · 🟢 0 · tempo total ≈ 0 min · custo total ≈ 0 € · atualizado em 2026-11-26
+**Resumo:** 3 abertas · 🔴 0 · 🟡 2 · 🟢 1 · tempo total ≈ 14 min · custo total ≈ 17 USD (domínio, 1.º ano) · atualizado em 2026-11-28
 
 ## 🔴 Bloqueiam o lançamento
 
@@ -41,11 +41,36 @@ _Sem tarefas abertas._
 
 ## 🟡 Antes do lançamento
 
-_Sem tarefas abertas._
+- [ ] **HT-01 · Comprar o domínio `rastoplan.com`** — ⏱ 4 min · 💶 ≈ 17 USD no 1.º ano (renovação a confirmar)
+  - **Porquê:** a página de lançamento, o email do produto, os links de pagamento e as páginas legais precisam de um domínio próprio. O nome «Rastoplan» foi escolhido com este domínio disponível.
+  - **Estado da verificação:** a ferramenta Shopify `generate-domain-names` indicou `rastoplan.com` **disponível por 17,00 USD no 1.º ano em 2026-11-28** (instantâneo, não uma reserva: comprar depressa). `rastoplan.pt` está ocupado.
+  - **Passos:**
+    1. Abre https://www.cloudflare.com/products/registrar/ (ou o registador indicado em `SETUP.md`; verifica o preço atual) e inicia sessão.
+    2. Pesquisa `rastoplan.com` e confirma o preço de **renovação** (limite do projeto: ≤ 35 €/ano).
+    3. Ativa a renovação automática; recusa extras (email, alojamento).
+    4. Paga com o teu cartão.
+  - **Se já não estiver disponível:** usa a reserva n.º 1, `cotamapa.com` (disponível segundo a mesma ferramenta em 2026-11-28, 17,00 USD), e avisa «HT-01 reserva n.º 1»; a marca muda por completo (`docs/03-brand.md` §3.2). Reserva n.º 2: `medirplan.com` / `medirplan.pt`.
+  - **Opcional antes de pagar (2 min):** vê em https://www.dns.pt/ quem detém `rastoplan.pt` (ocupado) e se tem atividade com o mesmo nome no setor; se tiver, usa a reserva n.º 1.
+  - **Valores a colar:** domínio `rastoplan.com` · titular: o teu nome ou a tua entidade · email de contacto: o email do produto.
+  - **Desbloqueia:** pré-visualização no domínio final, DNS, email, páginas legais, ligação a pagamentos.
+  - **Enquanto esperas:** o Claude continua com o domínio de teste da plataforma de alojamento e deixa `SITE_URL` configurável; `links.domain` só é preenchido depois da tua confirmação.
+  - **Como assinalar:** marca a caixa acima ou escreve «HT-01 feito rastoplan.com». Não envies dados do cartão.
+
+- [ ] **HT-02 · Reservar as contas sociais «Rastoplan»** — ⏱ 5 min · 💶 0 €
+  - **Porquê:** não foi possível verificar automaticamente os nomes nas redes (bloqueiam bots). Reservar cedo evita perder o nome.
+  - **Passos:** com o email do produto, tenta criar `rastoplan` (ou o mais próximo livre) em: GitHub https://github.com/signup, LinkedIn (página de empresa) https://www.linkedin.com/company/setup/new/, X https://x.com/i/flow/signup, Instagram https://www.instagram.com/accounts/emailsignup/, YouTube https://www.youtube.com/ (canal). Não publiques nada.
+  - **Valores a colar:** nome `Rastoplan` · descrição: «Medições de plantas PDF vetoriais com rasto até à folha. Para quem orça em Portugal.» · ícone: `brand/assets/icon-512.png`.
+  - **Desbloqueia:** presença consistente no lançamento e prospeção no LinkedIn.
+  - **Enquanto esperas:** o Claude continua a preparar o site e o conteúdo; nenhum texto é publicado sem a tua aprovação.
+  - **Como assinalar:** marca a caixa ou escreve «HT-02 feito» e diz que contas ficaram com outro nome.
 
 ## 🟢 Depois / opcional
 
-_Sem tarefas abertas._
+- [ ] **HT-03 · (Opcional) Registar a marca «Rastoplan»** — ⏱ 5 min · 💶 taxa oficial a confirmar
+  - **Porquê:** protege o nome. A verificação preliminar (`legal/trademark-check.md`) não encontrou conflitos óbvios, mas TMview e INPI não puderam ser consultados; convém uma verificação profissional antes de pedir o registo ou de investir em publicidade.
+  - **Passos:** em https://www.euipo.europa.eu/ (marca da União Europeia) ou https://inpi.justica.gov.pt/ (Portugal), pedir o registo da marca nominativa e figurativa (`brand/logo.svg`) nas classes 9, 42 e 35. Consulta a taxa atual na página oficial do organismo.
+  - **Desbloqueia:** uso de ® e proteção do nome. Nada bloqueia o lançamento sem isto; entretanto usa ™.
+  - **Como assinalar:** marca a caixa ou escreve «HT-03 feito» (ou «HT-03 adiado»).
 
 ## ✅ Concluídas
 
