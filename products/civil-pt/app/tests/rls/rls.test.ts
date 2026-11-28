@@ -39,7 +39,11 @@ interface Spec {
   probe: string;
 }
 
-const server = { insert: false, updatable: [], delete: false } as const;
+const server: Pick<Spec, "insert" | "updatable" | "delete"> = {
+  insert: false,
+  updatable: [],
+  delete: false,
+};
 
 const SPECS: Spec[] = [
   {
@@ -162,6 +166,21 @@ async function attempt(
   } catch (error) {
     return { ok: false, error: (error as Error).message };
   }
+}
+
+function errorOf(outcome: Outcome): string {
+  if (outcome.ok) throw new Error("expected the statement to fail");
+  return outcome.error;
+}
+
+function affectedOf(outcome: Outcome): number {
+  if (!outcome.ok) throw new Error(`expected the statement to succeed: ${outcome.error}`);
+  return outcome.affected;
+}
+
+function rowsOf<T>(outcome: Outcome): T[] {
+  if (!outcome.ok) throw new Error(`expected the statement to succeed: ${outcome.error}`);
+  return outcome.rows as T[]; // reason: rows come back untyped from the driver
 }
 
 const count = async (sql: string, params: unknown[] = []) =>
@@ -384,11 +403,11 @@ describe.each(SPECS)("SR-01: $table", (spec) => {
       );
       if (!spec.read) {
         expect(result.ok).toBe(false);
-        expect((result as { error: string }).error).toMatch(/permission denied/);
+        expect(errorOf(result)).toMatch(/permission denied/);
         return;
       }
       expect(result.ok).toBe(true);
-      const rows = (result as { rows: { owner: string }[] }).rows;
+      const rows = rowsOf<{ owner: string }>(result);
       expect(rows.length).toBe(await owned(ANA));
       expect(rows.every((r) => r.owner === ANA)).toBe(true);
       expect(rows.some((r) => r.owner === BRUNO)).toBe(false);
@@ -403,7 +422,7 @@ describe.each(SPECS)("SR-01: $table", (spec) => {
       `select ${spec.owner}::text as owner from public.${spec.table}`,
     );
     expect(result.ok).toBe(true);
-    const rows = (result as { rows: { owner: string }[] }).rows;
+    const rows = rowsOf<{ owner: string }>(result);
     expect(rows.length).toBe(await owned(BRUNO));
     expect(rows.every((r) => r.owner === BRUNO)).toBe(true);
   });
@@ -419,10 +438,10 @@ describe.each(SPECS)("SR-01: $table", (spec) => {
     );
     if (spec.updatable.length > 0) {
       expect(result.ok).toBe(true);
-      expect((result as { affected: number }).affected).toBe(0);
+      expect(affectedOf(result)).toBe(0);
     } else {
       expect(result.ok).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     }
     expect(await owned(BRUNO)).toBe(before);
   });
@@ -437,10 +456,10 @@ describe.each(SPECS)("SR-01: $table", (spec) => {
     );
     if (spec.delete) {
       expect(result.ok).toBe(true);
-      expect((result as { affected: number }).affected).toBe(0);
+      expect(affectedOf(result)).toBe(0);
     } else {
       expect(result.ok).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     }
     expect(await owned(BRUNO)).toBe(before);
   });
@@ -453,7 +472,7 @@ describe.each(SPECS)("SR-01: $table", (spec) => {
         `insert into public.${spec.table} default values`,
       );
       expect(result.ok).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     });
   }
 });
@@ -475,7 +494,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
         [ANA],
       );
       expect(result.ok, column).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     }
   });
 
@@ -509,7 +528,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
       [BRUNO],
     );
     expect(forged.ok).toBe(false);
-    expect((forged as { error: string }).error).toMatch(/row-level security/);
+    expect(errorOf(forged)).toMatch(/row-level security/);
     const takeover = await attempt(
       "authenticated",
       ANA,
@@ -517,7 +536,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
       [BRUNO, ANA_PROJECT_1],
     );
     expect(takeover.ok).toBe(false);
-    expect((takeover as { error: string }).error).toMatch(/permission denied/);
+    expect(errorOf(takeover)).toMatch(/permission denied/);
   });
 
   it("A cannot plant a map node in B's project or under B's node, whoever it claims to belong to", async () => {
@@ -533,13 +552,13 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
     expect(own.ok).toBe(true);
     const intoBruno = await insert(BRUNO_PROJECT, ANA, null);
     expect(intoBruno.ok).toBe(false);
-    expect((intoBruno as { error: string }).error).toMatch(/foreign key/);
+    expect(errorOf(intoBruno)).toMatch(/foreign key/);
     const asBruno = await insert(BRUNO_PROJECT, BRUNO, null);
     expect(asBruno.ok).toBe(false);
-    expect((asBruno as { error: string }).error).toMatch(/row-level security/);
+    expect(errorOf(asBruno)).toMatch(/row-level security/);
     const underBruno = await insert(ANA_PROJECT_1, ANA, BRUNO_ARTICLE);
     expect(underBruno.ok).toBe(false);
-    expect((underBruno as { error: string }).error).toMatch(/foreign key/);
+    expect(errorOf(underBruno)).toMatch(/foreign key/);
   });
 
   it("map node identity columns (project, owner, kind) cannot be changed", async () => {
@@ -555,7 +574,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
         [ANA_ARTICLE],
       );
       expect(result.ok, set).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     }
     const ok = await attempt(
       "authenticated",
@@ -581,7 +600,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
         [ANA_GROUP],
       );
       expect(result.ok, set).toBe(false);
-      expect((result as { error: string }).error).toMatch(/permission denied/);
+      expect(errorOf(result)).toMatch(/permission denied/);
     }
     const state = await attempt(
       "authenticated",
@@ -608,7 +627,7 @@ describe("SR-01: what an owner may still do (positive controls)", () => {
         [ANA_GROUP, article],
       );
       expect(result.ok, article).toBe(false);
-      expect((result as { error: string }).error).toMatch(/article_not_in_project/);
+      expect(errorOf(result)).toMatch(/article_not_in_project/);
     }
   });
 });
@@ -628,7 +647,7 @@ describe("SR-02: the ledger is closed to the API roles", () => {
       for (const sql of statements) {
         const result = await attempt(role, userId, sql);
         expect(result.ok, sql).toBe(false);
-        expect((result as { error: string }).error, sql).toMatch(/permission denied/);
+        expect(errorOf(result), sql).toMatch(/permission denied/);
       }
     },
   );
@@ -643,7 +662,7 @@ describe("SR-02: the ledger is closed to the API roles", () => {
   ])("authenticated cannot call %s", async (fn, args) => {
     const result = await attempt("authenticated", ANA, `select public.${fn}(${args})`);
     expect(result.ok).toBe(false);
-    expect((result as { error: string }).error).toMatch(/permission denied/);
+    expect(errorOf(result)).toMatch(/permission denied/);
   });
 
   it("A reads the balance of their own lots through the view, never B's", async () => {
@@ -653,7 +672,7 @@ describe("SR-02: the ledger is closed to the API roles", () => {
       "select user_id::text as owner, remaining from public.sheet_lot_balances",
     );
     expect(result.ok).toBe(true);
-    const rows = (result as { rows: { owner: string; remaining: number }[] }).rows;
+    const rows = rowsOf<{ owner: string; remaining: number }>(result);
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.owner === ANA)).toBe(true);
     const anon = await attempt("anon", null, "select * from public.sheet_lot_balances");
@@ -668,7 +687,7 @@ describe("SR-01: storage buckets", () => {
       userId,
       "select bucket_id, name from storage.objects order by name",
     );
-    return result.ok ? (result.rows as { bucket_id: string; name: string }[]) : [];
+    return result.ok ? rowsOf<{ bucket_id: string; name: string }>(result) : [];
   };
 
   it("A sees only the files under their own folder, in both buckets", async () => {
