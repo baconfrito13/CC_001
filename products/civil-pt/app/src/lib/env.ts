@@ -32,7 +32,10 @@ const flag = (fallback: boolean) =>
 
 /** A tunable limit: an integer in [min, max] read from a string, `fallback` when unset. */
 const limit = (fallback: number, min: number, max: number) =>
-  z.preprocess(emptyToUndefined, z.coerce.number().int().min(min).max(max).default(fallback));
+  z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().min(min).max(max).default(fallback),
+  );
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).catch("development"),
@@ -166,13 +169,17 @@ function configProblems(env: Env): string[] {
       problems.push("PAYMENTS_ADAPTER: must be stripe when PAYMENTS_LIVE=true");
     }
     if (!key || !isLiveStripeKey(key)) {
-      problems.push("STRIPE_SECRET_KEY: must be a live key (sk_live_ or rk_live_) when PAYMENTS_LIVE=true");
+      problems.push(
+        "STRIPE_SECRET_KEY: must be a live key (sk_live_ or rk_live_) when PAYMENTS_LIVE=true",
+      );
     }
     if (!env.STRIPE_WEBHOOK_SECRET) {
       problems.push("STRIPE_WEBHOOK_SECRET: required when PAYMENTS_LIVE=true");
     }
   } else if (key && isLiveStripeKey(key)) {
-    problems.push("PAYMENTS_LIVE: a live Stripe key is set but PAYMENTS_LIVE is not true");
+    problems.push(
+      "PAYMENTS_LIVE: a live Stripe key is set but PAYMENTS_LIVE is not true",
+    );
   }
   return problems;
 }
@@ -196,7 +203,8 @@ function productionProblems(env: Env): string[] {
   for (const active of testAdaptersIn(env)) {
     problems.push(`${active}: test adapter, not allowed in production`);
   }
-  if (!env.CRON_SECRET) problems.push("CRON_SECRET: required in production (32+ characters)");
+  if (!env.CRON_SECRET)
+    problems.push("CRON_SECRET: required in production (32+ characters)");
   if (!env.HASH_SALT) problems.push("HASH_SALT: required in production (16+ characters)");
   return problems;
 }

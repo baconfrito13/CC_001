@@ -13,7 +13,10 @@ export function readMigrations(): { name: string; sql: string }[] {
   return readdirSync(MIGRATIONS_DIR)
     .filter((file) => file.endsWith(".sql"))
     .sort()
-    .map((name) => ({ name, sql: readFileSync(path.join(MIGRATIONS_DIR, name), "utf8") }));
+    .map((name) => ({
+      name,
+      sql: readFileSync(path.join(MIGRATIONS_DIR, name), "utf8"),
+    }));
 }
 
 /** A fresh in-process Postgres with the Supabase shim and every migration applied. */

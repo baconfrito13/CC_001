@@ -14,7 +14,11 @@ function capture() {
 describe("logger (SR-09: never emits email, project or file names)", () => {
   it("writes one JSON object with level, timestamp and message", () => {
     const { logger, lines } = capture();
-    logger.info("sheet_processed", { route: "/api/sheets", duration_ms: 1200, sheet_id: "s1" });
+    logger.info("sheet_processed", {
+      route: "/api/sheets",
+      duration_ms: 1200,
+      sheet_id: "s1",
+    });
     expect(lines).toEqual([
       {
         level: "info",
@@ -67,12 +71,14 @@ describe("logger (SR-09: never emits email, project or file names)", () => {
 
 describe("errorCode", () => {
   it("prefers a short stable code, then the error name, never the message", () => {
-    expect(errorCode(Object.assign(new Error("boom for ana@example.pt"), { code: "23505" }))).toBe(
-      "23505",
-    );
+    expect(
+      errorCode(Object.assign(new Error("boom for ana@example.pt"), { code: "23505" })),
+    ).toBe("23505");
     expect(errorCode(new TypeError("secret"))).toBe("TypeError");
     expect(errorCode("not an error")).toBe("unknown");
-    expect(errorCode(Object.assign(new Error("x"), { code: "has spaces and @" }))).toBe("Error");
+    expect(errorCode(Object.assign(new Error("x"), { code: "has spaces and @" }))).toBe(
+      "Error",
+    );
   });
 });
 

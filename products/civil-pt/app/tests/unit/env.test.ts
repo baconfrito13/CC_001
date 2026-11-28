@@ -168,16 +168,26 @@ describe("adapters and limits (S-01)", () => {
 
   it("fails at boot when a chosen real adapter lacks its variables", () => {
     expect(message({ DATA_ADAPTER: "supabase" })).toContain("NEXT_PUBLIC_SUPABASE_URL");
-    expect(message({ STORAGE_ADAPTER: "supabase" })).toContain("SUPABASE_SERVICE_ROLE_KEY");
-    expect(message({ AUTH_ADAPTER: "supabase" })).toContain("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    expect(message({ STORAGE_ADAPTER: "supabase" })).toContain(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    );
+    expect(message({ AUTH_ADAPTER: "supabase" })).toContain(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    );
     expect(message({ EMAIL_ADAPTER: "resend" })).toContain("RESEND_API_KEY");
-    expect(message({ EMAIL_ADAPTER: "resend", RESEND_API_KEY: "re_x" })).toContain("EMAIL_FROM");
+    expect(message({ EMAIL_ADAPTER: "resend", RESEND_API_KEY: "re_x" })).toContain(
+      "EMAIL_FROM",
+    );
     expect(message({ PAYMENTS_ADAPTER: "stripe" })).toContain("STRIPE_SECRET_KEY");
   });
 
   it("accepts the starter's RESEND_FROM as the sender of the email adapter", () => {
     expect(
-      message({ EMAIL_ADAPTER: "resend", RESEND_API_KEY: "re_x", RESEND_FROM: "R <a@b.pt>" }),
+      message({
+        EMAIL_ADAPTER: "resend",
+        RESEND_API_KEY: "re_x",
+        RESEND_FROM: "R <a@b.pt>",
+      }),
     ).toBe("");
   });
 });
@@ -193,7 +203,12 @@ describe("payments live requires live keys (SR-08)", () => {
     expect(message({ ...stripe, PAYMENTS_LIVE: "true" })).toContain("sk_live_");
     expect(message({ PAYMENTS_LIVE: "true" })).toContain("PAYMENTS_ADAPTER");
     expect(
-      message({ ...stripe, STRIPE_SECRET_KEY: "sk_live_x", PAYMENTS_LIVE: "true", STRIPE_WEBHOOK_SECRET: "" }),
+      message({
+        ...stripe,
+        STRIPE_SECRET_KEY: "sk_live_x",
+        PAYMENTS_LIVE: "true",
+        STRIPE_WEBHOOK_SECRET: "",
+      }),
     ).toContain("STRIPE_WEBHOOK_SECRET");
   });
 
@@ -207,7 +222,9 @@ describe("payments live requires live keys (SR-08)", () => {
   });
 
   it("refuses a live key while PAYMENTS_LIVE is off, so a preview can never charge", () => {
-    expect(message({ ...stripe, STRIPE_SECRET_KEY: "sk_live_x" })).toContain("PAYMENTS_LIVE");
+    expect(message({ ...stripe, STRIPE_SECRET_KEY: "sk_live_x" })).toContain(
+      "PAYMENTS_LIVE",
+    );
   });
 });
 
@@ -233,12 +250,16 @@ describe("production boot guard (T-10, SR-08)", () => {
 
   it("does not refuse the same adapters outside production", () => {
     for (const nodeEnv of ["development", "test"]) {
-      expect(message({ NODE_ENV: nodeEnv, DATA_ADAPTER: "memory", AUTH_ADAPTER: "mock" })).toBe("");
+      expect(
+        message({ NODE_ENV: nodeEnv, DATA_ADAPTER: "memory", AUTH_ADAPTER: "mock" }),
+      ).toBe("");
     }
   });
 
   it("does not run during `next build`, which compiles with the defaults", () => {
-    expect(message({ NODE_ENV: "production", NEXT_PHASE: "phase-production-build" })).toBe("");
+    expect(
+      message({ NODE_ENV: "production", NEXT_PHASE: "phase-production-build" }),
+    ).toBe("");
   });
 
   it("requires the secrets production needs", () => {
@@ -263,7 +284,11 @@ describe("production boot guard (T-10, SR-08)", () => {
 
   it("still honours the switch on a Vercel preview", () => {
     expect(
-      message({ NODE_ENV: "production", VERCEL_ENV: "preview", ALLOW_TEST_ADAPTERS: "true" }),
+      message({
+        NODE_ENV: "production",
+        VERCEL_ENV: "preview",
+        ALLOW_TEST_ADAPTERS: "true",
+      }),
     ).toBe("");
   });
 });

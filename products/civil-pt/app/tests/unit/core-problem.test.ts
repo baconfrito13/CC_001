@@ -49,7 +49,9 @@ describe("problem+json", () => {
   });
 
   it("hides everything about an unexpected error", async () => {
-    const response = toProblem(new Error("connect ECONNREFUSED db.internal:5432 password=hunter2"));
+    const response = toProblem(
+      new Error("connect ECONNREFUSED db.internal:5432 password=hunter2"),
+    );
     expect(response.status).toBe(500);
     expect(await body(response)).toEqual({
       type: "about:blank",
